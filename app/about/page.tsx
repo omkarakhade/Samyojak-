@@ -27,7 +27,7 @@ export default function About() {
             <span style={{ color: '#8B5CF6' }}>team. For everyone.</span>
           </h1>
           <p className="text-xl leading-relaxed" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
-            Samyojak was born from a simple observation — Indian small businesses deserve world-class software at fair prices. Zoho and Odoo were too complex, too expensive, and not built for how Indian businesses actually work.
+            Samyojak was born from a simple observation — small and medium businesses everywhere deserve world-class software at fair prices. Traditional ERP platforms were too complex, too expensive, and not built for how modern businesses actually work.
           </p>
         </div>
       </section>
@@ -52,10 +52,10 @@ export default function About() {
           <h2 className="text-4xl font-black text-center mb-16" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Our Values</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {[
-              { icon: Target, title: 'Simplicity First', desc: 'Every feature must be usable in under 60 seconds. If it takes longer, we redesign it.', color: '#8B5CF6', bg: '#EDE9FE' },
-              { icon: Heart, title: 'India at Heart', desc: 'Built for GST, WhatsApp, UPI, and the way Indian businesses actually operate day to day.', color: '#F472B6', bg: '#FCE7F3' },
-              { icon: Zap, title: 'Speed Over Everything', desc: 'Setup in minutes not weeks. Your business cannot wait for month-long implementations.', color: '#FBBF24', bg: '#FEF3C7' },
-              { icon: Shield, title: 'Your Data, Your Control', desc: 'Export everything anytime. No lock-in. No hidden fees. Your data belongs to you.', color: '#34D399', bg: '#D1FAE5' },
+              { icon: Target, title: 'Simplicity First', desc: 'Every feature must be usable in under 60 seconds. If it takes longer we redesign it. Complexity is the enemy of adoption.', color: '#8B5CF6', bg: '#EDE9FE' },
+              { icon: Heart, title: 'Built for Real Business', desc: 'Built for GST, WhatsApp, and the way businesses actually operate day to day — not for enterprise corporations with IT teams.', color: '#F472B6', bg: '#FCE7F3' },
+              { icon: Zap, title: 'Speed Over Everything', desc: 'Setup in minutes not weeks. Your business cannot wait for month-long implementations and expensive consultants.', color: '#FBBF24', bg: '#FEF3C7' },
+              { icon: Shield, title: 'Your Data Your Control', desc: 'Export everything anytime. No lock-in. No hidden fees. No vendor dependency. Your data always belongs to you.', color: '#34D399', bg: '#D1FAE5' },
             ].map(v => (
               <div key={v.title} className="sticker-card p-8">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 wiggle" style={{ background: v.bg, border: `2px solid ${v.color}` }}>
@@ -72,9 +72,9 @@ export default function About() {
       <section className="py-24 px-6" style={{ background: '#8B5CF6' }}>
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-4xl font-black text-white mb-6" style={{ fontFamily: 'Outfit' }}>Ready to join us?</h2>
-          <p className="text-white/80 mb-8" style={{ fontFamily: 'Plus Jakarta Sans' }}>Start your free trial today. No credit card required.</p>
+          <p className="text-white/80 mb-8" style={{ fontFamily: 'Plus Jakarta Sans' }}>Start your trial today. No credit card required.</p>
           <Link href="/signup" className="inline-flex items-center gap-3 px-8 py-4 rounded-full font-bold text-lg" style={{ background: 'white', color: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '4px 4px 0px #1E293B', fontFamily: 'Outfit' }}>
-            Get Started Free <ArrowRight size={20} />
+            Start Trial <ArrowRight size={20} />
           </Link>
         </div>
       </section>
