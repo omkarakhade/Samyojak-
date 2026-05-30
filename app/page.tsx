@@ -9,6 +9,12 @@ const prices = {
   yearly: ['$144', '$336', '$576', '$759'],
 }
 
+const bonuses = {
+  weekly: '+1 week free',
+  monthly: '+2 months free',
+  yearly: '+3 months free',
+}
+
 const plans = ['CRM Starter', 'ERP Basic', 'Business', 'Complete']
 
 const planFeatures = [
@@ -19,7 +25,6 @@ const planFeatures = [
 ]
 
 const planColors = ['#8B5CF6', '#F472B6', '#FBBF24', '#34D399']
-const planShadows = ['pop-shadow-violet', 'pop-shadow-pink', 'pop-shadow-yellow', '']
 
 const features = [
   { icon: Users, title: 'Smart CRM', desc: 'AI-powered lead scoring, pipeline tracking, and automated follow-ups.', color: '#8B5CF6', bg: '#EDE9FE' },
@@ -66,7 +71,7 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-3">
             <Link href="/login" className="outline-btn px-5 py-2 text-sm">Sign in</Link>
             <Link href="/signup" className="candy-btn px-5 py-2 text-sm flex items-center gap-2">
-              Start Free <ArrowRight size={16} />
+              Start Trial <ArrowRight size={16} />
             </Link>
           </div>
 
@@ -78,15 +83,19 @@ export default function Home() {
         {menuOpen && (
           <div className="md:hidden mt-4 p-4 rounded-2xl" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '4px 4px 0px #1E293B' }}>
             {['Features', 'Pricing', 'About', 'Services', 'Contact'].map(item => (
-              <Link key={item} href={item === 'Features' ? '#features' : item === 'Pricing' ? '#pricing' : `/${item.toLowerCase()}`}
-                className="block py-3 font-semibold border-b last:border-0" style={{ color: '#1E293B', borderColor: '#E2E8F0' }}
-                onClick={() => setMenuOpen(false)}>
+              <Link
+                key={item}
+                href={item === 'Features' ? '#features' : item === 'Pricing' ? '#pricing' : `/${item.toLowerCase()}`}
+                className="block py-3 font-semibold border-b last:border-0"
+                style={{ color: '#1E293B', borderColor: '#E2E8F0' }}
+                onClick={() => setMenuOpen(false)}
+              >
                 {item}
               </Link>
             ))}
             <div className="flex gap-3 mt-4">
               <Link href="/login" className="outline-btn px-4 py-2 text-sm flex-1 text-center">Sign in</Link>
-              <Link href="/signup" className="candy-btn px-4 py-2 text-sm flex-1 text-center">Start Free</Link>
+              <Link href="/signup" className="candy-btn px-4 py-2 text-sm flex-1 text-center">Start Trial</Link>
             </div>
           </div>
         )}
@@ -94,7 +103,6 @@ export default function Home() {
 
       {/* HERO */}
       <section className="pt-32 pb-24 px-6 overflow-hidden relative">
-        {/* Background decorations */}
         <div className="absolute top-20 right-10 w-64 h-64 rounded-full opacity-20 float" style={{ background: '#FBBF24' }}></div>
         <div className="absolute bottom-10 left-10 w-32 h-32 rounded-full opacity-30" style={{ background: '#34D399' }}></div>
         <div className="absolute top-40 left-1/4 w-16 h-16 rotate-45 opacity-20" style={{ background: '#F472B6' }}></div>
@@ -103,7 +111,7 @@ export default function Home() {
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-semibold" style={{ background: '#EDE9FE', border: '2px solid #8B5CF6', color: '#8B5CF6' }}>
-                <Star size={14} fill="#8B5CF6" /> Now live · Built for Indian businesses
+                <Star size={14} fill="#8B5CF6" /> Now live · Built for modern businesses
               </div>
 
               <h1 className="text-5xl lg:text-7xl font-black mb-6 leading-tight" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
@@ -111,19 +119,19 @@ export default function Home() {
                 <span className="relative inline-block">
                   <span style={{ color: '#8B5CF6' }}>Every</span>
                   <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none">
-                    <path d="M2 8 Q50 2 100 8 Q150 14 198 8" stroke="#FBBF24" strokeWidth="4" strokeLinecap="round" fill="none"/>
+                    <path d="M2 8 Q50 2 100 8 Q150 14 198 8" stroke="#FBBF24" strokeWidth="4" strokeLinecap="round" fill="none" />
                   </svg>
                 </span>
                 {' '}Operation.
               </h1>
 
               <p className="text-lg mb-8 leading-relaxed" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
-                The all-in-one ERP for modern businesses. CRM, Invoicing, Inventory, HR, and Projects — all in one place. Beats Zoho and Odoo on price, simplicity, and features built for India.
+                The all-in-one ERP for modern businesses globally. CRM, Invoicing, Inventory, HR, and Projects — all in one place. Simpler, faster, and more affordable than legacy ERP platforms.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-6">
                 <Link href="/signup" className="candy-btn px-8 py-4 text-lg flex items-center justify-center gap-3">
-                  Start Free Trial
+                  Start Trial
                   <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'white' }}>
                     <ArrowRight size={16} style={{ color: '#8B5CF6' }} />
                   </div>
@@ -134,7 +142,7 @@ export default function Home() {
               </div>
 
               <p className="text-sm" style={{ color: '#94A3B8' }}>
-                🎁 Buy any weekly plan · Get 7 extra days free · No credit card required
+                🎁 Pay for a week · Get an extra week on us
               </p>
             </div>
 
@@ -164,8 +172,6 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-
-              {/* Floating badges */}
               <div className="absolute -top-4 -right-4 px-3 py-2 rounded-full font-bold text-sm wiggle" style={{ background: '#FBBF24', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B', fontFamily: 'Outfit' }}>
                 🚀 Free QR Codes!
               </div>
@@ -200,7 +206,7 @@ export default function Home() {
               Everything your business runs on
             </h2>
             <p className="text-lg" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
-              Zero context-switching. One source of truth. Built for India.
+              Zero context-switching. One source of truth. Built for businesses globally.
             </p>
           </div>
 
@@ -224,9 +230,11 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: 'white' }}>
-              Why Samyojak beats the rest
+              Why businesses choose Samyojak
             </h2>
-            <p style={{ color: '#94A3B8' }}>We built what Zoho and Odoo forgot — simplicity for Indian businesses</p>
+            <p style={{ color: '#94A3B8' }}>
+              Built from scratch to be simpler and smarter than traditional ERP platforms
+            </p>
           </div>
 
           <div className="rounded-2xl overflow-hidden" style={{ border: '2px solid #334155' }}>
@@ -235,19 +243,19 @@ export default function Home() {
                 <tr style={{ background: '#0F172A' }}>
                   <th className="p-4 text-left text-sm font-bold" style={{ color: '#94A3B8', fontFamily: 'Outfit' }}>Feature</th>
                   <th className="p-4 text-center text-sm font-bold" style={{ color: '#8B5CF6', fontFamily: 'Outfit' }}>Samyojak ✨</th>
-                  <th className="p-4 text-center text-sm font-bold" style={{ color: '#64748B', fontFamily: 'Outfit' }}>Zoho</th>
-                  <th className="p-4 text-center text-sm font-bold" style={{ color: '#64748B', fontFamily: 'Outfit' }}>Odoo</th>
+                  <th className="p-4 text-center text-sm font-bold" style={{ color: '#64748B', fontFamily: 'Outfit' }}>Legacy ERP</th>
+                  <th className="p-4 text-center text-sm font-bold" style={{ color: '#64748B', fontFamily: 'Outfit' }}>Complex CRM</th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  ['Flat pricing (not per-user)', true, false, false],
-                  ['Setup in minutes', true, false, false],
+                  ['Flat pricing — not per user', true, false, false],
+                  ['Setup in minutes not weeks', true, false, false],
                   ['Free QR codes built-in', true, false, false],
-                  ['GST ready for India', true, false, false],
+                  ['GST ready out of the box', true, false, false],
                   ['Weekly payment plans', true, false, false],
                   ['WhatsApp invoice sending', true, false, false],
-                  ['AI lead scoring', true, false, false],
+                  ['AI lead scoring built-in', true, false, false],
                   ['Mobile-first design', true, false, false],
                 ].map(([feature, s, z, o], idx) => (
                   <tr key={String(feature)} style={{ borderTop: '1px solid #1E293B', background: idx % 2 === 0 ? '#0F172A' : '#1E293B' }}>
@@ -280,10 +288,16 @@ export default function Home() {
               <Star size={14} fill="#FBBF24" /> Simple Transparent Pricing
             </div>
             <h2 className="text-4xl lg:text-5xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-              Start free. Upgrade when ready.
+              Pay once. Get more.
             </h2>
-            <p className="text-lg mb-2" style={{ color: '#64748B' }}>Buy any weekly plan and get 7 extra days free!</p>
-            <p className="font-bold" style={{ color: '#34D399' }}>🎁 That is 14 days for the price of 7!</p>
+            <p className="text-lg mb-2" style={{ color: '#64748B' }}>Every plan comes with a bonus period — on us.</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
+              {(['weekly', 'monthly', 'yearly'] as const).map(b => (
+                <span key={b} className="text-sm font-semibold px-4 py-2 rounded-full" style={{ background: '#F1F5F9', color: '#475569' }}>
+                  {b === 'weekly' ? '🎁 Weekly → +1 week free' : b === 'monthly' ? '🎁 Monthly → +2 months free' : '🎁 Yearly → +3 months free'}
+                </span>
+              ))}
+            </div>
           </div>
 
           <div className="flex justify-center mb-12">
@@ -300,7 +314,6 @@ export default function Home() {
                   }}
                 >
                   {b}
-                  {b === 'weekly' && <span className="ml-1 text-xs" style={{ color: billing === b ? '#34D399' : '#34D399' }}>+7 free</span>}
                   {b === 'yearly' && <span className="ml-1 text-xs" style={{ color: billing === b ? '#FBBF24' : '#FBBF24' }}>-20%</span>}
                 </button>
               ))}
@@ -320,20 +333,18 @@ export default function Home() {
                 }}
               >
                 {i === 2 && (
-                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black rotate-2" style={{ background: '#FBBF24', border: '2px solid #1E293B', color: '#1E293B', fontFamily: 'Outfit', whiteSpace: 'nowrap' }}>
+                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black rotate-2 whitespace-nowrap" style={{ background: '#FBBF24', border: '2px solid #1E293B', color: '#1E293B', fontFamily: 'Outfit' }}>
                     ⭐ MOST POPULAR
                   </div>
                 )}
 
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: i === 2 ? 'rgba(255,255,255,0.2)' : planColors[i] + '20', border: `2px solid ${i === 2 ? 'rgba(255,255,255,0.4)' : planColors[i]}` }}>
-                  <span className="text-lg">
-                    {['🌱', '⚡', '🚀', '💎'][i]}
-                  </span>
+                  <span className="text-lg">{['🌱', '⚡', '🚀', '💎'][i]}</span>
                 </div>
 
                 <h3 className="font-black text-lg mb-1" style={{ fontFamily: 'Outfit', color: i === 2 ? 'white' : '#1E293B' }}>{plan}</h3>
 
-                <div className="mb-4">
+                <div className="mb-2">
                   <span className="text-4xl font-black" style={{ fontFamily: 'Outfit', color: i === 2 ? 'white' : '#1E293B' }}>
                     {prices[billing][i]}
                   </span>
@@ -342,11 +353,9 @@ export default function Home() {
                   </span>
                 </div>
 
-                {billing === 'weekly' && (
-                  <div className="px-3 py-1 rounded-full text-xs font-bold mb-4 inline-block" style={{ background: i === 2 ? 'rgba(255,255,255,0.2)' : '#D1FAE5', color: i === 2 ? 'white' : '#065F46' }}>
-                    🎁 +7 Days Free
-                  </div>
-                )}
+                <div className="px-3 py-1 rounded-full text-xs font-bold mb-4 inline-block" style={{ background: i === 2 ? 'rgba(255,255,255,0.2)' : '#D1FAE5', color: i === 2 ? 'white' : '#065F46' }}>
+                  🎁 {bonuses[billing]}
+                </div>
 
                 <ul className="space-y-2 mb-6">
                   {planFeatures[i].map(f => (
@@ -368,7 +377,7 @@ export default function Home() {
                     boxShadow: '3px 3px 0px ' + (i === 2 ? 'rgba(0,0,0,0.2)' : '#8B5CF6'),
                   }}
                 >
-                  Get started →
+                  Start Trial →
                 </Link>
               </div>
             ))}
@@ -388,7 +397,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup" className="px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-2" style={{ background: 'white', color: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '4px 4px 0px #1E293B', fontFamily: 'Outfit' }}>
-              Start Free Trial <ArrowRight size={20} />
+              Start Trial <ArrowRight size={20} />
             </Link>
             <Link href="/contact" className="px-8 py-4 rounded-full font-bold text-lg text-center" style={{ background: 'transparent', color: 'white', border: '2px solid rgba(255,255,255,0.5)', fontFamily: 'Outfit' }}>
               Talk to Us
@@ -407,13 +416,13 @@ export default function Home() {
                 <span className="font-black text-xl text-white" style={{ fontFamily: 'Outfit' }}>Samyojak</span>
               </div>
               <p className="text-sm leading-relaxed" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
-                Coordinate Everything. Run Anything. The all-in-one ERP built for modern Indian businesses.
+                Coordinate Everything. Run Anything. The all-in-one ERP built for modern businesses worldwide.
               </p>
             </div>
 
             {[
               { title: 'Product', links: ['Features', 'Pricing', 'CRM', 'Invoicing', 'Inventory'] },
-              { title: 'Company', links: ['About', 'Services', 'Contact', 'Careers'] },
+              { title: 'Company', links: ['About', 'Services', 'Contact'] },
               { title: 'Legal', links: ['Privacy Policy', 'Terms of Service'] },
             ].map(col => (
               <div key={col.title}>
@@ -421,13 +430,17 @@ export default function Home() {
                 <ul className="space-y-2">
                   {col.links.map(link => (
                     <li key={link}>
-                      <Link href={
-                        link === 'Privacy Policy' ? '/privacy' :
-                        link === 'Terms of Service' ? '/terms' :
-                        link === 'Features' ? '#features' :
-                        link === 'Pricing' ? '#pricing' :
-                        `/${link.toLowerCase().replace(' ', '-')}`
-                      } className="text-sm hover:text-violet-400 transition-colors" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
+                      <Link
+                        href={
+                          link === 'Privacy Policy' ? '/privacy' :
+                          link === 'Terms of Service' ? '/terms' :
+                          link === 'Features' ? '#features' :
+                          link === 'Pricing' ? '#pricing' :
+                          `/${link.toLowerCase().replace(' ', '-')}`
+                        }
+                        className="text-sm hover:text-violet-400 transition-colors"
+                        style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}
+                      >
                         {link}
                       </Link>
                     </li>
@@ -439,7 +452,7 @@ export default function Home() {
 
           <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4" style={{ borderTop: '1px solid #1E293B' }}>
             <p className="text-sm" style={{ color: '#475569', fontFamily: 'Plus Jakarta Sans' }}>© 2026 Samyojak. All rights reserved.</p>
-            <p className="text-sm" style={{ color: '#475569' }}>Made with ❤️ in India 🇮🇳</p>
+            <p className="text-sm" style={{ color: '#475569' }}>Made with ❤️ for businesses everywhere 🌍</p>
           </div>
         </div>
       </footer>
