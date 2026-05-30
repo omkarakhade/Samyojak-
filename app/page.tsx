@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Check } from 'lucide-react'
+import { Check, ArrowRight, Star, Zap, Shield, Users, BarChart3, Package, FileText, UserCheck, FolderOpen, Menu, X } from 'lucide-react'
 
 const prices = {
   weekly: ['$4.99', '$9.99', '$16.99', '$21.99'],
@@ -18,153 +18,249 @@ const planFeatures = [
   ['Everything', 'AI features', 'Unlimited users', 'API access'],
 ]
 
-const comparison = [
-  ['Flat pricing', true, false, false],
-  ['Setup in minutes', true, false, false],
-  ['QR codes free', true, false, false],
-  ['GST ready India', true, false, false],
-  ['Weekly plans', true, false, false],
-  ['WhatsApp invoices', true, false, false],
-  ['AI lead scoring', true, false, false],
-  ['Mobile first', true, false, false],
+const planColors = ['#8B5CF6', '#F472B6', '#FBBF24', '#34D399']
+const planShadows = ['pop-shadow-violet', 'pop-shadow-pink', 'pop-shadow-yellow', '']
+
+const features = [
+  { icon: Users, title: 'Smart CRM', desc: 'AI-powered lead scoring, pipeline tracking, and automated follow-ups.', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: FileText, title: 'GST Invoicing', desc: 'Create compliant invoices with auto GST calculation and WhatsApp sending.', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: Package, title: 'Inventory + QR', desc: 'Track products with free auto-generated QR codes. Scan with any phone.', color: '#FBBF24', bg: '#FEF3C7' },
+  { icon: UserCheck, title: 'HR & Payroll', desc: 'Manage employees, attendance, leaves, and payroll in one place.', color: '#34D399', bg: '#D1FAE5' },
+  { icon: FolderOpen, title: 'Projects', desc: 'Kanban board with tasks, deadlines, and progress tracking.', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: BarChart3, title: 'GST Reports', desc: 'Auto GSTR-1 format reports with PDF and CSV export.', color: '#F472B6', bg: '#FCE7F3' },
 ]
+
+const marqueeItems = ['CRM', 'Invoicing', 'Inventory', 'HR', 'Projects', 'GST Reports', 'QR Codes', 'WhatsApp', 'AI Scoring', 'Dark Mode', 'Mobile First']
 
 export default function Home() {
   const [billing, setBilling] = useState<'weekly' | 'monthly' | 'yearly'>('weekly')
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-white">
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0A1628]/95 backdrop-blur px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold">S</span>
+    <div className="min-h-screen" style={{ background: '#FFFDF5' }}>
+
+      {/* NAV */}
+      <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4" style={{ background: '#FFFDF5', borderBottom: '2px solid #E2E8F0' }}>
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg" style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+              S
+            </div>
+            <span className="font-black text-xl" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Samyojak</span>
+          </Link>
+
+          <div className="hidden md:flex items-center gap-8">
+            {[
+              { label: 'Features', href: '#features' },
+              { label: 'Pricing', href: '#pricing' },
+              { label: 'About', href: '/about' },
+              { label: 'Services', href: '/services' },
+              { label: 'Contact', href: '/contact' },
+            ].map(item => (
+              <Link key={item.label} href={item.href} className="font-semibold text-sm hover:text-violet-600 transition-colors" style={{ fontFamily: 'Plus Jakarta Sans', color: '#1E293B' }}>
+                {item.label}
+              </Link>
+            ))}
           </div>
-          <span className="text-white font-bold text-xl">Samyojak</span>
+
+          <div className="hidden md:flex items-center gap-3">
+            <Link href="/login" className="outline-btn px-5 py-2 text-sm">Sign in</Link>
+            <Link href="/signup" className="candy-btn px-5 py-2 text-sm flex items-center gap-2">
+              Start Free <ArrowRight size={16} />
+            </Link>
+          </div>
+
+          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2">
+            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
-        <div className="flex items-center gap-4">
-          <Link href="/login" className="text-white/70 hover:text-white text-sm hidden md:block">
-            Sign in
-          </Link>
-          <Link
-            href="/signup"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
-          >
-            Start Free
-          </Link>
-        </div>
+
+        {menuOpen && (
+          <div className="md:hidden mt-4 p-4 rounded-2xl" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '4px 4px 0px #1E293B' }}>
+            {['Features', 'Pricing', 'About', 'Services', 'Contact'].map(item => (
+              <Link key={item} href={item === 'Features' ? '#features' : item === 'Pricing' ? '#pricing' : `/${item.toLowerCase()}`}
+                className="block py-3 font-semibold border-b last:border-0" style={{ color: '#1E293B', borderColor: '#E2E8F0' }}
+                onClick={() => setMenuOpen(false)}>
+                {item}
+              </Link>
+            ))}
+            <div className="flex gap-3 mt-4">
+              <Link href="/login" className="outline-btn px-4 py-2 text-sm flex-1 text-center">Sign in</Link>
+              <Link href="/signup" className="candy-btn px-4 py-2 text-sm flex-1 text-center">Start Free</Link>
+            </div>
+          </div>
+        )}
       </nav>
 
-      <section className="min-h-screen bg-[#0A1628] flex items-center justify-center px-6 pt-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 rounded-full px-4 py-2 mb-8">
-            <span className="text-blue-400 text-sm">Now live · Built for Indian businesses</span>
-          </div>
-          <h1 className="text-5xl md:text-7xl font-black text-white mb-6 leading-tight">
-            One System.<br />
-            <span className="text-blue-500">Every Operation.</span>
-          </h1>
-          <p className="text-xl text-white/60 mb-10 max-w-2xl mx-auto">
-            The all-in-one ERP built for modern businesses. CRM, Invoicing, Inventory, HR, and Projects unified in one premium workspace.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-4">
-            <Link
-              href="/signup"
-              className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-blue-700 transition-colors"
-            >
-              Start Free Trial →
-            </Link>
-            <Link
-              href="/login"
-              className="border border-white/20 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/10 transition-colors"
-            >
-              Sign In
-            </Link>
-          </div>
-          <p className="text-white/40 text-sm mb-2">
-            Buy any weekly plan · Get 7 extra days free · 14 days total
-          </p>
-          <p className="text-green-400 text-xs mb-16">🎁 No credit card required to start</p>
+      {/* HERO */}
+      <section className="pt-32 pb-24 px-6 overflow-hidden relative">
+        {/* Background decorations */}
+        <div className="absolute top-20 right-10 w-64 h-64 rounded-full opacity-20 float" style={{ background: '#FBBF24' }}></div>
+        <div className="absolute bottom-10 left-10 w-32 h-32 rounded-full opacity-30" style={{ background: '#34D399' }}></div>
+        <div className="absolute top-40 left-1/4 w-16 h-16 rotate-45 opacity-20" style={{ background: '#F472B6' }}></div>
 
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span className="text-white/40 text-xs ml-2">Samyojak · Live preview</span>
-              <span className="ml-auto text-green-400 text-xs">● System Online</span>
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-16">
+            <div className="flex-1 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-semibold" style={{ background: '#EDE9FE', border: '2px solid #8B5CF6', color: '#8B5CF6' }}>
+                <Star size={14} fill="#8B5CF6" /> Now live · Built for Indian businesses
+              </div>
+
+              <h1 className="text-5xl lg:text-7xl font-black mb-6 leading-tight" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                One System.<br />
+                <span className="relative inline-block">
+                  <span style={{ color: '#8B5CF6' }}>Every</span>
+                  <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none">
+                    <path d="M2 8 Q50 2 100 8 Q150 14 198 8" stroke="#FBBF24" strokeWidth="4" strokeLinecap="round" fill="none"/>
+                  </svg>
+                </span>
+                {' '}Operation.
+              </h1>
+
+              <p className="text-lg mb-8 leading-relaxed" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
+                The all-in-one ERP for modern businesses. CRM, Invoicing, Inventory, HR, and Projects — all in one place. Beats Zoho and Odoo on price, simplicity, and features built for India.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-6">
+                <Link href="/signup" className="candy-btn px-8 py-4 text-lg flex items-center justify-center gap-3">
+                  Start Free Trial
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'white' }}>
+                    <ArrowRight size={16} style={{ color: '#8B5CF6' }} />
+                  </div>
+                </Link>
+                <Link href="/about" className="outline-btn px-8 py-4 text-lg text-center">
+                  Learn More
+                </Link>
+              </div>
+
+              <p className="text-sm" style={{ color: '#94A3B8' }}>
+                🎁 Buy any weekly plan · Get 7 extra days free · No credit card required
+              </p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: 'Total Leads', value: '1,284', change: '+12%' },
-                { label: 'Revenue', value: '₹48.2K', change: '+24%' },
-                { label: 'Open Invoices', value: '37', change: '-3%' },
-                { label: 'Active Projects', value: '12', change: '+2' },
-              ].map(item => (
-                <div key={item.label} className="bg-white/5 rounded-xl p-4 text-left">
-                  <p className="text-white/50 text-xs mb-1">{item.label}</p>
-                  <p className="text-white text-2xl font-bold">{item.value}</p>
-                  <p className="text-green-400 text-xs mt-1">{item.change}</p>
+
+            <div className="flex-1 relative">
+              <div className="dot-bg rounded-3xl p-6 relative" style={{ border: '2px solid #E2E8F0' }}>
+                <div className="bg-white rounded-2xl p-6" style={{ border: '2px solid #1E293B', boxShadow: '8px 8px 0px #8B5CF6' }}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-3 h-3 rounded-full" style={{ background: '#F472B6' }}></div>
+                    <div className="w-3 h-3 rounded-full" style={{ background: '#FBBF24' }}></div>
+                    <div className="w-3 h-3 rounded-full" style={{ background: '#34D399' }}></div>
+                    <span className="text-xs ml-2 font-semibold" style={{ color: '#64748B' }}>Samyojak · Live</span>
+                    <span className="ml-auto text-xs font-bold" style={{ color: '#34D399' }}>● Online</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: 'Total Leads', value: '1,284', change: '+12%', color: '#8B5CF6', bg: '#EDE9FE' },
+                      { label: 'Revenue', value: '₹48.2K', change: '+24%', color: '#34D399', bg: '#D1FAE5' },
+                      { label: 'Open Invoices', value: '37', change: '-3%', color: '#F472B6', bg: '#FCE7F3' },
+                      { label: 'Projects', value: '12', change: '+2', color: '#FBBF24', bg: '#FEF3C7' },
+                    ].map(item => (
+                      <div key={item.label} className="p-4 rounded-xl" style={{ background: item.bg, border: `2px solid ${item.color}` }}>
+                        <p className="text-xs font-semibold mb-1" style={{ color: '#64748B' }}>{item.label}</p>
+                        <p className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>{item.value}</p>
+                        <p className="text-xs font-bold mt-1" style={{ color: item.color }}>{item.change}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
+              </div>
+
+              {/* Floating badges */}
+              <div className="absolute -top-4 -right-4 px-3 py-2 rounded-full font-bold text-sm wiggle" style={{ background: '#FBBF24', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B', fontFamily: 'Outfit' }}>
+                🚀 Free QR Codes!
+              </div>
+              <div className="absolute -bottom-4 -left-4 px-3 py-2 rounded-full font-bold text-sm" style={{ background: '#34D399', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B', fontFamily: 'Outfit' }}>
+                ✅ GST Ready
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="py-12 bg-gray-50 text-center">
-        <p className="text-gray-400 text-xs uppercase tracking-widest mb-6">TRUSTED BY 500+ GROWING TEAMS</p>
-        <div className="flex justify-center gap-8 flex-wrap px-6">
-          {['NORTHWIND', 'ACME CO', 'STELLAR', 'VERTEX', 'HORIZON', 'QUANTUM'].map(name => (
-            <span key={name} className="text-gray-300 font-semibold text-sm">{name}</span>
+      {/* MARQUEE */}
+      <div className="py-4 overflow-hidden" style={{ background: '#1E293B', borderTop: '2px solid #1E293B', borderBottom: '2px solid #1E293B' }}>
+        <div className="flex gap-8 marquee-track whitespace-nowrap">
+          {[...marqueeItems, ...marqueeItems].map((item, i) => (
+            <span key={i} className="flex items-center gap-3 font-bold text-sm px-2" style={{ color: 'white', fontFamily: 'Outfit' }}>
+              <span style={{ color: ['#F472B6', '#FBBF24', '#34D399', '#8B5CF6'][i % 4] }}>◆</span>
+              {item}
+            </span>
           ))}
         </div>
-      </section>
+      </div>
 
-      <section className="py-24 px-6">
+      {/* FEATURES */}
+      <section id="features" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-black text-gray-900 mb-4">Everything your business runs on</h2>
-            <p className="text-gray-500">Six modules. Zero context-switching. One source of truth.</p>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 text-sm font-semibold" style={{ background: '#FCE7F3', border: '2px solid #F472B6', color: '#F472B6' }}>
+              <Zap size={14} /> Six Powerful Modules
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+              Everything your business runs on
+            </h2>
+            <p className="text-lg" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
+              Zero context-switching. One source of truth. Built for India.
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { title: 'CRM', desc: 'Capture leads, AI scoring 0-100, pipeline tracking, follow-up reminders.', icon: '👥' },
-              { title: 'Invoicing', desc: 'GST invoices, Stripe payments, WhatsApp sending, PDF download.', icon: '📄' },
-              { title: 'Inventory', desc: 'Products with free QR codes, low stock alerts, CSV export.', icon: '📦' },
-              { title: 'HR', desc: 'Employee management, attendance tracking, payroll calculator.', icon: '👔' },
-              { title: 'Projects', desc: 'Kanban board, task management, deadline tracking.', icon: '🎯' },
-              { title: 'GST Reports', desc: 'Auto GSTR-1 format, monthly breakdown by tax rate, PDF export.', icon: '📊' },
-            ].map(f => (
-              <div key={f.title} className="border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-shadow">
-                <span className="text-3xl mb-3 block">{f.icon}</span>
-                <h3 className="font-bold text-gray-900 text-lg mb-2">{f.title}</h3>
-                <p className="text-gray-500 text-sm">{f.desc}</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((f, i) => (
+              <div key={f.title} className="sticker-card p-6 relative">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 wiggle" style={{ background: f.bg, border: `2px solid ${f.color}` }}>
+                  <f.icon size={22} strokeWidth={2.5} style={{ color: f.color }} />
+                </div>
+                <h3 className="text-xl font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>{f.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>{f.desc}</p>
+                <div className="absolute top-4 right-4 text-2xl">{['🎯', '📄', '📦', '👔', '🎯', '📊'][i]}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-24 px-6 bg-gray-50">
+      {/* WHY SAMYOJAK */}
+      <section className="py-24 px-6" style={{ background: '#1E293B' }}>
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-black text-center mb-12">Why Samyojak beats the rest</h2>
-          <div className="bg-white rounded-2xl overflow-hidden shadow-sm border">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: 'white' }}>
+              Why Samyojak beats the rest
+            </h2>
+            <p style={{ color: '#94A3B8' }}>We built what Zoho and Odoo forgot — simplicity for Indian businesses</p>
+          </div>
+
+          <div className="rounded-2xl overflow-hidden" style={{ border: '2px solid #334155' }}>
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50">
-                  <th className="p-4 text-left text-gray-600 font-medium text-sm">Feature</th>
-                  <th className="p-4 text-center text-blue-600 font-bold text-sm">Samyojak</th>
-                  <th className="p-4 text-center text-gray-400 font-medium text-sm">Zoho</th>
-                  <th className="p-4 text-center text-gray-400 font-medium text-sm">Odoo</th>
+                <tr style={{ background: '#0F172A' }}>
+                  <th className="p-4 text-left text-sm font-bold" style={{ color: '#94A3B8', fontFamily: 'Outfit' }}>Feature</th>
+                  <th className="p-4 text-center text-sm font-bold" style={{ color: '#8B5CF6', fontFamily: 'Outfit' }}>Samyojak ✨</th>
+                  <th className="p-4 text-center text-sm font-bold" style={{ color: '#64748B', fontFamily: 'Outfit' }}>Zoho</th>
+                  <th className="p-4 text-center text-sm font-bold" style={{ color: '#64748B', fontFamily: 'Outfit' }}>Odoo</th>
                 </tr>
               </thead>
               <tbody>
-                {comparison.map(([feature, s, z, o]) => (
-                  <tr key={String(feature)} className="border-t">
-                    <td className="p-4 text-gray-700 text-sm">{String(feature)}</td>
-                    <td className="p-4 text-center text-lg">{s ? '✅' : '❌'}</td>
-                    <td className="p-4 text-center text-lg">{z ? '✅' : '❌'}</td>
-                    <td className="p-4 text-center text-lg">{o ? '✅' : '❌'}</td>
+                {[
+                  ['Flat pricing (not per-user)', true, false, false],
+                  ['Setup in minutes', true, false, false],
+                  ['Free QR codes built-in', true, false, false],
+                  ['GST ready for India', true, false, false],
+                  ['Weekly payment plans', true, false, false],
+                  ['WhatsApp invoice sending', true, false, false],
+                  ['AI lead scoring', true, false, false],
+                  ['Mobile-first design', true, false, false],
+                ].map(([feature, s, z, o], idx) => (
+                  <tr key={String(feature)} style={{ borderTop: '1px solid #1E293B', background: idx % 2 === 0 ? '#0F172A' : '#1E293B' }}>
+                    <td className="p-4 text-sm font-medium" style={{ color: '#CBD5E1', fontFamily: 'Plus Jakarta Sans' }}>{String(feature)}</td>
+                    <td className="p-4 text-center">
+                      {s ? <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-bold" style={{ background: '#34D399' }}>✓</span> : <span style={{ color: '#475569' }}>—</span>}
+                    </td>
+                    <td className="p-4 text-center">
+                      {z ? <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-bold" style={{ background: '#34D399' }}>✓</span> : <span style={{ color: '#475569' }}>—</span>}
+                    </td>
+                    <td className="p-4 text-center">
+                      {o ? <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-bold" style={{ background: '#34D399' }}>✓</span> : <span style={{ color: '#475569' }}>—</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -173,77 +269,106 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-24 px-6" id="pricing">
-        <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-4xl font-black mb-4">Simple, transparent pricing</h2>
-          <p className="text-gray-500 mb-2">Buy any weekly plan and get 7 extra days free.</p>
-          <p className="text-green-600 text-sm font-medium mb-8">🎁 That is 14 days for the price of 7!</p>
+      {/* PRICING */}
+      <section id="pricing" className="py-24 px-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10" style={{ background: '#8B5CF6' }}></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-10" style={{ background: '#F472B6' }}></div>
 
-          <div className="flex justify-center gap-1 bg-gray-100 rounded-xl p-1 w-fit mx-auto mb-12">
-            {(['weekly', 'monthly', 'yearly'] as const).map(b => (
-              <button
-                key={b}
-                onClick={() => setBilling(b)}
-                className={`px-5 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
-                  billing === b ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {b}
-                {b === 'weekly' && <span className="ml-1 text-green-500 text-xs">+7 free</span>}
-                {b === 'yearly' && <span className="ml-1 text-green-500 text-xs">-20%</span>}
-              </button>
-            ))}
+        <div className="max-w-6xl mx-auto relative">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 text-sm font-semibold" style={{ background: '#FEF3C7', border: '2px solid #FBBF24', color: '#92400E' }}>
+              <Star size={14} fill="#FBBF24" /> Simple Transparent Pricing
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+              Start free. Upgrade when ready.
+            </h2>
+            <p className="text-lg mb-2" style={{ color: '#64748B' }}>Buy any weekly plan and get 7 extra days free!</p>
+            <p className="font-bold" style={{ color: '#34D399' }}>🎁 That is 14 days for the price of 7!</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="flex justify-center mb-12">
+            <div className="flex p-1 rounded-full" style={{ background: '#F1F5F9', border: '2px solid #E2E8F0' }}>
+              {(['weekly', 'monthly', 'yearly'] as const).map(b => (
+                <button
+                  key={b}
+                  onClick={() => setBilling(b)}
+                  className="px-6 py-2 rounded-full text-sm font-bold capitalize transition-all duration-300"
+                  style={{
+                    background: billing === b ? '#1E293B' : 'transparent',
+                    color: billing === b ? 'white' : '#64748B',
+                    fontFamily: 'Outfit',
+                  }}
+                >
+                  {b}
+                  {b === 'weekly' && <span className="ml-1 text-xs" style={{ color: billing === b ? '#34D399' : '#34D399' }}>+7 free</span>}
+                  {b === 'yearly' && <span className="ml-1 text-xs" style={{ color: billing === b ? '#FBBF24' : '#FBBF24' }}>-20%</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
             {plans.map((plan, i) => (
               <div
                 key={plan}
-                className={`rounded-2xl p-6 border-2 ${
-                  i === 2 ? 'border-blue-600 bg-blue-600' : 'border-gray-200 bg-white'
-                }`}
+                className={`relative p-6 rounded-2xl ${i === 2 ? 'md:-mt-4 md:mb-4' : ''}`}
+                style={{
+                  background: i === 2 ? '#8B5CF6' : 'white',
+                  border: '2px solid #1E293B',
+                  boxShadow: i === 2 ? '8px 8px 0px #FBBF24' : '6px 6px 0px #E2E8F0',
+                  transform: i === 2 ? 'scale(1.05)' : 'scale(1)',
+                }}
               >
                 {i === 2 && (
-                  <div className="text-xs font-bold text-blue-200 mb-2 uppercase tracking-widest">
-                    Most Popular
+                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black rotate-2" style={{ background: '#FBBF24', border: '2px solid #1E293B', color: '#1E293B', fontFamily: 'Outfit', whiteSpace: 'nowrap' }}>
+                    ⭐ MOST POPULAR
                   </div>
                 )}
-                <h3 className={`font-bold text-lg ${i === 2 ? 'text-white' : 'text-gray-900'}`}>
-                  {plan}
-                </h3>
-                <div className="mt-3 mb-4">
-                  <span className={`text-4xl font-black ${i === 2 ? 'text-white' : 'text-gray-900'}`}>
+
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: i === 2 ? 'rgba(255,255,255,0.2)' : planColors[i] + '20', border: `2px solid ${i === 2 ? 'rgba(255,255,255,0.4)' : planColors[i]}` }}>
+                  <span className="text-lg">
+                    {['🌱', '⚡', '🚀', '💎'][i]}
+                  </span>
+                </div>
+
+                <h3 className="font-black text-lg mb-1" style={{ fontFamily: 'Outfit', color: i === 2 ? 'white' : '#1E293B' }}>{plan}</h3>
+
+                <div className="mb-4">
+                  <span className="text-4xl font-black" style={{ fontFamily: 'Outfit', color: i === 2 ? 'white' : '#1E293B' }}>
                     {prices[billing][i]}
                   </span>
-                  <span className={`text-sm ${i === 2 ? 'text-blue-200' : 'text-gray-500'}`}>
+                  <span className="text-sm ml-1" style={{ color: i === 2 ? 'rgba(255,255,255,0.7)' : '#94A3B8' }}>
                     /{billing === 'weekly' ? 'wk' : billing === 'monthly' ? 'mo' : 'yr'}
                   </span>
                 </div>
+
                 {billing === 'weekly' && (
-                  <div className={`text-xs font-bold px-3 py-1 rounded-full mb-4 text-center ${i === 2 ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}`}>
+                  <div className="px-3 py-1 rounded-full text-xs font-bold mb-4 inline-block" style={{ background: i === 2 ? 'rgba(255,255,255,0.2)' : '#D1FAE5', color: i === 2 ? 'white' : '#065F46' }}>
                     🎁 +7 Days Free
                   </div>
                 )}
+
                 <ul className="space-y-2 mb-6">
                   {planFeatures[i].map(f => (
-                    <li
-                      key={f}
-                      className={`flex items-center gap-2 text-sm ${i === 2 ? 'text-blue-100' : 'text-gray-600'}`}
-                    >
-                      <Check size={14} className={i === 2 ? 'text-blue-200' : 'text-green-500'} />
+                    <li key={f} className="flex items-center gap-2 text-sm" style={{ color: i === 2 ? 'rgba(255,255,255,0.9)' : '#475569', fontFamily: 'Plus Jakarta Sans' }}>
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-xs" style={{ background: i === 2 ? 'rgba(255,255,255,0.2)' : '#D1FAE5', color: i === 2 ? 'white' : '#065F46' }}>✓</span>
                       {f}
                     </li>
                   ))}
                 </ul>
+
                 <Link
                   href="/signup"
-                  className={`block text-center py-3 rounded-xl font-semibold text-sm transition-colors ${
-                    i === 2
-                      ? 'bg-white text-blue-600 hover:bg-blue-50'
-                      : 'border border-blue-600 text-blue-600 hover:bg-blue-50'
-                  }`}
+                  className="block text-center py-3 rounded-full font-bold text-sm transition-all duration-300"
+                  style={{
+                    background: i === 2 ? 'white' : '#1E293B',
+                    color: i === 2 ? '#8B5CF6' : 'white',
+                    border: '2px solid #1E293B',
+                    fontFamily: 'Outfit',
+                    boxShadow: '3px 3px 0px ' + (i === 2 ? 'rgba(0,0,0,0.2)' : '#8B5CF6'),
+                  }}
                 >
-                  Get started
+                  Get started →
                 </Link>
               </div>
             ))}
@@ -251,19 +376,72 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="bg-[#0A1628] py-12 px-6 text-center">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">S</span>
+      {/* CTA */}
+      <section className="py-24 px-6" style={{ background: '#8B5CF6' }}>
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="text-6xl mb-6 float">🚀</div>
+          <h2 className="text-4xl lg:text-5xl font-black text-white mb-6" style={{ fontFamily: 'Outfit' }}>
+            Ready to coordinate everything?
+          </h2>
+          <p className="text-lg mb-8 text-white/80" style={{ fontFamily: 'Plus Jakarta Sans' }}>
+            Join 500+ growing businesses using Samyojak to run their operations smarter.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/signup" className="px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-2" style={{ background: 'white', color: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '4px 4px 0px #1E293B', fontFamily: 'Outfit' }}>
+              Start Free Trial <ArrowRight size={20} />
+            </Link>
+            <Link href="/contact" className="px-8 py-4 rounded-full font-bold text-lg text-center" style={{ background: 'transparent', color: 'white', border: '2px solid rgba(255,255,255,0.5)', fontFamily: 'Outfit' }}>
+              Talk to Us
+            </Link>
           </div>
-          <span className="text-white font-bold text-xl">Samyojak</span>
         </div>
-        <p className="text-white/40 text-sm mb-4">Coordinate Everything. Run Anything.</p>
-        <div className="flex justify-center gap-6 mb-4">
-          <Link href="/privacy" className="text-white/30 text-xs hover:text-white/60">Privacy Policy</Link>
-          <Link href="/terms" className="text-white/30 text-xs hover:text-white/60">Terms of Service</Link>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="py-16 px-6" style={{ background: '#0F172A', borderTop: '2px solid #1E293B' }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg" style={{ background: '#8B5CF6', border: '2px solid #334155' }}>S</div>
+                <span className="font-black text-xl text-white" style={{ fontFamily: 'Outfit' }}>Samyojak</span>
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
+                Coordinate Everything. Run Anything. The all-in-one ERP built for modern Indian businesses.
+              </p>
+            </div>
+
+            {[
+              { title: 'Product', links: ['Features', 'Pricing', 'CRM', 'Invoicing', 'Inventory'] },
+              { title: 'Company', links: ['About', 'Services', 'Contact', 'Careers'] },
+              { title: 'Legal', links: ['Privacy Policy', 'Terms of Service'] },
+            ].map(col => (
+              <div key={col.title}>
+                <h4 className="font-black text-white mb-4 text-sm uppercase tracking-wide" style={{ fontFamily: 'Outfit' }}>{col.title}</h4>
+                <ul className="space-y-2">
+                  {col.links.map(link => (
+                    <li key={link}>
+                      <Link href={
+                        link === 'Privacy Policy' ? '/privacy' :
+                        link === 'Terms of Service' ? '/terms' :
+                        link === 'Features' ? '#features' :
+                        link === 'Pricing' ? '#pricing' :
+                        `/${link.toLowerCase().replace(' ', '-')}`
+                      } className="text-sm hover:text-violet-400 transition-colors" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
+                        {link}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4" style={{ borderTop: '1px solid #1E293B' }}>
+            <p className="text-sm" style={{ color: '#475569', fontFamily: 'Plus Jakarta Sans' }}>© 2026 Samyojak. All rights reserved.</p>
+            <p className="text-sm" style={{ color: '#475569' }}>Made with ❤️ in India 🇮🇳</p>
+          </div>
         </div>
-        <p className="text-white/20 text-xs">© 2026 Samyojak. All rights reserved.</p>
       </footer>
     </div>
   )
