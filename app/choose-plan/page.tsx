@@ -29,9 +29,24 @@ export default function ChoosePlan() {
   const [billing, setBilling] = useState<'weekly' | 'monthly' | 'yearly'>('weekly')
   const router = useRouter()
 
-  const handleSelect = (planName: string) => {
-    router.push('/dashboard')
+  const [loadingPlan, setLoadingPlan] = useState('')
+
+const handleSelect = async (planName: string) => {
+  setLoadingPlan(planName)
+  try {
+    const { data: { user } } = await (await import('@/lib/supabase')).supabase.auth.getUser()
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: planName, billing, email: user?.email || '' }),
+    })
+    const data = await res.json()
+    if (data.url) window.location.href = data.url
+  } catch (e) {
+    console.error(e)
   }
+  setLoadingPlan('')
+}
 
   return (
     <div className="min-h-screen py-12 px-4" style={{ background: '#FFFDF5' }}>
