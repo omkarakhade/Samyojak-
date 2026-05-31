@@ -29,7 +29,7 @@ export default function ChoosePlan() {
   const [billing, setBilling] = useState<'weekly' | 'monthly' | 'yearly'>('weekly')
   const router = useRouter()
 
-  const [loadingPlan, setLoadingPlan] = useState('')
+const [loadingPlan, setLoadingPlan] = useState('')
 
 const handleSelect = async (planName: string) => {
   setLoadingPlan(planName)
