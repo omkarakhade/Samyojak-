@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { ArrowRight } from 'lucide-react'
 
 export default function Signup() {
   const [form, setForm] = useState({ name: '', email: '', password: '', company: '' })
@@ -25,68 +26,80 @@ export default function Signup() {
         data: { full_name: form.name, company: form.company },
       },
     })
-    if (error) setError(error.message)
-    else router.push('/dashboard')
-    setLoading(false)
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+    } else {
+      router.push('/choose-plan')
+    }
   }
 
   return (
-    <div className="min-h-screen bg-[#0A1628] flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#FFFDF5' }}>
+      <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-xl">S</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
-          <p className="text-gray-500 text-sm mt-1">Get started with Samyojak in seconds</p>
+          <Link href="/" className="inline-flex items-center gap-2 mb-6">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black" style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>S</div>
+            <span className="font-black text-xl" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Samyojak</span>
+          </Link>
+          <h1 className="text-3xl font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Create your account</h1>
+          <p className="text-sm" style={{ color: '#64748B' }}>Step 1 of 2 — Account details</p>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 mb-4 text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSignup} className="space-y-4">
-          {[
-            { key: 'name', label: 'Full Name', type: 'text', placeholder: 'Omkar Akhade' },
-            { key: 'email', label: 'Work Email', type: 'email', placeholder: 'you@company.com' },
-            { key: 'password', label: 'Password', type: 'password', placeholder: 'Min 8 characters' },
-            { key: 'company', label: 'Company Name', type: 'text', placeholder: 'Your Business Name' },
-          ].map(f => (
-            <div key={f.key}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
-              <input
-                type={f.type}
-                value={form[f.key as keyof typeof form]}
-                onChange={e => setForm({ ...form, [f.key]: e.target.value })}
-                required
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
-                placeholder={f.placeholder}
-              />
+        <div className="p-8 rounded-2xl" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '8px 8px 0px #8B5CF6' }}>
+          {error && (
+            <div className="p-3 rounded-xl mb-4 text-sm font-medium" style={{ background: '#FEE2E2', color: '#DC2626', border: '2px solid #FCA5A5' }}>
+              {error}
             </div>
-          ))}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
-          >
-            {loading ? 'Creating account...' : 'Create account'}
-          </button>
-        </form>
+          )}
 
-        <p className="text-center text-gray-500 text-sm mt-6">
-          Have an account?{' '}
-          <Link href="/login" className="text-blue-600 font-medium hover:underline">
-            Sign in
-          </Link>
-        </p>
+          <form onSubmit={handleSignup} className="space-y-4">
+            {[
+              { key: 'name', label: 'Full Name', type: 'text', placeholder: 'Your full name' },
+              { key: 'email', label: 'Work Email', type: 'email', placeholder: 'you@company.com' },
+              { key: 'password', label: 'Password', type: 'password', placeholder: 'Min 8 characters' },
+              { key: 'company', label: 'Company Name', type: 'text', placeholder: 'Your business name' },
+            ].map(f => (
+              <div key={f.key}>
+                <label className="block text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#1E293B', fontFamily: 'Outfit' }}>
+                  {f.label}
+                </label>
+                <input
+                  type={f.type}
+                  required
+                  placeholder={f.placeholder}
+                  value={form[f.key as keyof typeof form]}
+                  onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl outline-none transition-all"
+                  style={{ border: '2px solid #CBD5E1', background: 'white', fontFamily: 'Plus Jakarta Sans', color: '#1E293B' }}
+                  onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '4px 4px 0px #8B5CF6' }}
+                  onBlur={e => { e.target.style.borderColor = '#CBD5E1'; e.target.style.boxShadow = 'none' }}
+                />
+              </div>
+            ))}
 
-        <p className="text-center text-gray-400 text-xs mt-4">
+            <button
+              type="submit"
+              disabled={loading}
+              className="candy-btn w-full py-4 flex items-center justify-center gap-3 text-base"
+            >
+              {loading ? 'Creating account...' : (
+                <>Continue to Plan Selection <ArrowRight size={18} /></>
+              )}
+            </button>
+          </form>
+
+          <p className="text-center text-sm mt-4" style={{ color: '#94A3B8', fontFamily: 'Plus Jakarta Sans' }}>
+            Already have an account?{' '}
+            <Link href="/login" className="font-bold hover:underline" style={{ color: '#8B5CF6' }}>Sign in</Link>
+          </p>
+        </div>
+
+        <p className="text-center text-xs mt-4" style={{ color: '#94A3B8' }}>
           By signing up you agree to our{' '}
-          <Link href="/terms" className="hover:underline">Terms</Link>
+          <Link href="/terms" className="hover:underline" style={{ color: '#8B5CF6' }}>Terms</Link>
           {' '}and{' '}
-          <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
+          <Link href="/privacy" className="hover:underline" style={{ color: '#8B5CF6' }}>Privacy Policy</Link>
         </p>
       </div>
     </div>
