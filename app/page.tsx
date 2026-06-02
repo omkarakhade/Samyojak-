@@ -11,8 +11,8 @@ const prices = {
 
 const bonuses = {
   weekly: '+1 week free',
-  monthly: '+2 months free',
-  yearly: '+3 months free',
+  monthly: '+1 month free',
+  yearly: '+2 months free',
 }
 
 const plans = ['CRM Starter', 'ERP Basic', 'Business', 'Complete']
@@ -28,14 +28,49 @@ const planColors = ['#8B5CF6', '#F472B6', '#FBBF24', '#34D399']
 
 const features = [
   { icon: Users, title: 'Smart CRM', desc: 'AI-powered lead scoring, pipeline tracking, and automated follow-ups.', color: '#8B5CF6', bg: '#EDE9FE' },
-  { icon: FileText, title: 'GST Invoicing', desc: 'Create compliant invoices with auto GST calculation and WhatsApp sending.', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: FileText, title: 'GST Invoicing', desc: 'Create compliant invoices with auto tax calculation and WhatsApp sending.', color: '#F472B6', bg: '#FCE7F3' },
   { icon: Package, title: 'Inventory + QR', desc: 'Track products with free auto-generated QR codes. Scan with any phone.', color: '#FBBF24', bg: '#FEF3C7' },
   { icon: UserCheck, title: 'HR & Payroll', desc: 'Manage employees, attendance, leaves, and payroll in one place.', color: '#34D399', bg: '#D1FAE5' },
   { icon: FolderOpen, title: 'Projects', desc: 'Kanban board with tasks, deadlines, and progress tracking.', color: '#8B5CF6', bg: '#EDE9FE' },
-  { icon: BarChart3, title: 'GST Reports', desc: 'Auto GSTR-1 format reports with PDF and CSV export.', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: BarChart3, title: 'Tax Reports', desc: 'Auto GSTR-1 format reports with PDF and CSV export.', color: '#F472B6', bg: '#FCE7F3' },
 ]
 
-const marqueeItems = ['CRM', 'Invoicing', 'Inventory', 'HR', 'Projects', 'GST Reports', 'QR Codes', 'WhatsApp', 'AI Scoring', 'Dark Mode', 'Mobile First']
+const marqueeItems = ['CRM', 'Invoicing', 'Inventory', 'HR', 'Projects', 'Tax Reports', 'QR Codes', 'WhatsApp', 'AI Scoring', 'Dark Mode', 'Mobile First']
+
+const faqItems = [
+  {
+    q: 'What is Samyojak?',
+    a: 'Samyojak is an all-in-one ERP software for modern businesses. It includes CRM, GST invoicing, inventory with free QR codes, HR management, project tracking, and tax reports — all in one beautiful workspace.',
+  },
+  {
+    q: 'How much does Samyojak cost?',
+    a: 'Plans start at $4.99 per week. Every plan includes a bonus period — weekly gets +1 week free, monthly gets +1 month free, yearly gets +2-3 months free. Pay once, get more.',
+  },
+  {
+    q: 'Does Samyojak support GST, VAT, and other taxes?',
+    a: 'Yes! Samyojak has a universal tax engine supporting GST (India, Australia, Singapore), VAT (UK, Germany, UAE), HST (Canada), Sales Tax (US), Consumption Tax (Japan), and more.',
+  },
+  {
+    q: 'Does it work on mobile phones?',
+    a: 'Yes. Samyojak is mobile-first and works on any phone or tablet. It has a dedicated bottom navigation bar on mobile for easy access to all modules.',
+  },
+  {
+    q: 'What makes Samyojak different from other ERP software?',
+    a: 'Flat pricing not per-user, setup in minutes not weeks, free QR codes for inventory, WhatsApp invoice sending, AI lead scoring, and weekly payment plans — features legacy ERP platforms simply do not offer.',
+  },
+  {
+    q: 'Can I export my data from Samyojak?',
+    a: 'Yes. Every module has CSV export built in. Your data always belongs to you and you can download it anytime with one click.',
+  },
+  {
+    q: 'Is my data secure?',
+    a: 'Yes. Samyojak uses Supabase with row-level security, HTTPS everywhere, login rate limiting, auto session timeout, and encrypted data at rest. Your business data is always protected.',
+  },
+  {
+    q: 'Do I need a credit card to start?',
+    a: 'You need to select a plan to access the dashboard. Every plan comes with a bonus period so you get more time than you pay for.',
+  },
+]
 
 export default function Home() {
   const [billing, setBilling] = useState<'weekly' | 'monthly' | 'yearly'>('weekly')
@@ -252,7 +287,7 @@ export default function Home() {
                   ['Flat pricing — not per user', true, false, false],
                   ['Setup in minutes not weeks', true, false, false],
                   ['Free QR codes built-in', true, false, false],
-                  ['GST ready out of the box', true, false, false],
+                  ['GST and VAT ready', true, false, false],
                   ['Weekly payment plans', true, false, false],
                   ['WhatsApp invoice sending', true, false, false],
                   ['AI lead scoring built-in', true, false, false],
@@ -294,7 +329,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
               {(['weekly', 'monthly', 'yearly'] as const).map(b => (
                 <span key={b} className="text-sm font-semibold px-4 py-2 rounded-full" style={{ background: '#F1F5F9', color: '#475569' }}>
-                  {b === 'weekly' ? '🎁 Weekly → +1 week free' : b === 'monthly' ? '🎁 Monthly → +2 months free' : '🎁 Yearly → +3 months free'}
+                  {b === 'weekly' ? '🎁 Weekly → +1 week free' : b === 'monthly' ? '🎁 Monthly → +1 month free' : '🎁 Yearly → +2 months free'}
                 </span>
               ))}
             </div>
@@ -314,7 +349,7 @@ export default function Home() {
                   }}
                 >
                   {b}
-                  {b === 'yearly' && <span className="ml-1 text-xs" style={{ color: billing === b ? '#FBBF24' : '#FBBF24' }}>-20%</span>}
+                  {b === 'yearly' && <span className="ml-1 text-xs" style={{ color: '#FBBF24' }}>-20%</span>}
                 </button>
               ))}
             </div>
@@ -380,6 +415,52 @@ export default function Home() {
                   Start Trial →
                 </Link>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-24 px-6" style={{ background: '#F8FAFC' }}>
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 text-sm font-semibold" style={{ background: '#EDE9FE', border: '2px solid #8B5CF6', color: '#8B5CF6' }}>
+              ❓ FAQ
+            </div>
+            <h2 className="text-4xl font-black" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+              Frequently Asked Questions
+            </h2>
+            <p className="mt-3 text-lg" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
+              Everything you need to know about Samyojak
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {faqItems.map((item, i) => (
+              <details
+                key={i}
+                className="group rounded-2xl overflow-hidden"
+                style={{ border: '2px solid #E2E8F0', background: 'white', boxShadow: '4px 4px 0px #E2E8F0' }}
+              >
+                <summary
+                  className="flex items-center justify-between p-6 cursor-pointer font-bold list-none gap-4"
+                  style={{ fontFamily: 'Outfit', color: '#1E293B' }}
+                >
+                  <span>{item.q}</span>
+                  <span
+                    className="text-2xl flex-shrink-0 transition-transform duration-300 group-open:rotate-45"
+                    style={{ color: '#8B5CF6' }}
+                  >
+                    +
+                  </span>
+                </summary>
+                <div
+                  className="px-6 pb-6 text-sm leading-relaxed"
+                  style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans', borderTop: '2px solid #F1F5F9' }}
+                >
+                  <p className="pt-4">{item.a}</p>
+                </div>
+              </details>
             ))}
           </div>
         </div>
