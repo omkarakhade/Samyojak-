@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import {
   LayoutDashboard, Users, FileText, Package,
   UserCheck, FolderOpen, Settings, BarChart3,
-  LogOut, Menu, X, Moon, Sun, Bell,
+  LogOut, Menu, X, Moon, Sun, Bell, Gift,
 } from 'lucide-react'
 import GlobalSearch from './GlobalSearch'
 import QuickAdd from './QuickAdd'
@@ -19,6 +19,7 @@ const nav = [
   { path: '/hr', icon: UserCheck, label: 'HR' },
   { path: '/projects', icon: FolderOpen, label: 'Projects' },
   { path: '/reports', icon: BarChart3, label: 'GST Reports' },
+  { path: '/referral', icon: Gift, label: 'Earn Commission' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ]
 
@@ -68,7 +69,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               }`}
             >
               <Icon size={20} />
-              {open && <span className="text-sm font-medium">{label}</span>}
+              {open && (
+                <span className="text-sm font-medium flex items-center gap-2">
+                  {label}
+                  {label === 'Earn Commission' && (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: '#FBBF24', color: '#1E293B' }}>
+                      30%
+                    </span>
+                  )}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
@@ -104,10 +114,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </header>
-
-        <main className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6">
-          {children}
-        </main>
+        <main className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6">{children}</main>
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-[#0A1628] md:hidden flex justify-around py-2 z-30 border-t border-white/10">
