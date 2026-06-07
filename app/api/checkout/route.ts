@@ -1,44 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
-import DodoPayments from 'dodopayments'
-
-const client = new DodoPayments({
-  bearerToken: process.env.DODO_PAYMENTS_API_KEY || '',
-  environment: 'test_mode',
-})
 
 export async function POST(req: NextRequest) {
   try {
-    const { productId, email, name } = await req.json()
+    const { productId, email, name, planName } = await req.json()
 
-    if (!productId) {
-      return NextResponse.json({ error: 'Product ID required' }, { status: 400 })
+    if (!productId || productId === 'pdt_REPLACE_WITH_DODO_ID') {
+      return NextResponse.json({
+        error: 'Payment coming soon',
+        message: 'Contact hello@samyojak.app'
+      }, { status: 400 })
     }
 
-    const session = await client.payments.create({
-      billing: {
-        city: '',
-        country: 'IN',
-        state: '',
-        street: '',
-        zipcode: '',
+    const response = await fetch('https://api.dodopayments.com/subscriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.DODO_PAYMENTS_API_KEY}`,
+        'Content-Type': 'application/json',
       },
-      customer: {
-        email: email || '',
-        name: name || 'Customer',
-      },
-      product_cart: [
-        {
-          product_id: productId,
-          quantity: 1,
-        },
-      ],
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success`,
-      payment_link: true,
+      body: JSON.stringify({
+        customer: { email, name },
+        product_id: productId,
+        payment_link: true,
+        return_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success?plan=${encodeURIComponent(planName)}`,
+        metadata: { planName, email },
+      }),
     })
 
-    return NextResponse.json({ url: (session as any).payment_link || '' })
+    const data = await response.json()
+
+    if (data.payment_link) {
+      return NextResponse.json({ url: data.payment_link })
+    }
+
+    return NextResponse.json({ error: 'Could not create checkout' }, { status: 500 })
+
   } catch (error: any) {
-    console.error('Dodo checkout error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
