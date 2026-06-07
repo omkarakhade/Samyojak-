@@ -1,10 +1,15 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
+import LockedModule from '@/components/LockedModule'
+import { supabase } from '@/lib/supabase'
+import { getPlanFromMetadata, canAccessModuleSync } from '@/lib/planAccess'
 import { airtable } from '@/lib/airtable'
 import { Plus, Download, AlertTriangle } from 'lucide-react'
 
 export default function Inventory() {
+  const [plan, setPlan] = useState<string | null>(null)
+  const [checking, setChecking] = useState(true)
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -14,6 +19,13 @@ export default function Inventory() {
     'Unit Price': '', Supplier: '',
   })
 
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setPlan(getPlanFromMetadata(user))
+      setChecking(false)
+    })
+  }, [])
+
   const fetchProducts = async () => {
     try {
       const d = await airtable.get('Products')
@@ -22,14 +34,17 @@ export default function Inventory() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchProducts() }, [])
+  useEffect(() => {
+    if (!checking && canAccessModuleSync(plan as any, 'inventory')) {
+      fetchProducts()
+    }
+  }, [checking, plan])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const sku = form.SKU || `SKU-${Date.now()}`
     await airtable.create('Products', {
-      ...form,
-      SKU: sku,
+      ...form, SKU: sku,
       'Current Stock': Number(form['Current Stock']),
       'Reorder Level': Number(form['Reorder Level']),
       'Unit Price': Number(form['Unit Price']),
@@ -41,9 +56,7 @@ export default function Inventory() {
 
   const exportCSV = () => {
     const csv = ['Name,SKU,Category,Stock,Reorder Level,Price']
-      .concat(products.map(p =>
-        `${p.fields?.['Item Name'] || ''},${p.fields?.SKU || ''},${p.fields?.Category || ''},${p.fields?.['Current Stock'] || ''},${p.fields?.['Reorder Level'] || ''},${p.fields?.['Unit Price'] || ''}`
-      ))
+      .concat(products.map(p => `${p.fields?.['Item Name'] || ''},${p.fields?.SKU || ''},${p.fields?.Category || ''},${p.fields?.['Current Stock'] || ''},${p.fields?.['Reorder Level'] || ''},${p.fields?.['Unit Price'] || ''}`))
       .join('\n')
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
@@ -51,9 +64,19 @@ export default function Inventory() {
     a.click()
   }
 
-  const lowStock = products.filter(p =>
-    (p.fields?.['Current Stock'] || 0) < (p.fields?.['Reorder Level'] || 0)
+  const lowStock = products.filter(p => (p.fields?.['Current Stock'] || 0) < (p.fields?.['Reorder Level'] || 0))
+
+  if (checking) return (
+    <Layout>
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    </Layout>
   )
+
+  if (!canAccessModuleSync(plan as any, 'inventory')) {
+    return <Layout><LockedModule moduleName="Inventory" requiredPlan="ERP Basic" /></Layout>
+  }
 
   return (
     <Layout>
@@ -61,9 +84,7 @@ export default function Inventory() {
         {lowStock.length > 0 && (
           <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center gap-3 text-orange-800">
             <AlertTriangle size={18} />
-            <span className="text-sm font-medium">
-              ⚠️ {lowStock.length} product{lowStock.length > 1 ? 's' : ''} below reorder level
-            </span>
+            <span className="text-sm font-medium">⚠️ {lowStock.length} product{lowStock.length > 1 ? 's' : ''} below reorder level</span>
           </div>
         )}
 
@@ -73,76 +94,44 @@ export default function Inventory() {
             <p className="text-gray-500 text-sm">Track products with auto QR codes</p>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={exportCSV}
-              className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-xl text-sm hover:bg-gray-50 transition-colors"
-            >
+            <button onClick={exportCSV} className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-xl text-sm hover:bg-gray-50">
               <Download size={16} /> Export
             </button>
-            <button
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700 transition-colors"
-            >
+            <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700">
               <Plus size={16} /> Add Product
             </button>
           </div>
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          </div>
+          <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>
         ) : products.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10">
+          <div className="text-center py-16 bg-white dark:bg-[#1a2740] rounded-2xl border">
             <div className="text-5xl mb-4">📦</div>
-            <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2">No products yet</h3>
-            <p className="text-gray-500 text-sm mb-6">Add your first product to get a free QR code</p>
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-blue-600 text-white px-6 py-2 rounded-xl text-sm hover:bg-blue-700"
-            >
-              Add First Product
-            </button>
+            <h3 className="font-bold text-lg mb-2 dark:text-white">No products yet</h3>
+            <button onClick={() => setShowModal(true)} className="bg-blue-600 text-white px-6 py-2 rounded-xl text-sm mt-4 hover:bg-blue-700">Add First Product</button>
           </div>
         ) : (
-          <div className="bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10 overflow-x-auto">
+          <div className="bg-white dark:bg-[#1a2740] rounded-2xl border overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-[#0A1628]">
-                <tr>
-                  {['Product', 'SKU', 'Category', 'Stock', 'Reorder', 'Price', 'QR Code'].map(h => (
-                    <th key={h} className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
+                <tr>{['Product', 'SKU', 'Category', 'Stock', 'Reorder', 'Price', 'QR Code'].map(h => <th key={h} className="p-4 text-left text-xs font-semibold text-gray-500 uppercase">{h}</th>)}</tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-white/10">
                 {products.map(p => {
                   const stock = p.fields?.['Current Stock'] || 0
                   const reorder = p.fields?.['Reorder Level'] || 0
                   const sku = p.fields?.SKU || 'SKU'
-                  const isLow = stock < reorder
                   return (
-                    <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                    <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
                       <td className="p-4 font-medium text-sm dark:text-white">{p.fields?.['Item Name']}</td>
                       <td className="p-4 text-gray-500 text-sm font-mono">{sku}</td>
                       <td className="p-4 text-gray-500 text-sm">{p.fields?.Category}</td>
-                      <td className="p-4">
-                        <span className={`font-bold text-sm ${isLow ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>
-                          {stock} {isLow && '⚠️'}
-                        </span>
-                      </td>
+                      <td className="p-4"><span className={`font-bold text-sm ${stock < reorder ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>{stock} {stock < reorder && '⚠️'}</span></td>
                       <td className="p-4 text-gray-500 text-sm">{reorder}</td>
-                      <td className="p-4 text-gray-900 dark:text-white text-sm font-medium">
-                        ₹{(p.fields?.['Unit Price'] || 0).toLocaleString()}
-                      </td>
+                      <td className="p-4 text-gray-900 dark:text-white text-sm font-medium">₹{(p.fields?.['Unit Price'] || 0).toLocaleString()}</td>
                       <td className="p-4">
-                        <img
-                          src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(sku)}&size=60x60`}
-                          alt={`QR ${sku}`}
-                          className="w-12 h-12 rounded border"
-                          loading="lazy"
-                        />
+                        <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(sku)}&size=60x60`} alt={`QR ${sku}`} className="w-12 h-12 rounded border" loading="lazy" />
                       </td>
                     </tr>
                   )
@@ -163,34 +152,17 @@ export default function Inventory() {
                   { key: 'Category', label: 'Category', type: 'text' },
                   { key: 'Current Stock', label: 'Current Stock', type: 'number', required: true },
                   { key: 'Reorder Level', label: 'Reorder Level', type: 'number' },
-                  { key: 'Unit Price', label: 'Unit Price (₹)', type: 'number' },
-                  { key: 'Supplier', label: 'Supplier Name', type: 'text' },
+                  { key: 'Unit Price', label: 'Unit Price', type: 'number' },
+                  { key: 'Supplier', label: 'Supplier', type: 'text' },
                 ].map(f => (
                   <div key={f.key}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
-                    <input
-                      type={f.type}
-                      required={f.required}
-                      value={form[f.key as keyof typeof form]}
-                      onChange={e => setForm({ ...form, [f.key]: e.target.value })}
-                      className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
+                    <input type={f.type} required={f.required} value={form[f.key as keyof typeof form]} onChange={e => setForm({ ...form, [f.key]: e.target.value })} className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
                 ))}
                 <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="flex-1 border border-gray-300 py-2 rounded-xl text-sm hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 bg-blue-600 text-white py-2 rounded-xl text-sm hover:bg-blue-700"
-                  >
-                    Save Product
-                  </button>
+                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 border border-gray-300 py-2 rounded-xl text-sm">Cancel</button>
+                  <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded-xl text-sm hover:bg-blue-700">Save Product</button>
                 </div>
               </form>
             </div>
