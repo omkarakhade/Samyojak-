@@ -1,6 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
+import LockedModule from '@/components/LockedModule'
+import { supabase } from '@/lib/supabase'
+import { getPlanFromMetadata, canAccessModuleSync } from '@/lib/planAccess'
 import { airtable } from '@/lib/airtable'
 import { Plus, Download, AlertCircle } from 'lucide-react'
 
@@ -30,6 +33,8 @@ const statusColors: Record<string, string> = {
 }
 
 export default function Invoices() {
+  const [plan, setPlan] = useState<string | null>(null)
+  const [checking, setChecking] = useState(true)
   const [invoices, setInvoices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -39,6 +44,13 @@ export default function Invoices() {
     'Client Name': '', 'Client Email': '', 'Client Phone': '',
     Amount: '', 'Due Date': '', Notes: '',
   })
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setPlan(getPlanFromMetadata(user))
+      setChecking(false)
+    })
+  }, [])
 
   const taxSystem = TAX_SYSTEMS[taxCountry]
 
@@ -50,7 +62,11 @@ export default function Invoices() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchInvoices() }, [])
+  useEffect(() => {
+    if (!checking && canAccessModuleSync(plan as any, 'invoices')) {
+      fetchInvoices()
+    }
+  }, [checking, plan])
 
   const amount = Number(form.Amount) || 0
   const taxAmount = Math.round((amount * taxRate) / 100)
@@ -83,13 +99,13 @@ export default function Invoices() {
 
   const sendWhatsApp = (inv: any) => {
     const phone = inv.fields?.['Client Phone']?.replace(/\D/g, '') || ''
-    const msg = encodeURIComponent(`Hi ${inv.fields?.['Client Name']}, your Invoice ${inv.fields?.['Invoice No']} for ${inv.fields?.Total?.toLocaleString()} is ready. Please make the payment at your earliest convenience. Thank you! - Samyojak`)
+    const msg = encodeURIComponent(`Hi ${inv.fields?.['Client Name']}, your Invoice ${inv.fields?.['Invoice No']} for ${inv.fields?.Total?.toLocaleString()} is ready. Thank you! - Samyojak`)
     window.open(`https://wa.me/${phone}?text=${msg}`, '_blank')
   }
 
   const exportCSV = () => {
-    const csv = ['Invoice No,Client,Amount,Tax System,Tax Rate,Tax Amount,Total,Status']
-      .concat(invoices.map(i => `${i.fields?.['Invoice No'] || ''},${i.fields?.['Client Name'] || ''},${i.fields?.Amount || ''},${i.fields?.['Tax System'] || 'GST'},${i.fields?.['Tax Rate'] || ''},${i.fields?.['Tax Amount'] || ''},${i.fields?.Total || ''},${i.fields?.Status || ''}`))
+    const csv = ['Invoice No,Client,Amount,Tax,Total,Status']
+      .concat(invoices.map(i => `${i.fields?.['Invoice No'] || ''},${i.fields?.['Client Name'] || ''},${i.fields?.Amount || ''},${i.fields?.['Tax Amount'] || ''},${i.fields?.Total || ''},${i.fields?.Status || ''}`))
       .join('\n')
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
@@ -97,7 +113,23 @@ export default function Invoices() {
     a.click()
   }
 
-  const overdue = invoices.filter(i => i.fields?.Status === 'Unpaid' && i.fields?.['Due Date'] && new Date(i.fields['Due Date']) < new Date())
+  const overdue = invoices.filter(i =>
+    i.fields?.Status === 'Unpaid' &&
+    i.fields?.['Due Date'] &&
+    new Date(i.fields['Due Date']) < new Date()
+  )
+
+  if (checking) return (
+    <Layout>
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    </Layout>
+  )
+
+  if (!canAccessModuleSync(plan as any, 'invoices')) {
+    return <Layout><LockedModule moduleName="Invoices" requiredPlan="ERP Basic" /></Layout>
+  }
 
   return (
     <Layout>
@@ -173,7 +205,7 @@ export default function Invoices() {
                 {[
                   { key: 'Client Name', label: 'Client Name', type: 'text', required: true },
                   { key: 'Client Email', label: 'Client Email', type: 'email' },
-                  { key: 'Client Phone', label: 'Client Phone', type: 'tel' },
+                  { key: 'Client Phone', label: 'Client Phone (WhatsApp)', type: 'tel' },
                   { key: 'Amount', label: 'Amount', type: 'number', required: true },
                   { key: 'Due Date', label: 'Due Date', type: 'date' },
                   { key: 'Notes', label: 'Notes', type: 'text' },
@@ -183,30 +215,18 @@ export default function Invoices() {
                     <input type={f.type} required={f.required} value={form[f.key as keyof typeof form]} onChange={e => setForm({ ...form, [f.key]: e.target.value })} className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
                 ))}
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tax System / Country</label>
-                  <select
-                    value={taxCountry}
-                    onChange={e => {
-                      setTaxCountry(e.target.value)
-                      setTaxRate(TAX_SYSTEMS[e.target.value].rates.find(r => r > 0) || 0)
-                    }}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    {Object.entries(TAX_SYSTEMS).map(([code, sys]) => (
-                      <option key={code} value={code}>{sys.name}</option>
-                    ))}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tax System</label>
+                  <select value={taxCountry} onChange={e => { setTaxCountry(e.target.value); setTaxRate(TAX_SYSTEMS[e.target.value].rates.find(r => r > 0) || 0) }} className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    {Object.entries(TAX_SYSTEMS).map(([code, sys]) => <option key={code} value={code}>{sys.name}</option>)}
                   </select>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{taxSystem.label} Rate</label>
                   <select value={taxRate} onChange={e => setTaxRate(Number(e.target.value))} className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                     {taxSystem.rates.map(r => <option key={r} value={r}>{r}% {taxSystem.label}</option>)}
                   </select>
                 </div>
-
                 {amount > 0 && (
                   <div className="bg-gray-50 rounded-xl p-3 space-y-1">
                     <div className="flex justify-between text-sm text-gray-600"><span>Subtotal</span><span>{amount.toLocaleString()}</span></div>
@@ -214,7 +234,6 @@ export default function Invoices() {
                     <div className="flex justify-between text-sm font-bold text-gray-900 border-t pt-1"><span>Total</span><span>{total.toLocaleString()}</span></div>
                   </div>
                 )}
-
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={() => setShowModal(false)} className="flex-1 border border-gray-300 py-2 rounded-xl text-sm">Cancel</button>
                   <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded-xl text-sm hover:bg-blue-700">Create Invoice</button>
