@@ -3,7 +3,7 @@ import DodoPayments from 'dodopayments'
 
 const client = new DodoPayments({
   bearerToken: process.env.DODO_PAYMENTS_API_KEY || '',
-  environment: 'test_mode',  // change from live_mode
+  environment: 'test_mode',
 })
 
 export async function POST(req: NextRequest) {
@@ -28,19 +28,15 @@ export async function POST(req: NextRequest) {
       customer: {
         email: email || 'customer@example.com',
         name: name || 'Customer',
-        create_new_customer: true,
       },
       return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://samyojak.vercel.app'}/payment-success?plan=${encodeURIComponent(planName || '')}`,
     })
 
-    console.log('Dodo session created:', session.session_id)
-
+    console.log('Dodo session:', session.session_id)
     return NextResponse.json({ url: session.checkout_url })
 
   } catch (error: any) {
     console.error('Checkout error:', error?.message || error)
-    return NextResponse.json({
-      error: error?.message || 'Checkout failed',
-    }, { status: 500 })
+    return NextResponse.json({ error: error?.message || 'Checkout failed' }, { status: 500 })
   }
 }
