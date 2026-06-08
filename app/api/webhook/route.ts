@@ -1,26 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+// Admin supabase client with service role for updating users
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+)
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.text()
-    const signature = req.headers.get('webhook-signature') || ''
-    const webhookSecret = process.env.DODO_PAYMENTS_WEBHOOK_SECRET || ''
-
-    // Log webhook for debugging
-    console.log('Webhook received:', body.slice(0, 200))
-
     const event = JSON.parse(body)
-    const eventType = event.type || event.event_type
+    const eventType = event.type
 
-    if (eventType === 'subscription.created' || eventType === 'payment.succeeded') {
-      const customerEmail = event.data?.customer?.email || event.customer?.email
-      const planName = event.data?.metadata?.plan_name || event.metadata?.plan_name
+    console.log('Webhook event:', eventType)
 
-      console.log(`Payment success: ${customerEmail} - ${planName}`)
-      // Plan is saved on payment-success page via Supabase updateUser
+    if (eventType === 'subscription.active') {
+      const subscription = event.data
+      const customerEmail = subscription?.customer?.email
+      const planName = subscription?.metadata?.plan_name
+
+      console.log(`Subscription active: ${customerEmail} - ${planName}`)
+    }
+
+    if (eventType === 'payment.succeeded') {
+      const payment = event.data
+      const customerEmail = payment?.customer?.email
+      console.log(`Payment succeeded: ${customerEmail}`)
+    }
+
+    if (eventType === 'subscription.on_hold') {
+      const subscription = event.data
+      console.log(`Subscription on hold: ${subscription?.subscription_id}`)
+    }
+
+    if (eventType === 'subscription.cancelled') {
+      const subscription = event.data
+      console.log(`Subscription cancelled: ${subscription?.subscription_id}`)
     }
 
     return NextResponse.json({ received: true })
+
   } catch (error: any) {
     console.error('Webhook error:', error)
     return NextResponse.json({ error: error.message }, { status: 400 })
