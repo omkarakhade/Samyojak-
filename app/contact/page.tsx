@@ -57,7 +57,7 @@ export default function Contact() {
                       <Mail size={22} strokeWidth={2.5} style={{ color: '#8B5CF6' }} />
                     </div>
                     <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: '#8B5CF6', fontFamily: 'Outfit' }}>Email Us</p>
-                    <p className="text-sm font-semibold" style={{ color: '#1E293B', fontFamily: 'Plus Jakarta Sans' }}>hello@samyojak.app</p>
+                    <p className="text-sm font-semibold" style={{ color: '#1E293B', fontFamily: 'Plus Jakarta Sans' }}>hello@samyojak@gmail.com</p>
                   </div>
 
                   <div className="flex flex-col items-center text-center p-4 rounded-2xl" style={{ background: '#FCE7F3', border: '2px solid #F472B6' }}>
