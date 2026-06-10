@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -10,6 +10,18 @@ export default function Signup() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        if (session.user.email === 'omkarakhade083@gmail.com') {
+          router.push('/admin')
+        } else if (session.user.user_metadata?.plan) {
+          router.push('/dashboard')
+        }
+      }
+    })
+  }, [router])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,7 +35,10 @@ export default function Signup() {
       email: form.email,
       password: form.password,
       options: {
-        data: { full_name: form.name, company: form.company },
+        data: {
+          full_name: form.name,
+          company: form.company,
+        },
       },
     })
     if (error) {
@@ -39,7 +54,8 @@ export default function Signup() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black" style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>S</div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black"
+              style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>S</div>
             <span className="font-black text-xl" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Samyojak</span>
           </Link>
           <h1 className="text-3xl font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Create your account</h1>
@@ -52,18 +68,15 @@ export default function Signup() {
               {error}
             </div>
           )}
-
           <form onSubmit={handleSignup} className="space-y-4">
             {[
               { key: 'name', label: 'Full Name', type: 'text', placeholder: 'Your full name' },
-              { key: 'email', label: 'Work Email', type: 'email', placeholder: 'you@company.com' },
+              { key: 'email', label: 'Email', type: 'email', placeholder: 'you@company.com' },
               { key: 'password', label: 'Password', type: 'password', placeholder: 'Min 8 characters' },
               { key: 'company', label: 'Company Name', type: 'text', placeholder: 'Your business name' },
             ].map(f => (
               <div key={f.key}>
-                <label className="block text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#1E293B', fontFamily: 'Outfit' }}>
-                  {f.label}
-                </label>
+                <label className="block text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#1E293B', fontFamily: 'Outfit' }}>{f.label}</label>
                 <input
                   type={f.type}
                   required
@@ -77,30 +90,16 @@ export default function Signup() {
                 />
               </div>
             ))}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="candy-btn w-full py-4 flex items-center justify-center gap-3 text-base"
-            >
-              {loading ? 'Creating account...' : (
-                <>Continue to Plan Selection <ArrowRight size={18} /></>
-              )}
+            <button type="submit" disabled={loading}
+              className="candy-btn w-full py-4 flex items-center justify-center gap-2 text-base disabled:opacity-50">
+              {loading ? 'Creating account...' : <><span>Continue to Plan Selection</span><ArrowRight size={18} /></>}
             </button>
           </form>
-
-          <p className="text-center text-sm mt-4" style={{ color: '#94A3B8', fontFamily: 'Plus Jakarta Sans' }}>
+          <p className="text-center text-sm mt-4" style={{ color: '#94A3B8' }}>
             Already have an account?{' '}
             <Link href="/login" className="font-bold hover:underline" style={{ color: '#8B5CF6' }}>Sign in</Link>
           </p>
         </div>
-
-        <p className="text-center text-xs mt-4" style={{ color: '#94A3B8' }}>
-          By signing up you agree to our{' '}
-          <Link href="/terms" className="hover:underline" style={{ color: '#8B5CF6' }}>Terms</Link>
-          {' '}and{' '}
-          <Link href="/privacy" className="hover:underline" style={{ color: '#8B5CF6' }}>Privacy Policy</Link>
-        </p>
       </div>
     </div>
   )
