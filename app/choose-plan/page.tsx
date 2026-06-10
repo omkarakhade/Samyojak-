@@ -29,35 +29,42 @@ export default function ChoosePlan() {
   }, [])
 
   const handleSelect = async (productId: string, planName: string) => {
-    setLoadingPlan(planName)
-    setError('')
+  const handleSelect = async (productId: string, planName: string) => {
+  setLoadingPlan(planName)
+  setError('')
 
-    try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId,
-          email: userEmail,
-          name: userName,
-          planName,
-        }),
-      })
+  try {
+    console.log('Selecting plan:', planName, 'Product:', productId)
 
-      const data = await res.json()
+    const res = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId,
+        email: userEmail,
+        name: userName,
+        planName,
+      }),
+    })
 
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        setError(`Error: ${data.error || 'Could not create checkout'}`)
-      }
-    } catch (e: any) {
-      setError(`Network error: ${e.message}`)
+    const data = await res.json()
+    console.log('Checkout response:', data)
+
+    if (data.url) {
+      // This redirects to Dodo hosted payment page
+      console.log('Redirecting to:', data.url)
+      window.location.href = data.url
+    } else {
+      setError(`Payment error: ${data.error || 'No checkout URL returned'}`)
+      console.error('No URL in response:', data)
     }
-
-    setLoadingPlan('')
+  } catch (e: any) {
+    setError(`Network error: ${e.message}`)
+    console.error('Fetch error:', e)
   }
 
+  setLoadingPlan('')
+}
   const plans = PRODUCTS[region][billing]
 
   const regionLabel = {
