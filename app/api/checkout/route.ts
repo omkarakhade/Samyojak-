@@ -2,86 +2,80 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { productId, email, name, planName } = body
+    const { productId, email, name, planName } = await req.json()
 
-    // Log everything for debugging
-    console.log('=== CHECKOUT DEBUG ===')
+    const apiKey = process.env.DODO_PAYMENTS_API_KEY
+    const env = process.env.DODO_ENV || 'test'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://samyojak.vercel.app'
+
+    // Debug info
     console.log('productId:', productId)
-    console.log('email:', email)
-    console.log('planName:', planName)
-    console.log('DODO_ENV:', process.env.DODO_ENV)
-    console.log('API Key length:', process.env.DODO_PAYMENTS_API_KEY?.length)
-    console.log('APP URL:', process.env.NEXT_PUBLIC_APP_URL)
+    console.log('env:', env)
+    console.log('apiKey first 8 chars:', apiKey?.slice(0, 8))
+    console.log('apiKey length:', apiKey?.length)
 
-    if (!productId) {
-      return NextResponse.json({ error: 'No product ID provided' }, { status: 400 })
-    }
-
-    if (!process.env.DODO_PAYMENTS_API_KEY) {
+    if (!apiKey) {
       return NextResponse.json({
-        error: 'DODO_PAYMENTS_API_KEY not set in Vercel environment variables'
+        error: 'DODO_PAYMENTS_API_KEY is missing from Vercel environment variables'
       }, { status: 500 })
     }
 
-    const isDodoPkg = await import('dodopayments')
-    const DodoPayments = isDodoPkg.default || isDodoPkg
-    
-    const environment = process.env.DODO_ENV === 'live' ? 'live_mode' : 'test_mode'
-    console.log('Using environment:', environment)
+    if (!productId) {
+      return NextResponse.json({ error: 'Product ID is required' }, { status: 400 })
+    }
 
-    const client = new DodoPayments({
-      bearerToken: process.env.DODO_PAYMENTS_API_KEY,
-      environment: environment,
-    })
+    // Direct API call — no SDK to avoid import issues
+    const baseUrl = env === 'live'
+      ? 'https://api.dodopayments.com'
+      : 'https://test.dodopayments.com'
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://samyojak.vercel.app'
-    const returnUrl = `${appUrl}/payment-success?plan=${encodeURIComponent(planName || 'CRM Starter')}`
-
-    console.log('Return URL:', returnUrl)
-    console.log('Creating session...')
-
-    const session = await client.checkoutSessions.create({
-      product_cart: [
-        {
-          product_id: productId,
-          quantity: 1,
-        }
-      ],
-      customer: {
-        email: email || 'customer@example.com',
-        name: name || 'Customer',
+    const response = await fetch(`${baseUrl}/checkout/sessions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       },
-      return_url: returnUrl,
+      body: JSON.stringify({
+        product_cart: [
+          {
+            product_id: productId,
+            quantity: 1,
+          }
+        ],
+        customer: {
+          email: email || 'customer@samyojak.app',
+          name: name || 'Customer',
+        },
+        return_url: `${appUrl}/payment-success?plan=${encodeURIComponent(planName || '')}`,
+      }),
     })
 
-    console.log('Session response:', JSON.stringify(session))
-    console.log('checkout_url:', session.checkout_url)
-    console.log('session_id:', session.session_id)
+    const responseText = await response.text()
+    console.log('Dodo status:', response.status)
+    console.log('Dodo response:', responseText)
 
-    if (session.checkout_url) {
+    if (!response.ok) {
       return NextResponse.json({
-        url: session.checkout_url,
-        session_id: session.session_id
-      })
+        error: `Dodo API error ${response.status}: ${responseText}`,
+      }, { status: response.status })
+    }
+
+    const data = JSON.parse(responseText)
+    console.log('checkout_url:', data.checkout_url)
+
+    if (data.checkout_url) {
+      return NextResponse.json({ url: data.checkout_url })
     }
 
     return NextResponse.json({
-      error: 'Dodo did not return a checkout URL',
-      session: JSON.stringify(session)
+      error: 'No checkout URL returned',
+      data: data
     }, { status: 500 })
 
   } catch (error: any) {
-    console.error('=== CHECKOUT ERROR ===')
-    console.error('Type:', error?.constructor?.name)
-    console.error('Message:', error?.message)
-    console.error('Status:', error?.status)
-    console.error('Body:', JSON.stringify(error?.body || error?.response || {}))
-
+    console.error('Checkout error:', error.message)
     return NextResponse.json({
-      error: error?.message || 'Unknown checkout error',
-      status: error?.status,
-      body: error?.body || {}
+      error: error.message
     }, { status: 500 })
   }
 }
