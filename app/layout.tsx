@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 import CookieBanner from '@/components/CookieBanner'
 import SessionManager from '@/components/SessionManager'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://samyojak.vercel.app'),
@@ -11,16 +13,9 @@ export const metadata: Metadata = {
   },
   description: 'The all-in-one AI-powered ERP for modern businesses. CRM, GST Invoicing, Inventory with QR codes, HR, Projects, and Tax Reports unified in one workspace.',
   keywords: [
-    'ERP',
-    'CRM',
-    'GST invoicing',
-    'inventory management',
-    'HR software',
-    'project management',
-    'SaaS ERP',
-    'small business ERP',
-    'AI ERP',
-    'business software India',
+    'ERP', 'CRM', 'GST invoicing', 'inventory management',
+    'HR software', 'project management', 'SaaS ERP',
+    'small business ERP', 'AI ERP', 'business software India',
   ],
   authors: [{ name: 'Samyojak', url: 'https://samyojak.vercel.app' }],
   creator: 'Samyojak',
@@ -43,14 +38,7 @@ export const metadata: Metadata = {
     siteName: 'Samyojak',
     title: 'Samyojak — Coordinate Everything. Run Anything.',
     description: 'The all-in-one AI-powered ERP for modern businesses globally.',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Samyojak ERP — Coordinate Everything. Run Anything.',
-      },
-    ],
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Samyojak ERP' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -58,13 +46,8 @@ export const metadata: Metadata = {
     description: 'All-in-one AI-powered ERP. CRM, Invoicing, Inventory, HR, Projects.',
     images: ['/og-image.png'],
   },
-  alternates: {
-    canonical: 'https://samyojak.vercel.app',
-  },
-  icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-  },
+  alternates: { canonical: 'https://samyojak.vercel.app' },
+  icons: { icon: '/favicon.svg', shortcut: '/favicon.svg' },
 }
 
 const structuredData = {
@@ -74,7 +57,7 @@ const structuredData = {
       '@type': 'SoftwareApplication',
       '@id': 'https://samyojak.vercel.app/#software',
       name: 'Samyojak',
-      description: 'All-in-one AI-powered ERP for modern businesses. CRM, GST invoicing, inventory with QR codes, HR, project management, and tax reports.',
+      description: 'All-in-one AI-powered ERP for modern businesses.',
       url: 'https://samyojak.vercel.app',
       applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web',
@@ -93,8 +76,8 @@ const structuredData = {
         'Project management Kanban board',
         'Tax reports GSTR-1 format',
         'AI business intelligence',
+        'Support ticket system',
         'White label program',
-        'Referral commission program',
         'Mobile-first design',
       ],
       aggregateRating: {
@@ -122,9 +105,7 @@ const structuredData = {
       url: 'https://samyojak.vercel.app',
       name: 'Samyojak',
       description: 'All-in-one AI-powered ERP for modern businesses',
-      publisher: {
-        '@id': 'https://samyojak.vercel.app/#organization',
-      },
+      publisher: { '@id': 'https://samyojak.vercel.app/#organization' },
     },
     {
       '@type': 'FAQPage',
@@ -134,7 +115,7 @@ const structuredData = {
           name: 'What is Samyojak?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Samyojak is an all-in-one AI-powered ERP for modern businesses. It includes CRM, invoicing with universal tax support, inventory with QR codes, HR, projects, and tax reports.',
+            text: 'Samyojak is an all-in-one AI-powered ERP for modern businesses including CRM, invoicing, inventory with QR codes, HR, projects, and tax reports.',
           },
         },
         {
@@ -142,7 +123,7 @@ const structuredData = {
           name: 'How much does Samyojak cost?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Plans start at $4.99 per week for India, $6.99 for global markets, and $9.99 for western markets. Every plan includes a bonus period free.',
+            text: 'Plans start at $4.99 per week for India, $6.99 for global, $9.99 for western markets. Every plan includes a bonus period.',
           },
         },
         {
@@ -150,7 +131,7 @@ const structuredData = {
           name: 'Does Samyojak support GST and VAT?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Yes. Samyojak has a universal tax engine supporting GST for India Australia Singapore, VAT for UK Germany UAE France, HST for Canada, Sales Tax for US, and more across 15 countries.',
+            text: 'Yes. Universal tax engine supports GST, VAT, HST, Sales Tax across 15 countries.',
           },
         },
         {
@@ -158,15 +139,7 @@ const structuredData = {
           name: 'Does Samyojak work on mobile?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Yes. Samyojak is mobile-first and works on any phone or tablet with a dedicated bottom navigation bar on mobile.',
-          },
-        },
-        {
-          '@type': 'Question',
-          name: 'What makes Samyojak different from other ERP software?',
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: 'Samyojak offers flat pricing not per-user, setup in minutes not weeks, free QR codes for inventory, WhatsApp invoice sending, AI lead scoring, and weekly payment plans. Built for businesses globally.',
+            text: 'Yes. Mobile-first design with dedicated bottom navigation bar.',
           },
         },
       ],
@@ -174,11 +147,7 @@ const structuredData = {
   ],
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
@@ -200,6 +169,8 @@ export default function RootLayout({
         </main>
         <CookieBanner />
         <SessionManager />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
