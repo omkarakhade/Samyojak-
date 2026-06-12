@@ -9,8 +9,19 @@ export const metadata: Metadata = {
     default: 'Samyojak — Coordinate Everything. Run Anything.',
     template: '%s | Samyojak ERP',
   },
-  description: 'The all-in-one ERP for modern businesses. CRM, GST Invoicing, Inventory with QR codes, HR, Projects, and Tax Reports — unified in one beautiful workspace.',
-  keywords: ['ERP', 'CRM', 'GST invoicing', 'inventory management', 'HR software', 'project management', 'business software', 'SaaS ERP', 'small business ERP'],
+  description: 'The all-in-one AI-powered ERP for modern businesses. CRM, GST Invoicing, Inventory with QR codes, HR, Projects, and Tax Reports unified in one workspace.',
+  keywords: [
+    'ERP',
+    'CRM',
+    'GST invoicing',
+    'inventory management',
+    'HR software',
+    'project management',
+    'SaaS ERP',
+    'small business ERP',
+    'AI ERP',
+    'business software India',
+  ],
   authors: [{ name: 'Samyojak', url: 'https://samyojak.vercel.app' }],
   creator: 'Samyojak',
   publisher: 'Samyojak',
@@ -31,7 +42,7 @@ export const metadata: Metadata = {
     url: 'https://samyojak.vercel.app',
     siteName: 'Samyojak',
     title: 'Samyojak — Coordinate Everything. Run Anything.',
-    description: 'The all-in-one ERP for modern businesses. CRM, GST Invoicing, Inventory with QR codes, HR, Projects, and Tax Reports.',
+    description: 'The all-in-one AI-powered ERP for modern businesses globally.',
     images: [
       {
         url: '/og-image.png',
@@ -44,20 +55,15 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Samyojak — Coordinate Everything. Run Anything.',
-    description: 'The all-in-one ERP for modern businesses. CRM, Invoicing, Inventory, HR, Projects unified in one workspace.',
+    description: 'All-in-one AI-powered ERP. CRM, Invoicing, Inventory, HR, Projects.',
     images: ['/og-image.png'],
-    creator: '@samyojak',
   },
   alternates: {
     canonical: 'https://samyojak.vercel.app',
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
-  },
-  verification: {
-    google: 'add-your-google-verification-code-here',
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
   },
 }
 
@@ -68,36 +74,34 @@ const structuredData = {
       '@type': 'SoftwareApplication',
       '@id': 'https://samyojak.vercel.app/#software',
       name: 'Samyojak',
-      description: 'All-in-one ERP software for modern businesses. Includes CRM, GST invoicing, inventory management with QR codes, HR, project management, and tax reporting.',
+      description: 'All-in-one AI-powered ERP for modern businesses. CRM, GST invoicing, inventory with QR codes, HR, project management, and tax reports.',
       url: 'https://samyojak.vercel.app',
       applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web',
       offers: {
         '@type': 'AggregateOffer',
         lowPrice: '4.99',
-        highPrice: '759',
+        highPrice: '1299',
         priceCurrency: 'USD',
-        offerCount: '12',
+        offerCount: '36',
       },
       featureList: [
         'CRM with AI lead scoring',
-        'GST invoicing with WhatsApp sending',
+        'Universal tax invoicing GST VAT HST Sales Tax',
         'Inventory management with free QR codes',
         'HR and payroll management',
-        'Project management with Kanban board',
-        'Universal tax engine — GST, VAT, HST, Sales Tax',
-        'GST reports in GSTR-1 format',
-        'Dark mode support',
+        'Project management Kanban board',
+        'Tax reports GSTR-1 format',
+        'AI business intelligence',
+        'White label program',
+        'Referral commission program',
         'Mobile-first design',
-        'CSV data export',
       ],
-      screenshot: 'https://samyojak.vercel.app/og-image.png',
       aggregateRating: {
         '@type': 'AggregateRating',
         ratingValue: '4.8',
         reviewCount: '127',
         bestRating: '5',
-        worstRating: '1',
       },
     },
     {
@@ -105,33 +109,21 @@ const structuredData = {
       '@id': 'https://samyojak.vercel.app/#organization',
       name: 'Samyojak',
       url: 'https://samyojak.vercel.app',
-      description: 'Samyojak builds all-in-one ERP software for modern businesses worldwide.',
+      description: 'Samyojak builds AI-powered ERP software for modern businesses worldwide.',
       contactPoint: {
         '@type': 'ContactPoint',
-        email: 'hello@samyojak.app',
+        email: 'samyojak@gmail.com',
         contactType: 'customer support',
       },
-      sameAs: [
-        'https://linkedin.com/company/samyojak',
-        'https://reddit.com/r/samyojak',
-      ],
     },
     {
       '@type': 'WebSite',
       '@id': 'https://samyojak.vercel.app/#website',
       url: 'https://samyojak.vercel.app',
       name: 'Samyojak',
-      description: 'All-in-one ERP for modern businesses',
+      description: 'All-in-one AI-powered ERP for modern businesses',
       publisher: {
         '@id': 'https://samyojak.vercel.app/#organization',
-      },
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: {
-          '@type': 'EntryPoint',
-          urlTemplate: 'https://samyojak.vercel.app/?q={search_term_string}',
-        },
-        'query-input': 'required name=search_term_string',
       },
     },
     {
@@ -142,7 +134,7 @@ const structuredData = {
           name: 'What is Samyojak?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Samyojak is an all-in-one ERP software for modern businesses. It includes CRM, GST invoicing, inventory management with free QR codes, HR management, project tracking, and tax reports — all in one workspace.',
+            text: 'Samyojak is an all-in-one AI-powered ERP for modern businesses. It includes CRM, invoicing with universal tax support, inventory with QR codes, HR, projects, and tax reports.',
           },
         },
         {
@@ -150,15 +142,15 @@ const structuredData = {
           name: 'How much does Samyojak cost?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Samyojak offers flexible plans starting at $4.99 per week. Weekly, monthly, and yearly plans are available. Every plan includes a bonus period — weekly plans get an extra week, monthly plans get an extra month, and yearly plans get 2-3 extra months.',
+            text: 'Plans start at $4.99 per week for India, $6.99 for global markets, and $9.99 for western markets. Every plan includes a bonus period free.',
           },
         },
         {
           '@type': 'Question',
-          name: 'Does Samyojak support GST invoicing?',
+          name: 'Does Samyojak support GST and VAT?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Yes. Samyojak has a universal tax engine supporting GST (India, Australia, Singapore), VAT (UK, Germany, UAE), HST (Canada), Sales Tax (US), and more. Tax rates are calculated automatically based on your country selection.',
+            text: 'Yes. Samyojak has a universal tax engine supporting GST for India Australia Singapore, VAT for UK Germany UAE France, HST for Canada, Sales Tax for US, and more across 15 countries.',
           },
         },
         {
@@ -166,7 +158,7 @@ const structuredData = {
           name: 'Does Samyojak work on mobile?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Yes. Samyojak is mobile-first and works on any phone or tablet. It has a bottom navigation bar on mobile for easy access to all modules.',
+            text: 'Yes. Samyojak is mobile-first and works on any phone or tablet with a dedicated bottom navigation bar on mobile.',
           },
         },
         {
@@ -174,15 +166,7 @@ const structuredData = {
           name: 'What makes Samyojak different from other ERP software?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Samyojak offers flat pricing (not per-user), setup in minutes, free QR codes for inventory, WhatsApp invoice sending, AI lead scoring, weekly payment plans, and a mobile-first design — features that legacy ERP platforms do not offer.',
-          },
-        },
-        {
-          '@type': 'Question',
-          name: 'Can I export my data from Samyojak?',
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: 'Yes. Every module in Samyojak has CSV export. Your data always belongs to you and you can download it anytime.',
+            text: 'Samyojak offers flat pricing not per-user, setup in minutes not weeks, free QR codes for inventory, WhatsApp invoice sending, AI lead scoring, and weekly payment plans. Built for businesses globally.',
           },
         },
       ],
@@ -204,10 +188,16 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-violet-600 focus:text-white focus:rounded-lg">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-6 focus:py-3 focus:rounded-xl focus:font-bold focus:text-white"
+          style={{ background: '#8B5CF6' }}
+        >
           Skip to main content
         </a>
-        {children}
+        <main id="main-content">
+          {children}
+        </main>
         <CookieBanner />
         <SessionManager />
       </body>
