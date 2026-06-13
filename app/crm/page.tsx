@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import { airtable } from '@/lib/airtable'
-import { Plus, Download, Search, AlertCircle } from 'lucide-react'
+import { Plus, Download, Search, AlertCircle, Upload } from 'lucide-react'
+import ImportModal from '@/components/ImportModal'
 
 const statusColors: Record<string, string> = {
   New: 'bg-blue-100 text-blue-700',
@@ -35,6 +36,7 @@ export default function CRM() {
   const [leads, setLeads] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [form, setForm] = useState({
@@ -47,7 +49,7 @@ export default function CRM() {
     try {
       const d = await airtable.get('Leads')
       setLeads(d.records || [])
-    } catch (e) {}
+    } catch (e) { }
     finally { setLoading(false) }
   }
 
@@ -64,7 +66,7 @@ export default function CRM() {
       setShowModal(false)
       setForm({ Name: '', Company: '', Phone: '', Email: '', 'Lead Source': 'Website', 'Deal Value': '', Notes: '', 'Next Follow-up Date': '' })
       fetchLeads()
-    } catch (e) {}
+    } catch (e) { }
   }
 
   const exportCSV = () => {
@@ -96,6 +98,14 @@ export default function CRM() {
   return (
     <Layout>
       <div className="space-y-4">
+        {showImport && (
+          <ImportModal
+            module="Leads"
+            onClose={() => setShowImport(false)}
+            onSuccess={fetchLeads}
+          />
+        )}
+
         {todayFollowUps > 0 && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-3 text-yellow-800">
             <AlertCircle size={18} />
@@ -105,22 +115,23 @@ export default function CRM() {
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">CRM</h2>
-            <p className="text-gray-500 text-sm">Manage leads and track your pipeline</p>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>CRM</h2>
+            <p className="text-gray-500 text-sm">{leads.length} leads · Manage your pipeline</p>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={exportCSV}
-              className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-white/10 dark:text-white transition-colors"
-            >
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={() => setShowImport(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors"
+              style={{ background: '#EDE9FE', color: '#8B5CF6', border: '2px solid #8B5CF6' }}>
+              <Upload size={16} /> Import CSV
+            </button>
+            <button onClick={exportCSV}
+              className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-white/10 dark:text-white transition-colors">
               <Download size={16} /> Export
             </button>
-            <button
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700 transition-colors"
-            >
+            <button onClick={() => setShowModal(true)}
+              className="candy-btn flex items-center gap-2 px-4 py-2 text-sm">
               <Plus size={16} /> Add Lead
             </button>
           </div>
@@ -133,13 +144,13 @@ export default function CRM() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search leads..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:bg-[#1a2740] dark:text-white transition-colors"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 outline-none dark:bg-[#1a2740] dark:text-white"
             />
           </div>
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="border border-gray-300 dark:border-white/20 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:bg-[#1a2740] dark:text-white"
+            className="border border-gray-300 dark:border-white/20 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 outline-none dark:bg-[#1a2740] dark:text-white"
           >
             {['All', 'New', 'Contacted', 'Converted', 'Lost'].map(s => (
               <option key={s}>{s}</option>
@@ -149,19 +160,28 @@ export default function CRM() {
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10">
             <div className="text-5xl mb-4">🚀</div>
-            <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2">No leads yet</h3>
-            <p className="text-gray-500 text-sm mb-6">Add your first lead and start growing</p>
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-blue-600 text-white px-6 py-2 rounded-xl text-sm hover:bg-blue-700"
-            >
-              Add First Lead
-            </button>
+            <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2" style={{ fontFamily: 'Outfit' }}>
+              {leads.length === 0 ? 'No leads yet' : 'No results found'}
+            </h3>
+            <p className="text-gray-500 text-sm mb-6">
+              {leads.length === 0 ? 'Add your first lead or import from CSV' : 'Try a different search'}
+            </p>
+            <div className="flex gap-3 justify-center flex-wrap">
+              <button onClick={() => setShowImport(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
+                style={{ background: '#EDE9FE', color: '#8B5CF6', border: '2px solid #8B5CF6' }}>
+                <Upload size={16} /> Import CSV
+              </button>
+              <button onClick={() => setShowModal(true)}
+                className="candy-btn px-6 py-2 text-sm">
+                Add First Lead
+              </button>
+            </div>
           </div>
         ) : (
           <div className="bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10 overflow-x-auto">
@@ -169,9 +189,7 @@ export default function CRM() {
               <thead className="bg-gray-50 dark:bg-[#0A1628]">
                 <tr>
                   {['Lead', 'Company', 'Contact', 'Source', 'Status', 'Value', 'AI Score'].map(h => (
-                    <th key={h} className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      {h}
-                    </th>
+                    <th key={h} className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -180,19 +198,13 @@ export default function CRM() {
                   const score = calcScore(lead)
                   return (
                     <tr key={lead.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-                      <td className="p-4 font-medium text-gray-900 dark:text-white text-sm">
-                        {lead.fields?.Name}
-                      </td>
-                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
-                        {lead.fields?.Company}
-                      </td>
+                      <td className="p-4 font-medium text-gray-900 dark:text-white text-sm">{lead.fields?.Name}</td>
+                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{lead.fields?.Company}</td>
                       <td className="p-4 text-sm">
                         <div className="text-gray-600 dark:text-gray-300 text-xs">{lead.fields?.Email}</div>
                         <div className="text-gray-400 text-xs">{lead.fields?.Phone}</div>
                       </td>
-                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
-                        {lead.fields?.['Lead Source']}
-                      </td>
+                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{lead.fields?.['Lead Source']}</td>
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[lead.fields?.Status] || 'bg-gray-100 text-gray-600'}`}>
                           {lead.fields?.Status}
@@ -216,34 +228,35 @@ export default function CRM() {
 
         {showModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h3 className="font-bold text-lg mb-4">Add New Lead</h3>
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+              style={{ border: '2px solid #1E293B', boxShadow: '8px 8px 0px #8B5CF6' }}>
+              <h3 className="font-black text-lg mb-4" style={{ fontFamily: 'Outfit' }}>Add New Lead</h3>
               <form onSubmit={handleSubmit} className="space-y-3">
                 {[
                   { key: 'Name', label: 'Full Name', type: 'text', required: true },
                   { key: 'Company', label: 'Company', type: 'text' },
-                  { key: 'Phone', label: 'Phone (+91)', type: 'tel' },
+                  { key: 'Phone', label: 'Phone', type: 'tel' },
                   { key: 'Email', label: 'Email', type: 'email' },
                   { key: 'Deal Value', label: 'Deal Value (₹)', type: 'number' },
                   { key: 'Next Follow-up Date', label: 'Follow-up Date', type: 'date' },
                 ].map(f => (
                   <div key={f.key}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
+                    <label className="block text-xs font-bold uppercase tracking-wide mb-1" style={{ color: '#1E293B', fontFamily: 'Outfit' }}>{f.label}</label>
                     <input
                       type={f.type}
                       required={f.required}
                       value={form[f.key as keyof typeof form]}
                       onChange={e => setForm({ ...form, [f.key]: e.target.value })}
-                      className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-violet-500 outline-none"
                     />
                   </div>
                 ))}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Lead Source</label>
+                  <label className="block text-xs font-bold uppercase tracking-wide mb-1" style={{ color: '#1E293B', fontFamily: 'Outfit' }}>Lead Source</label>
                   <select
                     value={form['Lead Source']}
                     onChange={e => setForm({ ...form, 'Lead Source': e.target.value })}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-violet-500 outline-none"
                   >
                     {['Website', 'Referral', 'LinkedIn', 'Cold Call', 'Trade Show', 'Event', 'Other'].map(s => (
                       <option key={s}>{s}</option>
@@ -251,26 +264,21 @@ export default function CRM() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <label className="block text-xs font-bold uppercase tracking-wide mb-1" style={{ color: '#1E293B', fontFamily: 'Outfit' }}>Notes</label>
                   <textarea
                     value={form.Notes}
                     onChange={e => setForm({ ...form, Notes: e.target.value })}
                     rows={3}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-violet-500 outline-none resize-none"
                   />
                 </div>
                 <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="flex-1 border border-gray-300 py-2 rounded-xl text-sm hover:bg-gray-50"
-                  >
+                  <button type="button" onClick={() => setShowModal(false)}
+                    className="flex-1 border border-gray-300 py-2 rounded-xl text-sm hover:bg-gray-50">
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    className="flex-1 bg-blue-600 text-white py-2 rounded-xl text-sm hover:bg-blue-700"
-                  >
+                  <button type="submit"
+                    className="candy-btn flex-1 py-2 text-sm">
                     Save Lead
                   </button>
                 </div>
