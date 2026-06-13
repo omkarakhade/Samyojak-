@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server'
 const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
 const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
 
-// Smart column mapping — maps any column name to our field names
 function smartMap(headers: string[], module: string): Record<string, string> {
   const mapping: Record<string, string> = {}
 
@@ -16,7 +15,7 @@ function smartMap(headers: string[], module: string): Record<string, string> {
       'Lead Source': ['source', 'lead source', 'channel', 'how did you hear', 'referred by', 'origin'],
       'Status': ['status', 'stage', 'pipeline stage', 'lead status', 'state'],
       'Deal Value': ['value', 'deal value', 'amount', 'deal size', 'revenue', 'potential', 'opportunity value', 'budget'],
-      'Notes': ['notes', 'note', 'comments', 'comment', 'description', 'details', 'remarks', 'additional info'],
+      'Notes': ['notes', 'note', 'comments', 'comment', 'description', 'details', 'remarks'],
       'Next Follow-up Date': ['follow up', 'follow-up', 'next contact', 'followup date', 'next follow up', 'reminder'],
     },
     Invoices: {
@@ -64,7 +63,9 @@ function smartMap(headers: string[], module: string): Record<string, string> {
     let matched = false
 
     for (const [ourField, aliases] of Object.entries(moduleFields)) {
-      if (aliases.some(alias => headerLower.includes(alias) || alias.includes(headerLower))) {
+      if (aliases.some(alias =>
+        headerLower.includes(alias) || alias.includes(headerLower)
+      )) {
         if (!mapping[header]) {
           mapping[header] = ourField
           matched = true
@@ -81,7 +82,12 @@ function smartMap(headers: string[], module: string): Record<string, string> {
   return mapping
 }
 
-async function createRecord(table: string, fields: Record<string, any>) {
+const NUMERIC_FIELDS = [
+  'Deal Value', 'Amount', 'Tax Rate', 'Tax Amount',
+  'Total', 'Salary', 'Current Stock', 'Reorder Level', 'Unit Price'
+]
+
+async function createAirtableRecord(table: string, fields: Record<string, unknown>) {
   const res = await fetch(`https://api.airtable.com/v0/${BASE}/${table}`, {
     method: 'POST',
     headers: {
@@ -93,58 +99,77 @@ async function createRecord(table: string, fields: Record<string, any>) {
   return res.json()
 }
 
+function getAirtableTable(module: string): string {
+  const tables: Record<string, string> = {
+    Leads: 'Leads',
+    Invoices: 'Invoices',
+    Products: 'Products',
+    Employees: 'Employees',
+    Projects: 'Projects',
+  }
+  return tables[module] || module
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { action, module, headers, rows, mapping } = body
 
-    // Step 1: Analyze headers and return smart mapping
     if (action === 'analyze') {
-      const smartMapping = smartMap(headers, module)
+      const smartMapping = smartMap(headers as string[], module as string)
       return NextResponse.json({ mapping: smartMapping })
     }
 
-    // Step 2: Import rows with confirmed mapping
     if (action === 'import') {
       const results = { success: 0, failed: 0, errors: [] as string[] }
+      const typedRows = rows as Record<string, string>[]
+      const typedMapping = mapping as Record<string, string>
+      const tableName = getAirtableTable(module as string)
 
-      for (const row of rows) {
+      for (const row of typedRows) {
         try {
-          const fields: Record<string, any> = {}
+          const fields: Record<string, unknown> = {}
 
-          for (const [csvCol, ourField] of Object.entries(mapping)) {
+          for (const [csvCol, ourField] of Object.entries(typedMapping)) {
             if (ourField === 'skip' || !ourField) continue
-            const value = row[csvCol]
-            if (!value && value !== 0) continue
+            const rawValue = row[csvCol]
+            if (rawValue === undefined || rawValue === null || rawValue === '') continue
 
-            // Type conversion
-            if (['Deal Value', 'Amount', 'Tax Rate', 'Tax Amount', 'Total', 'Salary', 'Current Stock', 'Reorder Level', 'Unit Price'].includes(ourField)) {
-              const num = parseFloat(String(value).replace(/[₹$,£€\s]/g, ''))
-              if (!isNaN(num)) fields[ourField] = num
+            const valueStr = String(rawValue).trim()
+
+            if (NUMERIC_FIELDS.includes(ourField)) {
+              const num = parseFloat(valueStr.replace(/[₹$,£€\s]/g, ''))
+              if (!isNaN(num)) {
+                fields[ourField] = num
+              }
             } else {
-              fields[ourField] = String(value).trim()
+              fields[ourField] = valueStr
             }
           }
 
-          // Add defaults based on module
-          if (module === 'Leads' && !fields['Status']) fields['Status'] = 'New'
-          if (module === 'Invoices' && !fields['Status']) fields['Status'] = 'Unpaid'
+          // Add defaults
+          if (module === 'Leads' && !fields['Status']) {
+            fields['Status'] = 'New'
+          }
+          if (module === 'Invoices' && !fields['Status']) {
+            fields['Status'] = 'Unpaid'
+          }
           if (module === 'Invoices' && !fields['Invoice No']) {
             fields['Invoice No'] = 'IMP-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5).toUpperCase()
           }
+          if (module === 'Products' && !fields['SKU']) {
+            fields['SKU'] = 'SKU-' + Date.now()
+          }
 
           if (Object.keys(fields).length > 0) {
-            await createRecord(module === 'Leads' ? 'Leads' :
-              module === 'Invoices' ? 'Invoices' :
-              module === 'Products' ? 'Products' :
-              module === 'Employees' ? 'Employees' : 'Projects', fields)
+            await createAirtableRecord(tableName, fields)
             results.success++
-            // Small delay to avoid Airtable rate limiting
-            await new Promise(r => setTimeout(r, 100))
+            await new Promise(r => setTimeout(r, 150))
           }
-        } catch (e: any) {
+        } catch (e: unknown) {
           results.failed++
-          results.errors.push(e.message)
+          const msg = e instanceof Error ? e.message : 'Unknown error'
+          results.errors.push(msg)
         }
       }
 
@@ -153,8 +178,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
 
-  } catch (error: any) {
-    console.error('Import error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Import error:', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
