@@ -12,49 +12,77 @@ export async function GET() {
       BASE_ID: BASE,
       BASE_ID_LENGTH: BASE.length,
     },
-    tables: {}
+    readTest: {},
+    writeTest: {},
+    fieldNames: {},
   }
 
   if (!TOKEN || !BASE) {
-    results.error = 'TOKEN or BASE_ID is missing from environment variables'
+    results.error = 'TOKEN or BASE_ID missing'
     return NextResponse.json(results)
   }
 
-  const tables = ['Leads', 'Invoices', 'Products', 'Employees', 'Projects']
+  const headers = {
+    'Authorization': `Bearer ${TOKEN}`,
+    'Content-Type': 'application/json',
+  }
 
+  // READ TEST — check what fields actually exist
+  const tables = ['Leads', 'Invoices', 'Products', 'Employees', 'Projects']
   for (const table of tables) {
     try {
-      const url = `https://api.airtable.com/v0/${BASE}/${table}?maxRecords=3`
-      const res = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-      })
-
-      const text = await res.text()
-      let data: any = {}
-
-      try {
-        data = JSON.parse(text)
-      } catch {
-        data = { rawResponse: text.slice(0, 200) }
-      }
-
-      results.tables[table] = {
+      const res = await fetch(
+        `https://api.airtable.com/v0/${BASE}/${table}?maxRecords=1`,
+        { headers }
+      )
+      const data = await res.json()
+      results.readTest[table] = {
         status: res.status,
         ok: res.ok,
-        recordCount: data.records?.length ?? 0,
         error: data.error || null,
-        firstRecord: data.records?.[0]?.fields || null,
-        rawError: !res.ok ? text.slice(0, 300) : null,
+      }
+      if (data.records?.[0]?.fields) {
+        results.fieldNames[table] = Object.keys(data.records[0].fields)
       }
     } catch (e: any) {
-      results.tables[table] = {
-        status: 'FETCH_ERROR',
-        error: e.message,
-      }
+      results.readTest[table] = { error: e.message }
     }
+  }
+
+  // WRITE TEST — try to create a test record in Leads
+  try {
+    const writeRes = await fetch(
+      `https://api.airtable.com/v0/${BASE}/Leads`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          fields: {
+            Name: 'WRITE_TEST_DELETE_ME',
+            Notes: 'This is a write test from Samyojak debug page',
+          },
+        }),
+      }
+    )
+    const writeData = await writeRes.json()
+    results.writeTest = {
+      status: writeRes.status,
+      ok: writeRes.ok,
+      recordId: writeData.id || null,
+      error: writeData.error || null,
+      rawError: !writeRes.ok ? JSON.stringify(writeData) : null,
+    }
+
+    // If write succeeded, delete the test record
+    if (writeData.id) {
+      await fetch(
+        `https://api.airtable.com/v0/${BASE}/Leads/${writeData.id}`,
+        { method: 'DELETE', headers }
+      )
+      results.writeTest.deleted = true
+    }
+  } catch (e: any) {
+    results.writeTest = { error: e.message }
   }
 
   return NextResponse.json(results)
