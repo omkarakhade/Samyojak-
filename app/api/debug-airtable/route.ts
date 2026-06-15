@@ -13,13 +13,8 @@ export async function GET() {
       BASE_ID_LENGTH: BASE.length,
     },
     readTest: {},
-    writeTest: {},
+    writeTest: null,
     fieldNames: {},
-  }
-
-  if (!TOKEN || !BASE) {
-    results.error = 'TOKEN or BASE_ID missing'
-    return NextResponse.json(results)
   }
 
   const headers = {
@@ -27,8 +22,8 @@ export async function GET() {
     'Content-Type': 'application/json',
   }
 
-  // READ TEST — check what fields actually exist
   const tables = ['Leads', 'Invoices', 'Products', 'Employees', 'Projects']
+
   for (const table of tables) {
     try {
       const res = await fetch(
@@ -49,7 +44,7 @@ export async function GET() {
     }
   }
 
-  // WRITE TEST — try to create a test record in Leads
+  // WRITE TEST
   try {
     const writeRes = await fetch(
       `https://api.airtable.com/v0/${BASE}/Leads`,
@@ -59,7 +54,8 @@ export async function GET() {
         body: JSON.stringify({
           fields: {
             Name: 'WRITE_TEST_DELETE_ME',
-            Notes: 'This is a write test from Samyojak debug page',
+            Status: 'New',
+            Notes: 'Samyojak write test',
           },
         }),
       }
@@ -70,16 +66,15 @@ export async function GET() {
       ok: writeRes.ok,
       recordId: writeData.id || null,
       error: writeData.error || null,
-      rawError: !writeRes.ok ? JSON.stringify(writeData) : null,
+      message: writeData.error ? JSON.stringify(writeData) : 'WRITE SUCCESS',
     }
 
-    // If write succeeded, delete the test record
     if (writeData.id) {
       await fetch(
         `https://api.airtable.com/v0/${BASE}/Leads/${writeData.id}`,
         { method: 'DELETE', headers }
       )
-      results.writeTest.deleted = true
+      results.writeTest.cleaned = true
     }
   } catch (e: any) {
     results.writeTest = { error: e.message }
