@@ -5,7 +5,7 @@ import { airtable } from '@/lib/airtable'
 import { Plus, Download, Search, AlertCircle, Upload, Trash2 } from 'lucide-react'
 import ImportModal from '@/components/ImportModal'
 
-const statusColors: Record<string, string> = {
+const STATUS_COLORS: Record<string, string> = {
   New: 'bg-blue-100 text-blue-700',
   Contacted: 'bg-yellow-100 text-yellow-700',
   Converted: 'bg-green-100 text-green-700',
@@ -48,37 +48,23 @@ export default function CRM() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.Name.trim()) {
-      setError('Name is required')
-      return
-    }
+    if (!form.Name.trim()) { setError('Name is required'); return }
     setSaving(true)
     setError('')
     try {
-      // Only write fields that exist in your Airtable Leads table
-      const fields: Record<string, unknown> = {
-        Name: form.Name.trim(),
-        Status: form.Status,
-      }
+      const fields: Record<string, unknown> = { Name: form.Name.trim(), Status: form.Status }
       if (form.Email.trim()) fields['Email'] = form.Email.trim()
       if (form.Phone.trim()) fields['Phone'] = form.Phone.trim()
       if (form['Lead Source']) fields['Lead Source'] = form['Lead Source']
       if (form.Notes.trim()) fields['Notes'] = form.Notes.trim()
       if (form['Next Follow-up Date']) fields['Next Follow-up Date'] = form['Next Follow-up Date']
       if (form['Business Type'].trim()) fields['Business Type'] = form['Business Type'].trim()
-
-      const result = await airtable.create('Leads', fields)
-      console.log('Lead created:', result.id)
-
+      await airtable.create('Leads', fields)
       setShowModal(false)
-      setForm({
-        Name: '', Email: '', Phone: '',
-        'Lead Source': 'Website', Status: 'New',
-        Notes: '', 'Next Follow-up Date': '', 'Business Type': '',
-      })
+      setForm({ Name: '', Email: '', Phone: '', 'Lead Source': 'Website', Status: 'New', Notes: '', 'Next Follow-up Date': '', 'Business Type': '' })
       await fetchLeads()
     } catch (e: any) {
-      setError('Failed to save lead: ' + e.message)
+      setError('Failed to save: ' + e.message)
     }
     setSaving(false)
   }
@@ -93,9 +79,18 @@ export default function CRM() {
     }
   }
 
+  const handleStatusChange = async (id: string, status: string) => {
+    try {
+      await airtable.update('Leads', id, { Status: status })
+      await fetchLeads()
+    } catch (e: any) {
+      setError('Update failed: ' + e.message)
+    }
+  }
+
   const exportCSV = () => {
     const rows = [
-      ['Name', 'Email', 'Phone', 'Status', 'Lead Source', 'Business Type', 'Score', 'Notes'],
+      ['Name', 'Email', 'Phone', 'Status', 'Lead Source', 'Business Type', 'Score', 'Notes', 'Next Follow-up Date'],
       ...leads.map(l => [
         l.fields?.Name || '',
         l.fields?.Email || '',
@@ -105,9 +100,10 @@ export default function CRM() {
         l.fields?.['Business Type'] || '',
         l.fields?.Score || '',
         l.fields?.Notes || '',
+        l.fields?.['Next Follow-up Date'] || '',
       ])
     ]
-    const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n')
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
     a.download = 'leads.csv'
@@ -125,8 +121,7 @@ export default function CRM() {
       (l.fields?.Name || '').toLowerCase().includes(q) ||
       (l.fields?.Email || '').toLowerCase().includes(q) ||
       (l.fields?.['Business Type'] || '').toLowerCase().includes(q)
-    const matchStatus = statusFilter === 'All' || l.fields?.Status === statusFilter
-    return matchSearch && matchStatus
+    return matchSearch && (statusFilter === 'All' || l.fields?.Status === statusFilter)
   })
 
   return (
@@ -139,45 +134,35 @@ export default function CRM() {
         {todayFollowUps > 0 && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-3 text-yellow-800">
             <AlertCircle size={18} />
-            <span className="text-sm font-medium">
-              📅 {todayFollowUps} follow-up{todayFollowUps > 1 ? 's' : ''} due today
-            </span>
+            <span className="text-sm font-medium">📅 {todayFollowUps} follow-up{todayFollowUps > 1 ? 's' : ''} due today</span>
           </div>
         )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm flex items-center gap-2">
-            <AlertCircle size={16} />
-            {error}
-            <button onClick={() => setError('')} className="ml-auto text-red-400 hover:text-red-600">✕</button>
+            <AlertCircle size={16} className="flex-shrink-0" />
+            <span className="flex-1">{error}</span>
+            <button onClick={() => setError('')} className="text-red-400 hover:text-red-600">✕</button>
           </div>
         )}
 
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
-              CRM
-            </h2>
-            <p className="text-gray-500 text-sm">{leads.length} leads · AI scored pipeline</p>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>CRM</h2>
+            <p className="text-gray-500 text-sm">{leads.length} leads · Manage your sales pipeline</p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setShowImport(true)}
+            <button onClick={() => setShowImport(true)}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium"
-              style={{ background: '#EDE9FE', color: '#8B5CF6', border: '2px solid #8B5CF6' }}
-            >
+              style={{ background: '#EDE9FE', color: '#8B5CF6', border: '2px solid #8B5CF6' }}>
               <Upload size={16} /> Import
             </button>
-            <button
-              onClick={exportCSV}
-              className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-white/10 dark:text-white"
-            >
+            <button onClick={exportCSV}
+              className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-white/10 dark:text-white">
               <Download size={16} /> Export
             </button>
-            <button
-              onClick={() => { setShowModal(true); setError('') }}
-              className="candy-btn flex items-center gap-2 px-4 py-2 text-sm"
-            >
+            <button onClick={() => { setShowModal(true); setError('') }}
+              className="candy-btn flex items-center gap-2 px-4 py-2 text-sm">
               <Plus size={16} /> Add Lead
             </button>
           </div>
@@ -186,21 +171,13 @@ export default function CRM() {
         <div className="flex gap-3">
           <div className="flex-1 relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+            <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search by name, email, business..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 outline-none dark:bg-[#1a2740] dark:text-white"
-            />
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500 dark:bg-[#1a2740] dark:text-white" />
           </div>
-          <select
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-            className="border border-gray-300 dark:border-white/20 rounded-xl px-3 py-2 text-sm outline-none dark:bg-[#1a2740] dark:text-white"
-          >
-            {['All', 'New', 'Contacted', 'Converted', 'Lost'].map(s => (
-              <option key={s}>{s}</option>
-            ))}
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+            className="border border-gray-300 dark:border-white/20 rounded-xl px-3 py-2 text-sm outline-none dark:bg-[#1a2740] dark:text-white">
+            {['All', 'New', 'Contacted', 'Converted', 'Lost'].map(s => <option key={s}>{s}</option>)}
           </select>
         </div>
 
@@ -215,14 +192,12 @@ export default function CRM() {
               {leads.length === 0 ? 'No leads yet' : 'No results found'}
             </h3>
             <p className="text-gray-500 text-sm mb-6">
-              {leads.length === 0 ? 'Add your first lead or import from CSV' : 'Try different search terms'}
+              {leads.length === 0 ? 'Add your first lead or import from any CSV format' : 'Try different search terms'}
             </p>
             <div className="flex gap-3 justify-center flex-wrap">
-              <button
-                onClick={() => setShowImport(true)}
+              <button onClick={() => setShowImport(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
-                style={{ background: '#EDE9FE', color: '#8B5CF6', border: '2px solid #8B5CF6' }}
-              >
+                style={{ background: '#EDE9FE', color: '#8B5CF6', border: '2px solid #8B5CF6' }}>
                 <Upload size={16} /> Import CSV
               </button>
               <button onClick={() => setShowModal(true)} className="candy-btn px-6 py-2 text-sm">
@@ -236,9 +211,7 @@ export default function CRM() {
               <thead className="bg-gray-50 dark:bg-[#0A1628]">
                 <tr>
                   {['Name', 'Email', 'Phone', 'Business', 'Source', 'Status', 'Score', ''].map(h => (
-                    <th key={h} className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      {h}
-                    </th>
+                    <th key={h} className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -247,41 +220,30 @@ export default function CRM() {
                   const score = lead.fields?.Score || 0
                   return (
                     <tr key={lead.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-                      <td className="p-4 font-medium text-gray-900 dark:text-white text-sm">
-                        {lead.fields?.Name}
-                      </td>
-                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
-                        {lead.fields?.Email || '—'}
-                      </td>
-                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
-                        {lead.fields?.Phone || '—'}
-                      </td>
-                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
-                        {lead.fields?.['Business Type'] || '—'}
-                      </td>
-                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">
-                        {lead.fields?.['Lead Source'] || '—'}
-                      </td>
+                      <td className="p-4 font-medium text-gray-900 dark:text-white text-sm">{lead.fields?.Name}</td>
+                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{lead.fields?.Email || '—'}</td>
+                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{lead.fields?.Phone || '—'}</td>
+                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{lead.fields?.['Business Type'] || '—'}</td>
+                      <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{lead.fields?.['Lead Source'] || '—'}</td>
                       <td className="p-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[lead.fields?.Status] || 'bg-gray-100 text-gray-600'}`}>
-                          {lead.fields?.Status || 'New'}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                          score >= 70 ? 'bg-green-100 text-green-700' :
-                          score >= 40 ? 'bg-yellow-100 text-yellow-700' :
-                          score > 0 ? 'bg-red-100 text-red-700' :
-                          'bg-gray-100 text-gray-500'
-                        }`}>
-                          {score > 0 ? score : 'N/A'}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => handleDelete(lead.id)}
-                          className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        <select
+                          value={lead.fields?.Status || 'New'}
+                          onChange={e => handleStatusChange(lead.id, e.target.value)}
+                          className={`px-2 py-1 rounded-full text-xs font-medium border-0 outline-none cursor-pointer ${STATUS_COLORS[lead.fields?.Status] || 'bg-gray-100 text-gray-600'}`}
                         >
+                          {['New', 'Contacted', 'Converted', 'Lost'].map(s => <option key={s}>{s}</option>)}
+                        </select>
+                      </td>
+                      <td className="p-4">
+                        {score > 0 ? (
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${score >= 70 ? 'bg-green-100 text-green-700' : score >= 40 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                            {score}
+                          </span>
+                        ) : <span className="text-gray-300 text-xs">—</span>}
+                      </td>
+                      <td className="p-4">
+                        <button onClick={() => handleDelete(lead.id)}
+                          className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors">
                           <Trash2 size={14} />
                         </button>
                       </td>
@@ -295,97 +257,51 @@ export default function CRM() {
 
         {showModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div
-              className="bg-white dark:bg-[#1a2740] rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
-              style={{ border: '2px solid #1E293B', boxShadow: '8px 8px 0px #8B5CF6' }}
-            >
-              <h3 className="font-black text-lg mb-4 dark:text-white" style={{ fontFamily: 'Outfit' }}>
-                Add New Lead
-              </h3>
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-red-600 text-sm">
-                  {error}
-                </div>
-              )}
+            <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+              style={{ border: '2px solid #1E293B', boxShadow: '8px 8px 0px #8B5CF6' }}>
+              <h3 className="font-black text-lg mb-4 dark:text-white" style={{ fontFamily: 'Outfit' }}>Add New Lead</h3>
+              {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-red-600 text-sm">{error}</div>}
               <form onSubmit={handleSubmit} className="space-y-3">
                 {[
-                  { key: 'Name', label: 'Full Name *', type: 'text', required: true, placeholder: 'Contact full name' },
-                  { key: 'Email', label: 'Email', type: 'email', required: false, placeholder: 'email@company.com' },
-                  { key: 'Phone', label: 'Phone', type: 'tel', required: false, placeholder: '+91 9876543210' },
-                  { key: 'Business Type', label: 'Business Type', type: 'text', required: false, placeholder: 'e.g. Retail, SaaS, Manufacturing' },
-                  { key: 'Next Follow-up Date', label: 'Follow-up Date', type: 'date', required: false, placeholder: '' },
+                  { key: 'Name', label: 'Full Name *', type: 'text', required: true, ph: 'Contact full name' },
+                  { key: 'Email', label: 'Email', type: 'email', required: false, ph: 'email@company.com' },
+                  { key: 'Phone', label: 'Phone', type: 'tel', required: false, ph: '+91 9876543210' },
+                  { key: 'Business Type', label: 'Business Type', type: 'text', required: false, ph: 'e.g. Retail, SaaS' },
+                  { key: 'Next Follow-up Date', label: 'Follow-up Date', type: 'date', required: false, ph: '' },
                 ].map(f => (
                   <div key={f.key}>
-                    <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300"
-                      style={{ fontFamily: 'Outfit' }}>
-                      {f.label}
-                    </label>
-                    <input
-                      type={f.type}
-                      required={f.required}
-                      placeholder={f.placeholder}
+                    <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300" style={{ fontFamily: 'Outfit' }}>{f.label}</label>
+                    <input type={f.type} required={f.required} placeholder={f.ph}
                       value={form[f.key as keyof typeof form]}
                       onChange={e => setForm({ ...form, [f.key]: e.target.value })}
-                      className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-violet-500 outline-none dark:bg-white/5 dark:text-white"
-                    />
+                      className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-violet-500 outline-none dark:bg-white/5 dark:text-white" />
                   </div>
                 ))}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300"
-                    style={{ fontFamily: 'Outfit' }}>
-                    Lead Source
-                  </label>
-                  <select
-                    value={form['Lead Source']}
-                    onChange={e => setForm({ ...form, 'Lead Source': e.target.value })}
-                    className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-violet-500 outline-none dark:bg-[#1a2740] dark:text-white"
-                  >
-                    {['Website', 'Referral', 'LinkedIn', 'Cold Call', 'Trade Show', 'Event', 'Other'].map(s => (
-                      <option key={s}>{s}</option>
-                    ))}
+                  <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300" style={{ fontFamily: 'Outfit' }}>Lead Source</label>
+                  <select value={form['Lead Source']} onChange={e => setForm({ ...form, 'Lead Source': e.target.value })}
+                    className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm outline-none dark:bg-[#1a2740] dark:text-white">
+                    {['Website', 'Referral', 'LinkedIn', 'Cold Call', 'Trade Show', 'Event', 'Other'].map(s => <option key={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300"
-                    style={{ fontFamily: 'Outfit' }}>
-                    Status
-                  </label>
-                  <select
-                    value={form.Status}
-                    onChange={e => setForm({ ...form, Status: e.target.value })}
-                    className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-violet-500 outline-none dark:bg-[#1a2740] dark:text-white"
-                  >
-                    {['New', 'Contacted', 'Converted', 'Lost'].map(s => (
-                      <option key={s}>{s}</option>
-                    ))}
+                  <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300" style={{ fontFamily: 'Outfit' }}>Status</label>
+                  <select value={form.Status} onChange={e => setForm({ ...form, Status: e.target.value })}
+                    className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm outline-none dark:bg-[#1a2740] dark:text-white">
+                    {['New', 'Contacted', 'Converted', 'Lost'].map(s => <option key={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300"
-                    style={{ fontFamily: 'Outfit' }}>
-                    Notes
-                  </label>
-                  <textarea
-                    value={form.Notes}
-                    onChange={e => setForm({ ...form, Notes: e.target.value })}
-                    rows={3}
-                    placeholder="Any additional notes..."
-                    className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-violet-500 outline-none resize-none dark:bg-white/5 dark:text-white"
-                  />
+                  <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300" style={{ fontFamily: 'Outfit' }}>Notes</label>
+                  <textarea value={form.Notes} onChange={e => setForm({ ...form, Notes: e.target.value })}
+                    rows={3} placeholder="Any additional notes..."
+                    className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm outline-none resize-none dark:bg-white/5 dark:text-white" />
                 </div>
                 <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => { setShowModal(false); setError('') }}
-                    className="flex-1 border border-gray-300 py-2 rounded-xl text-sm hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="candy-btn flex-1 py-2 text-sm disabled:opacity-50"
-                  >
+                  <button type="button" onClick={() => { setShowModal(false); setError('') }}
+                    className="flex-1 border border-gray-300 py-2 rounded-xl text-sm hover:bg-gray-50">Cancel</button>
+                  <button type="submit" disabled={saving}
+                    className="candy-btn flex-1 py-2 text-sm disabled:opacity-50">
                     {saving ? 'Saving...' : 'Save Lead'}
                   </button>
                 </div>
