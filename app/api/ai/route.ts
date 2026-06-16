@@ -3,47 +3,46 @@ import { NextRequest, NextResponse } from 'next/server'
 const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
 const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
 
-async function getAirtableData() {
-  const headers = { Authorization: `Bearer ${TOKEN}` }
-  const results: Record<string, any> = {}
-
-  const tables = ['Leads', 'Invoices', 'Products', 'Employees', 'Projects']
-
-  await Promise.all(tables.map(async table => {
-    try {
-      const r = await fetch(`https://api.airtable.com/v0/${BASE}/${table}?maxRecords=50`, { headers })
-      const d = await r.json()
-      results[table] = d.records || []
-    } catch {
-      results[table] = []
-    }
-  }))
-
-  return results
+async function fetchTableData(table: string, maxRecords = 50) {
+  try {
+    const res = await fetch(
+      `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}?maxRecords=${maxRecords}`,
+      { headers: { Authorization: `Bearer ${TOKEN}` } }
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.records || []
+  } catch {
+    return []
+  }
 }
 
-function buildContext(data: Record<string, any[]>) {
-  const leads = data.Leads || []
-  const invoices = data.Invoices || []
-  const products = data.Products || []
-  const employees = data.Employees || []
-  const projects = data.Projects || []
+async function buildBusinessContext() {
+  const [leads, invoices, products, employees, projects] = await Promise.all([
+    fetchTableData('Leads'),
+    fetchTableData('Invoices'),
+    fetchTableData('Products'),
+    fetchTableData('Employees'),
+    fetchTableData('Projects'),
+  ])
 
   const newLeads = leads.filter((l: any) => l.fields?.Status === 'New').length
   const contactedLeads = leads.filter((l: any) => l.fields?.Status === 'Contacted').length
   const convertedLeads = leads.filter((l: any) => l.fields?.Status === 'Converted').length
+  const lostLeads = leads.filter((l: any) => l.fields?.Status === 'Lost').length
 
   const paidInvoices = invoices.filter((i: any) => i.fields?.['Payment Status'] === 'Paid').length
   const unpaidInvoices = invoices.filter((i: any) => i.fields?.['Payment Status'] === 'Unpaid').length
   const overdueInvoices = invoices.filter((i: any) => i.fields?.['Payment Status'] === 'Overdue').length
 
-  const lowStockProducts = products.filter((p: any) =>
-    (p.fields?.['Current Stock'] || 0) <= (p.fields?.['Reorder Level'] || 0)
+  const lowStock = products.filter((p: any) =>
+    (p.fields?.['Current Stock'] || 0) <= (p.fields?.['Reorder Level'] || 0) &&
+    (p.fields?.['Reorder Level'] || 0) > 0
   ).length
 
   const totalPayroll = employees.reduce((s: number, e: any) => s + (e.fields?.Salary || 0), 0)
 
-  const inProgressProjects = projects.filter((p: any) => p.fields?.Status === 'In Progress').length
+  const inProgress = projects.filter((p: any) => p.fields?.Status === 'In Progress').length
   const overdueProjects = projects.filter((p: any) =>
     p.fields?.Deadline && new Date(p.fields.Deadline) < new Date()
   ).length
@@ -51,94 +50,143 @@ function buildContext(data: Record<string, any[]>) {
   const topLeads = leads
     .sort((a: any, b: any) => (b.fields?.Score || 0) - (a.fields?.Score || 0))
     .slice(0, 3)
-    .map((l: any) => `${l.fields?.Name} (${l.fields?.Status}, score: ${l.fields?.Score || 0})`)
+    .map((l: any) => `${l.fields?.Name || 'Unknown'} (${l.fields?.Status || 'New'}, score: ${l.fields?.Score || 0})`)
+
+  const recentLeadNames = leads
+    .slice(0, 5)
+    .map((l: any) => l.fields?.Name)
+    .filter(Boolean)
 
   return {
-    totalLeads: leads.length,
-    newLeads,
-    contactedLeads,
-    convertedLeads,
-    totalInvoices: invoices.length,
-    paidInvoices,
-    unpaidInvoices,
-    overdueInvoices,
-    totalProducts: products.length,
-    lowStockProducts,
-    totalEmployees: employees.length,
-    totalPayroll,
-    totalProjects: projects.length,
-    inProgressProjects,
-    overdueProjects,
-    topLeads,
-    recentLeadNames: leads.slice(0, 5).map((l: any) => l.fields?.Name).filter(Boolean),
+    leads: {
+      total: leads.length,
+      new: newLeads,
+      contacted: contactedLeads,
+      converted: convertedLeads,
+      lost: lostLeads,
+      conversionRate: leads.length > 0 ? Math.round((convertedLeads / leads.length) * 100) : 0,
+      topLeads,
+      recentNames: recentLeadNames,
+    },
+    invoices: {
+      total: invoices.length,
+      paid: paidInvoices,
+      unpaid: unpaidInvoices,
+      overdue: overdueInvoices,
+    },
+    inventory: {
+      total: products.length,
+      lowStock,
+    },
+    hr: {
+      total: employees.length,
+      totalPayroll,
+    },
+    projects: {
+      total: projects.length,
+      inProgress,
+      overdueProjects,
+      done: projects.filter((p: any) => p.fields?.Status === 'Done').length,
+    },
   }
 }
 
-function getFallback(context: any): string {
+function getMotivationalFallback(context: any): string {
   if (!context) {
-    return '🚀 Add your business data to get personalized AI insights about your leads, revenue, and growth opportunities!'
+    return '🚀 Your Samyojak ERP is ready! Start by adding your first lead in CRM. Every big business started with their first contact. You have got this!'
   }
-  const { totalLeads, convertedLeads, paidInvoices, newLeads } = context
-  if (totalLeads === 0) {
-    return '🌟 Your ERP is ready! Start by adding your first lead in CRM. Every big business started with their first contact.'
+
+  const { leads, invoices, inventory } = context
+
+  if (leads.total === 0) {
+    return '🌟 Your ERP is set up and ready! Head to CRM and add your first lead today. The journey of a thousand customers starts with one.'
   }
-  if (convertedLeads > 0) {
-    return `💪 You have converted ${convertedLeads} out of ${totalLeads} leads — that is real traction! Focus on your ${newLeads} new leads today and follow up personally.`
+
+  if (leads.converted > 0) {
+    return `💪 You have already converted ${leads.converted} out of ${leads.total} leads — real traction! Your top leads are: ${leads.topLeads.slice(0, 2).join(', ')}. Follow up with your ${leads.new} new leads today.`
   }
-  return `🎯 You have ${totalLeads} leads in your pipeline. Your next goal is to convert at least one to a paying customer. Pick your top lead and reach out today!`
+
+  if (invoices.overdue > 0) {
+    return `⚠️ You have ${invoices.overdue} overdue invoice${invoices.overdue > 1 ? 's' : ''} that need attention today. Follow up on payments first — then focus on your ${leads.new} new leads in the pipeline.`
+  }
+
+  if (inventory.lowStock > 0) {
+    return `📦 ${inventory.lowStock} product${inventory.lowStock > 1 ? 's are' : ' is'} running low on stock. Reorder before you run out. Meanwhile you have ${leads.total} leads in your pipeline to convert!`
+  }
+
+  return `🎯 You have ${leads.total} leads with a ${leads.conversionRate}% conversion rate. Your pipeline has ${leads.new} new leads and ${leads.contacted} being nurtured. Keep pushing — every follow-up brings you closer to a sale!`
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, isOnboarding, userName, company } = await req.json()
+    const body = await req.json()
+    const { message, isOnboarding, userName, company } = body
 
     const apiKey = process.env.GROQ_API_KEY
 
-    // Fetch real data from Airtable
+    // Always fetch real data
     let context: any = null
     try {
-      const data = await getAirtableData()
-      context = buildContext(data)
+      context = await buildBusinessContext()
     } catch (e) {
-      console.error('Could not fetch Airtable data for AI:', e)
+      console.error('Failed to fetch business context:', e)
     }
 
     if (!apiKey) {
-      return NextResponse.json({ reply: getFallback(context), context })
+      return NextResponse.json({
+        reply: getMotivationalFallback(context),
+        context,
+      })
     }
 
-    const systemPrompt = isOnboarding
-      ? `You are Samyojak AI — a warm, encouraging business assistant.
-The user just signed up. Name: ${userName || 'there'}. Company: ${company || 'their business'}.
-Give a warm personalized welcome in 2-3 sentences. Tell them the ONE most important first step.
-Be energetic and encouraging. Use 1-2 emojis. Keep it under 50 words.`
-      : `You are Samyojak AI — a smart business intelligence assistant for an ERP system.
-You have access to the user's REAL business data:
+    let systemPrompt: string
 
-${context ? JSON.stringify(context, null, 2) : 'No data available yet'}
+    if (isOnboarding) {
+      systemPrompt = `You are Samyojak AI — a warm, encouraging business assistant.
+User just signed up. Name: ${userName || 'there'}. Company: ${company || 'their business'}.
+Give a warm 2-3 sentence personalized welcome. Tell them ONE most important first step.
+Be energetic, friendly. Use 1-2 emojis. Max 60 words.`
+    } else {
+      systemPrompt = `You are Samyojak AI — a smart, encouraging business intelligence assistant for an ERP system.
 
-Rules:
-- Use their ACTUAL numbers when answering
+You have access to the user's REAL live business data right now:
+
+LEADS: ${context?.leads.total || 0} total — ${context?.leads.new || 0} new, ${context?.leads.contacted || 0} contacted, ${context?.leads.converted || 0} converted, ${context?.leads.lost || 0} lost
+Conversion rate: ${context?.leads.conversionRate || 0}%
+Top leads: ${context?.leads.topLeads?.join(', ') || 'none yet'}
+Recent leads: ${context?.leads.recentNames?.join(', ') || 'none yet'}
+
+INVOICES: ${context?.invoices.total || 0} total — ${context?.invoices.paid || 0} paid, ${context?.invoices.unpaid || 0} unpaid, ${context?.invoices.overdue || 0} overdue
+
+INVENTORY: ${context?.inventory.total || 0} products — ${context?.inventory.lowStock || 0} low on stock
+
+EMPLOYEES: ${context?.hr.total || 0} team members — Total payroll: ₹${context?.hr.totalPayroll?.toLocaleString() || 0}/month
+
+PROJECTS: ${context?.projects.total || 0} total — ${context?.projects.inProgress || 0} in progress, ${context?.projects.done || 0} done, ${context?.projects.overdueProjects || 0} overdue
+
+RULES:
+- Use ACTUAL numbers from the data above when answering
 - Always find the positive angle first
-- Give specific actionable advice based on their data
-- If they ask about leads, mention their actual lead names and counts
-- If they ask about revenue, use their actual invoice data
-- Be encouraging like a business mentor
+- Give specific actionable advice based on their real data
+- Reference actual lead names when relevant
+- Be like an encouraging business mentor who knows their numbers
 - Maximum 4 sentences
 - Use 1-2 emojis
-- Never say "I don't have access to your data" — you DO have their data above`
+- NEVER say "I don't have access to your data" — you DO have it above
+- If asked about specific things like leads or invoices, give specific answers using the numbers above`
+    }
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: 'llama3-8b-8192',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: message || 'Give me a business overview' }
+          { role: 'user', content: message || 'Give me a quick business overview and what I should focus on today' },
         ],
         max_tokens: 300,
         temperature: 0.7,
@@ -146,19 +194,25 @@ Rules:
     })
 
     if (!response.ok) {
-      console.error('Groq error:', response.status)
-      return NextResponse.json({ reply: getFallback(context) })
+      const errText = await response.text()
+      console.error('Groq error:', response.status, errText)
+      return NextResponse.json({
+        reply: getMotivationalFallback(context),
+        context,
+      })
     }
 
     const data = await response.json()
     const reply = data.choices?.[0]?.message?.content
 
-    return NextResponse.json({ reply: reply || getFallback(context), context })
-
+    return NextResponse.json({
+      reply: reply || getMotivationalFallback(context),
+      context,
+    })
   } catch (error: any) {
     console.error('AI route error:', error.message)
     return NextResponse.json({
-      reply: '🤖 AI is temporarily unavailable. Check your GROQ_API_KEY in Vercel environment variables.'
+      reply: '🤖 AI is warming up. Check GROQ_API_KEY in Vercel environment variables.',
     })
   }
 }
