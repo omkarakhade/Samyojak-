@@ -6,31 +6,45 @@ import { airtable } from '@/lib/airtable'
 import { useRouter } from 'next/navigation'
 import {
   Users, FileText, Package, UserCheck,
-  FolderOpen, TrendingUp, Brain, Send,
-  AlertCircle, Star
+  FolderOpen, Brain, Send, Star,
+  TrendingUp, Lock,
 } from 'lucide-react'
 import { getPlanFromMetadata } from '@/lib/planAccess'
+
+const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
+const AI_PLANS = ['Complete']
 
 const planOrder = ['CRM Starter', 'ERP Basic', 'Business', 'Complete']
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
   const [plan, setPlan] = useState<string>('No Plan')
-  const [stats, setStats] = useState({ leads: 0, invoices: 0, products: 0, employees: 0, projects: 0 })
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [stats, setStats] = useState({
+    leads: 0, invoices: 0, products: 0,
+    employees: 0, projects: 0,
+    convertedLeads: 0, paidInvoices: 0, overdueInvoices: 0
+  })
   const [loading, setLoading] = useState(true)
-  const [aiMessage, setAiMessage] = useState('')
+  const [aiGreeting, setAiGreeting] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
-  const [aiReply, setAiReply] = useState('')
   const [aiInput, setAiInput] = useState('')
+  const [aiReply, setAiReply] = useState('')
+  const [aiChatLoading, setAiChatLoading] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push('/login'); return }
       setUser(user)
-      setPlan(getPlanFromMetadata(user) || 'No Plan')
+      const userPlan = getPlanFromMetadata(user) || 'No Plan'
+      setPlan(userPlan)
+      const admin = user.email === ADMIN_EMAIL
+      setIsAdmin(admin)
       loadStats()
-      loadAIGreeting(user)
+      // Load AI greeting only for Complete plan, admin, or demo users
+      const hasAI = AI_PLANS.includes(userPlan) || admin || user.user_metadata?.is_demo
+      if (hasAI) loadAIGreeting()
     })
   }, [router])
 
@@ -43,66 +57,62 @@ export default function Dashboard() {
         airtable.get('Employees'),
         airtable.get('Projects'),
       ])
+      const leads = l.records || []
+      const invoices = i.records || []
       setStats({
-        leads: l.records?.length || 0,
-        invoices: i.records?.length || 0,
+        leads: leads.length,
+        invoices: invoices.length,
         products: p.records?.length || 0,
         employees: e.records?.length || 0,
         projects: pr.records?.length || 0,
+        convertedLeads: leads.filter((r: any) => r.fields?.Status === 'Converted').length,
+        paidInvoices: invoices.filter((r: any) => r.fields?.['Payment Status'] === 'Paid').length,
+        overdueInvoices: invoices.filter((r: any) => r.fields?.['Payment Status'] === 'Overdue').length,
       })
     } catch (e) {
-      console.error('Stats load error:', e)
+      console.error('Stats error:', e)
     }
     setLoading(false)
   }
 
-  const loadAIGreeting = async (u: any) => {
+  const loadAIGreeting = async () => {
     setAiLoading(true)
     try {
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: 'Give me a quick encouraging business overview and the one most important thing I should do today',
-          isOnboarding: false,
+          message: 'Give me an encouraging business overview and the single most important thing I should do today based on my actual data',
         }),
       })
       const data = await res.json()
-      setAiMessage(data.reply || '')
+      setAiGreeting(data.reply || '')
     } catch {
-      setAiMessage('🚀 Your ERP is ready! Add leads in CRM and create invoices to start tracking your business growth.')
+      setAiGreeting('🚀 Your ERP is ready! Focus on following up with your top leads today.')
     }
     setAiLoading(false)
   }
 
   const askAI = async () => {
-    if (!aiInput.trim() || aiLoading) return
-    const question = aiInput.trim()
+    if (!aiInput.trim() || aiChatLoading) return
+    const q = aiInput.trim()
     setAiInput('')
-    setAiLoading(true)
+    setAiChatLoading(true)
     try {
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: question }),
+        body: JSON.stringify({ message: q }),
       })
       const data = await res.json()
-      setAiReply(data.reply || '')
+      setAiReply(data.reply || 'No response. Try again.')
     } catch {
-      setAiReply('AI temporarily unavailable.')
+      setAiReply('Connection error. Please try again.')
     }
-    setAiLoading(false)
+    setAiChatLoading(false)
   }
 
-  const planIndex = planOrder.indexOf(plan)
-
-  const modules = [
-    { label: 'Leads', value: stats.leads, icon: Users, color: '#8B5CF6', bg: '#EDE9FE', path: '/crm', emoji: '👥' },
-    { label: 'Invoices', value: stats.invoices, icon: FileText, color: '#F472B6', bg: '#FCE7F3', path: '/invoices', emoji: '📄' },
-    { label: 'Products', value: stats.products, icon: Package, color: '#FBBF24', bg: '#FEF3C7', path: '/inventory', emoji: '📦' },
-    { label: 'Employees', value: stats.employees, icon: UserCheck, color: '#34D399', bg: '#D1FAE5', path: '/hr', emoji: '👥' },
-    { label: 'Projects', value: stats.projects, icon: FolderOpen, color: '#8B5CF6', bg: '#EDE9FE', path: '/projects', emoji: '🎯' },
-  ]
+  const canUseAI = AI_PLANS.includes(plan) || isAdmin || user?.user_metadata?.is_demo
 
   const greeting = () => {
     const h = new Date().getHours()
@@ -111,107 +121,184 @@ export default function Dashboard() {
     return 'Good evening'
   }
 
+  const planIndex = planOrder.indexOf(plan)
+
+  const modules = [
+    { label: 'Leads', value: stats.leads, sub: `${stats.convertedLeads} converted`, icon: Users, color: '#8B5CF6', bg: '#EDE9FE', path: '/crm' },
+    { label: 'Invoices', value: stats.invoices, sub: `${stats.paidInvoices} paid`, icon: FileText, color: '#F472B6', bg: '#FCE7F3', path: '/invoices' },
+    { label: 'Products', value: stats.products, sub: 'in inventory', icon: Package, color: '#FBBF24', bg: '#FEF3C7', path: '/inventory' },
+    { label: 'Employees', value: stats.employees, sub: 'team members', icon: UserCheck, color: '#34D399', bg: '#D1FAE5', path: '/hr' },
+    { label: 'Projects', value: stats.projects, sub: 'being tracked', icon: FolderOpen, color: '#8B5CF6', bg: '#EDE9FE', path: '/projects' },
+  ]
+
+  const quickActions = [
+    { label: 'Add Lead', path: '/crm', color: '#8B5CF6', bg: '#EDE9FE', emoji: '👥' },
+    { label: 'Create Invoice', path: '/invoices', color: '#F472B6', bg: '#FCE7F3', emoji: '📄' },
+    { label: 'Add Product', path: '/inventory', color: '#FBBF24', bg: '#FEF3C7', emoji: '📦' },
+    { label: 'New Project', path: '/projects', color: '#34D399', bg: '#D1FAE5', emoji: '🎯' },
+  ]
+
   return (
     <Layout>
       <div className="space-y-6">
 
-        {/* Greeting */}
-        <div className="flex items-start justify-between gap-4">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h2 className="text-2xl font-black text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
               {greeting()}, {user?.user_metadata?.full_name?.split(' ')[0] || 'there'} 👋
             </h2>
             <p className="text-gray-500 text-sm mt-1">
-              {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              {new Date().toLocaleDateString('en-IN', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+              })}
             </p>
           </div>
-          <div className="flex-shrink-0">
-            <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${
-              plan === 'Complete' ? 'bg-purple-100 text-purple-700' :
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <span className="px-3 py-1.5 rounded-full text-xs font-black"
+                style={{ background: '#EF4444', color: 'white' }}>
+                🛡️ Admin
+              </span>
+            )}
+            <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${plan === 'Complete' ? 'bg-purple-100 text-purple-700' :
               plan === 'Business' ? 'bg-blue-100 text-blue-700' :
               plan === 'ERP Basic' ? 'bg-green-100 text-green-700' :
               plan === 'CRM Starter' ? 'bg-yellow-100 text-yellow-700' :
-              'bg-gray-100 text-gray-600'
-            }`}>
+              'bg-gray-100 text-gray-600'}`}>
               {plan}
             </span>
           </div>
         </div>
 
-        {/* AI Business Intelligence Card */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: '#0F172A', border: '2px solid #334155', boxShadow: '6px 6px 0px #8B5CF6' }}>
-          <div className="p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: '#8B5CF6' }}>
-                <Brain size={20} className="text-white" />
+        {/* AI SECTION — Only for Complete plan, Admin, Demo */}
+        {canUseAI ? (
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: '#0F172A', border: '2px solid #334155', boxShadow: '6px 6px 0px #8B5CF6' }}>
+            <div className="p-5">
+              {/* AI Header */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: '#8B5CF6' }}>
+                  <Brain size={20} className="text-white" />
+                </div>
+                <div>
+                  <p className="font-black text-white" style={{ fontFamily: 'Outfit' }}>
+                    AI Business Intelligence
+                  </p>
+                  <p className="text-xs" style={{ color: '#34D399' }}>
+                    Reading your live Airtable data in real-time
+                  </p>
+                </div>
+                <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                  <span className="text-xs text-green-400">Live</span>
+                </div>
               </div>
-              <div>
+
+              {/* AI Greeting */}
+              {aiLoading ? (
+                <div className="flex items-center gap-2 py-2 mb-4">
+                  {[0, 150, 300].map(d => (
+                    <div key={d} className="w-2 h-2 rounded-full bg-violet-400 animate-bounce"
+                      style={{ animationDelay: `${d}ms` }}></div>
+                  ))}
+                  <span className="text-xs" style={{ color: '#64748B' }}>Analyzing your business data...</span>
+                </div>
+              ) : aiGreeting ? (
+                <p className="text-sm leading-relaxed mb-4" style={{ color: '#C4B5FD', fontFamily: 'Plus Jakarta Sans' }}>
+                  {aiGreeting}
+                </p>
+              ) : null}
+
+              {/* AI Response */}
+              {aiReply && (
+                <div className="mb-4 p-3 rounded-xl text-sm leading-relaxed"
+                  style={{ background: 'rgba(139,92,246,0.15)', color: '#E9D5FF', border: '1px solid rgba(139,92,246,0.3)', fontFamily: 'Plus Jakarta Sans' }}>
+                  {aiChatLoading ? (
+                    <div className="flex items-center gap-2">
+                      {[0, 150, 300].map(d => (
+                        <div key={d} className="w-2 h-2 rounded-full bg-violet-400 animate-bounce"
+                          style={{ animationDelay: `${d}ms` }}></div>
+                      ))}
+                    </div>
+                  ) : aiReply}
+                </div>
+              )}
+
+              {/* AI Input */}
+              <div className="flex gap-2 mb-3">
+                <input
+                  value={aiInput}
+                  onChange={e => setAiInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && askAI()}
+                  placeholder="Ask AI about your business..."
+                  className="flex-1 px-3 py-2 rounded-xl text-sm outline-none"
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: 'white',
+                    fontFamily: 'Plus Jakarta Sans',
+                  }}
+                />
+                <button
+                  onClick={askAI}
+                  disabled={aiChatLoading || !aiInput.trim()}
+                  className="px-4 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-40 flex items-center gap-2 flex-shrink-0"
+                  style={{ background: '#8B5CF6' }}
+                >
+                  <Send size={16} />
+                </button>
+              </div>
+
+              {/* Quick Questions */}
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  'How are my leads?',
+                  'Any overdue invoices?',
+                  'Low stock alerts?',
+                  'What should I focus on?',
+                  'Business health summary',
+                ].map(q => (
+                  <button
+                    key={q}
+                    onClick={() => { setAiInput(q); setTimeout(() => askAI(), 50) }}
+                    className="px-2 py-1 rounded-full text-xs font-medium hover:opacity-80 transition-opacity"
+                    style={{ background: 'rgba(139,92,246,0.2)', color: '#C4B5FD', border: '1px solid rgba(139,92,246,0.3)' }}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* AI Upgrade Prompt — for plans below Complete */
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: '#1E293B', border: '2px solid #334155' }}>
+            <div className="p-5 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(139,92,246,0.2)', border: '2px solid rgba(139,92,246,0.3)' }}>
+                <Lock size={22} style={{ color: '#8B5CF6' }} />
+              </div>
+              <div className="flex-1">
                 <p className="font-black text-white" style={{ fontFamily: 'Outfit' }}>
                   AI Business Intelligence
                 </p>
-                <p className="text-xs text-green-400">Reading your live Airtable data</p>
+                <p className="text-sm" style={{ color: '#64748B' }}>
+                  Upgrade to Complete plan to unlock AI that reads your live data and gives real insights
+                </p>
               </div>
-              <div className="ml-auto flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                <span className="text-xs text-green-400">Live</span>
-              </div>
-            </div>
-
-            {aiLoading && !aiMessage ? (
-              <div className="flex items-center gap-2 py-2">
-                <div className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                <span className="text-xs text-gray-400">Analyzing your data...</span>
-              </div>
-            ) : (
-              <p className="text-sm leading-relaxed mb-4" style={{ color: '#C4B5FD', fontFamily: 'Plus Jakarta Sans' }}>
-                {aiMessage}
-              </p>
-            )}
-
-            {aiReply && (
-              <div className="mb-4 p-3 rounded-xl text-sm leading-relaxed" style={{ background: 'rgba(139,92,246,0.2)', color: '#E9D5FF', border: '1px solid rgba(139,92,246,0.3)', fontFamily: 'Plus Jakarta Sans' }}>
-                {aiReply}
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <input
-                value={aiInput}
-                onChange={e => setAiInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && askAI()}
-                placeholder="Ask AI about your business..."
-                className="flex-1 px-3 py-2 rounded-xl text-sm outline-none"
-                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', fontFamily: 'Plus Jakarta Sans' }}
-              />
-              <button
-                onClick={askAI}
-                disabled={aiLoading || !aiInput.trim()}
-                className="px-4 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-40 flex items-center gap-2"
-                style={{ background: '#8B5CF6' }}
-              >
-                <Send size={16} />
-              </button>
-            </div>
-
-            <div className="flex gap-2 mt-3 flex-wrap">
-              {['How are my leads?', 'Any overdue invoices?', 'Low stock alerts?', 'Team summary'].map(q => (
-                <button
-                  key={q}
-                  onClick={() => { setAiInput(q); setTimeout(askAI, 100) }}
-                  className="px-2 py-1 rounded-full text-xs font-medium"
-                  style={{ background: 'rgba(139,92,246,0.2)', color: '#C4B5FD', border: '1px solid rgba(139,92,246,0.3)' }}
-                >
-                  {q}
-                </button>
-              ))}
+              <a href="/choose-plan"
+                className="px-4 py-2 rounded-xl text-sm font-bold flex-shrink-0 hover:opacity-90 transition-opacity"
+                style={{ background: '#8B5CF6', color: 'white' }}>
+                Upgrade
+              </a>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Stats Grid */}
+        {/* Stats */}
         {loading ? (
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div>
@@ -220,9 +307,8 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {modules.map(m => (
               <a key={m.label} href={m.path}
-                className="block bg-white dark:bg-[#1a2740] rounded-2xl p-5 hover:shadow-lg transition-all"
-                style={{ border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #E2E8F0' }}
-              >
+                className="block bg-white dark:bg-[#1a2740] rounded-2xl p-5 hover:shadow-lg transition-all hover:-translate-y-0.5"
+                style={{ border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #E2E8F0' }}>
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
                   style={{ background: m.bg, border: `2px solid ${m.color}` }}>
                   <m.icon size={20} style={{ color: m.color }} />
@@ -231,61 +317,100 @@ export default function Dashboard() {
                 <p className="text-3xl font-black text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
                   {m.value}
                 </p>
+                <p className="text-xs mt-1" style={{ color: m.color }}>{m.sub}</p>
               </a>
             ))}
           </div>
         )}
 
+        {/* Alerts */}
+        {stats.overdueInvoices > 0 && (
+          <div className="p-4 rounded-xl flex items-center gap-3"
+            style={{ background: '#FEF2F2', border: '1.5px solid #FCA5A5' }}>
+            <span className="text-lg">⚠️</span>
+            <div>
+              <p className="text-sm font-bold text-red-800">
+                {stats.overdueInvoices} overdue invoice{stats.overdueInvoices > 1 ? 's' : ''}
+              </p>
+              <p className="text-xs text-red-600">Follow up on payments to maintain cash flow</p>
+            </div>
+            <a href="/invoices" className="ml-auto text-xs font-bold text-red-700 hover:underline">
+              View →
+            </a>
+          </div>
+        )}
+
         {/* Plan Progress */}
-        {plan !== 'Complete' && (
+        {plan !== 'Complete' && !isAdmin && (
           <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-5"
             style={{ border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #E2E8F0' }}>
             <div className="flex items-center gap-2 mb-3">
               <Star size={18} style={{ color: '#FBBF24' }} />
               <h3 className="font-bold text-gray-900 dark:text-white text-sm" style={{ fontFamily: 'Outfit' }}>
-                Your Plan Progress
+                Upgrade Your Plan
               </h3>
             </div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-1 mb-3 flex-wrap">
               {planOrder.map((p, i) => (
-                <div key={p} className="flex items-center gap-2">
-                  <div className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    i <= planIndex ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400'
-                  }`}>
+                <div key={p} className="flex items-center gap-1">
+                  <div className={`px-2 py-1 rounded-full text-xs font-bold ${i <= planIndex ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
                     {p}
                   </div>
                   {i < planOrder.length - 1 && (
-                    <div className={`w-4 h-0.5 ${i < planIndex ? 'bg-violet-600' : 'bg-gray-200'}`} />
+                    <div className={`w-3 h-0.5 ${i < planIndex ? 'bg-violet-600' : 'bg-gray-200'}`} />
                   )}
                 </div>
               ))}
             </div>
-            <p className="text-xs text-gray-400 mt-2">
-              Upgrade to <strong style={{ color: '#8B5CF6' }}>
-                {planOrder[planIndex + 1] || 'Complete'}
-              </strong> to unlock more modules
+            <p className="text-xs text-gray-400">
+              Upgrade to <strong style={{ color: '#8B5CF6' }}>{planOrder[planIndex + 1] || 'Complete'}</strong> to unlock AI assistant and more modules
             </p>
           </div>
         )}
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: 'Add Lead', path: '/crm', color: '#8B5CF6', bg: '#EDE9FE', emoji: '➕' },
-            { label: 'Create Invoice', path: '/invoices', color: '#F472B6', bg: '#FCE7F3', emoji: '📄' },
-            { label: 'Add Product', path: '/inventory', color: '#FBBF24', bg: '#FEF3C7', emoji: '📦' },
-            { label: 'New Project', path: '/projects', color: '#34D399', bg: '#D1FAE5', emoji: '🎯' },
-          ].map(a => (
-            <a key={a.label} href={a.path}
-              className="block p-4 rounded-2xl text-center hover:shadow-md transition-all"
-              style={{ background: a.bg, border: `2px solid ${a.color}` }}
-            >
-              <span className="text-2xl block mb-1">{a.emoji}</span>
-              <span className="text-sm font-bold" style={{ color: a.color, fontFamily: 'Outfit' }}>
-                {a.label}
-              </span>
-            </a>
-          ))}
+        <div>
+          <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+            Quick Actions
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {quickActions.map(a => (
+              <a key={a.label} href={a.path}
+                className="block p-4 rounded-2xl text-center hover:shadow-md transition-all hover:-translate-y-0.5"
+                style={{ background: a.bg, border: `2px solid ${a.color}` }}>
+                <span className="text-2xl block mb-1">{a.emoji}</span>
+                <span className="text-sm font-bold" style={{ color: a.color, fontFamily: 'Outfit' }}>
+                  {a.label}
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Revenue insight */}
+        <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-5"
+          style={{ border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #E2E8F0' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp size={18} style={{ color: '#34D399' }} />
+            <h3 className="font-bold text-gray-900 dark:text-white text-sm" style={{ fontFamily: 'Outfit' }}>
+              Business Snapshot
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: 'Lead Conversion', value: stats.leads > 0 ? `${Math.round((stats.convertedLeads / stats.leads) * 100)}%` : '0%', color: '#8B5CF6' },
+              { label: 'Paid Invoices', value: `${stats.paidInvoices}/${stats.invoices}`, color: '#34D399' },
+              { label: 'Overdue', value: stats.overdueInvoices, color: stats.overdueInvoices > 0 ? '#EF4444' : '#34D399' },
+              { label: 'Team Size', value: stats.employees, color: '#FBBF24' },
+            ].map(s => (
+              <div key={s.label} className="text-center">
+                <p className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: s.color }}>
+                  {s.value}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>
