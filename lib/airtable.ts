@@ -15,27 +15,26 @@ export const airtable = {
     const r = await fetch(url, { headers: getHeaders() })
     if (!r.ok) {
       const err = await r.text()
-      throw new Error(`Airtable GET error ${r.status}: ${err}`)
+      throw new Error(`Airtable GET ${table} failed ${r.status}: ${err}`)
     }
     return r.json()
   },
 
-  async create(table: string, fields: Record<string, any>) {
+  async create(table: string, fields: Record<string, unknown>) {
     const url = `${BASE_URL}/${encodeURIComponent(table)}`
-    const body = JSON.stringify({ fields })
     const r = await fetch(url, {
       method: 'POST',
       headers: getHeaders(),
-      body,
+      body: JSON.stringify({ fields }),
     })
     if (!r.ok) {
       const err = await r.text()
-      throw new Error(`Airtable CREATE error ${r.status}: ${err}`)
+      throw new Error(`Airtable CREATE ${table} failed ${r.status}: ${err}`)
     }
     return r.json()
   },
 
-  async update(table: string, id: string, fields: Record<string, any>) {
+  async update(table: string, id: string, fields: Record<string, unknown>) {
     const url = `${BASE_URL}/${encodeURIComponent(table)}/${id}`
     const r = await fetch(url, {
       method: 'PATCH',
@@ -44,7 +43,7 @@ export const airtable = {
     })
     if (!r.ok) {
       const err = await r.text()
-      throw new Error(`Airtable UPDATE error ${r.status}: ${err}`)
+      throw new Error(`Airtable UPDATE ${table} failed ${r.status}: ${err}`)
     }
     return r.json()
   },
@@ -57,7 +56,7 @@ export const airtable = {
     })
     if (!r.ok) {
       const err = await r.text()
-      throw new Error(`Airtable DELETE error ${r.status}: ${err}`)
+      throw new Error(`Airtable DELETE ${table} failed ${r.status}: ${err}`)
     }
     return r.json()
   },
