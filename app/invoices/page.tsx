@@ -87,18 +87,25 @@ export default function Invoices() {
     setSaving(true)
     setError('')
     try {
-      // Generate invoice number
-      const invNum = invoices.length + 1
+      // IMPORTANT: Invoice No and Total are computed fields - DO NOT write them
+      // Payment Status, Due Date, Issue Date, GST % are writable
+      // We store all client info in Notes since Client is a linked field
+      const noteContent = [
+        `Client: ${form['Client Name'].trim()}`,
+        form['Client Email'] ? `Email: ${form['Client Email']}` : '',
+        form['Client Phone'] ? `Phone: ${form['Client Phone']}` : '',
+        `Amount: ${amount}`,
+        `${taxSystem.label} ${taxRate}%: ${taxAmount}`,
+        `Total: ${total}`,
+        `Tax System: ${taxSystem.name}`,
+        form.Notes ? `Notes: ${form.Notes}` : '',
+      ].filter(Boolean).join(' | ')
 
-      // Only write to fields that exist and are writable in your Airtable
-      // Note: Total is a formula field — we cannot write to it
-      // Client is a linked field — we store as text in Notes instead
       const fields: Record<string, unknown> = {
-        'Invoice No': invNum,
         'Payment Status': 'Unpaid',
         'Issue Date': new Date().toISOString().split('T')[0],
         'GST %': taxRate,
-        Notes: `Client: ${form['Client Name'].trim()}${form['Client Email'] ? ' | Email: ' + form['Client Email'] : ''}${form['Client Phone'] ? ' | Phone: ' + form['Client Phone'] : ''}${form.Notes ? ' | Notes: ' + form.Notes : ''} | Amount: ${amount} | ${taxSystem.label}: ${taxAmount} | Total: ${total} | Tax System: ${taxSystem.name}`,
+        Notes: noteContent,
       }
       if (form['Due Date']) fields['Due Date'] = form['Due Date']
 
@@ -106,7 +113,10 @@ export default function Invoices() {
       console.log('Invoice created:', result.id)
 
       setShowModal(false)
-      setForm({ 'Client Name': '', 'Client Email': '', 'Client Phone': '', Amount: '', 'Due Date': '', Notes: '' })
+      setForm({
+        'Client Name': '', 'Client Email': '', 'Client Phone': '',
+        Amount: '', 'Due Date': '', Notes: '',
+      })
       await fetchInvoices()
     } catch (e: any) {
       setError('Failed to create invoice: ' + e.message)
@@ -135,33 +145,44 @@ export default function Invoices() {
 
   const sendWhatsApp = (inv: any) => {
     const notes = inv.fields?.Notes || ''
-    const phoneMatch = notes.match(/Phone: ([^\s|]+)/)
-    const phone = phoneMatch ? phoneMatch[1].replace(/\D/g, '') : ''
+    const phoneMatch = notes.match(/Phone: ([^|]+)/)
+    const phone = phoneMatch ? phoneMatch[1].trim().replace(/\D/g, '') : ''
     const clientMatch = notes.match(/Client: ([^|]+)/)
     const clientName = clientMatch ? clientMatch[1].trim() : 'Customer'
     const invNo = inv.fields?.['Invoice No'] || ''
+    const totalMatch = notes.match(/Total: ([0-9.]+)/)
+    const totalAmt = totalMatch ? totalMatch[1] : ''
     const msg = encodeURIComponent(
-      `Hi ${clientName}, your Invoice #${invNo} is ready. Please make payment at your earliest. Thank you! - Samyojak`
+      `Hi ${clientName}, your Invoice #${invNo} for ₹${totalAmt} is due. Please make payment at your earliest. Thank you! - Samyojak`
     )
     if (phone) {
       window.open(`https://wa.me/${phone}?text=${msg}`, '_blank')
     } else {
-      alert('No phone number found for this invoice')
+      alert('No phone number found for this invoice. Add phone when creating invoice.')
     }
   }
 
   const exportCSV = () => {
     const rows = [
-      ['Invoice No', 'Client', 'GST %', 'Payment Status', 'Issue Date', 'Due Date', 'Notes'],
-      ...invoices.map(i => [
-        i.fields?.['Invoice No'] || '',
-        i.fields?.Notes?.match(/Client: ([^|]+)/)?.[1]?.trim() || '',
-        i.fields?.['GST %'] || '',
-        i.fields?.['Payment Status'] || '',
-        i.fields?.['Issue Date'] || '',
-        i.fields?.['Due Date'] || '',
-        i.fields?.Notes || '',
-      ])
+      ['Invoice No', 'Client', 'GST %', 'Amount', 'Tax Amount', 'Total', 'Payment Status', 'Issue Date', 'Due Date'],
+      ...invoices.map(i => {
+        const notes = i.fields?.Notes || ''
+        const clientMatch = notes.match(/Client: ([^|]+)/)
+        const amtMatch = notes.match(/Amount: ([0-9.]+)/)
+        const totalMatch = notes.match(/Total: ([0-9.]+)/)
+        const taxMatch = notes.match(/[\w]+ \d+%: ([0-9.]+)/)
+        return [
+          i.fields?.['Invoice No'] || '',
+          clientMatch ? clientMatch[1].trim() : '',
+          i.fields?.['GST %'] || '',
+          amtMatch ? amtMatch[1] : '',
+          taxMatch ? taxMatch[1] : '',
+          totalMatch ? totalMatch[1] : '',
+          i.fields?.['Payment Status'] || '',
+          i.fields?.['Issue Date'] || '',
+          i.fields?.['Due Date'] || '',
+        ]
+      })
     ]
     const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n')
     const a = document.createElement('a')
@@ -199,7 +220,7 @@ export default function Invoices() {
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 text-red-800">
             <AlertCircle size={18} />
             <span className="text-sm font-medium">
-              ⚠️ {overdue.length} overdue invoice{overdue.length > 1 ? 's' : ''} need attention
+              ⚠️ {overdue.length} overdue invoice{overdue.length > 1 ? 's' : ''} — follow up now
             </span>
           </div>
         )}
@@ -207,8 +228,8 @@ export default function Invoices() {
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm flex items-center gap-2">
             <AlertCircle size={16} />
-            {error}
-            <button onClick={() => setError('')} className="ml-auto">✕</button>
+            <span className="flex-1">{error}</span>
+            <button onClick={() => setError('')}>✕</button>
           </div>
         )}
 
@@ -273,7 +294,7 @@ export default function Invoices() {
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-[#0A1628]">
                 <tr>
-                  {['Invoice #', 'Client', 'GST %', 'Status', 'Issue Date', 'Due Date', 'Actions'].map(h => (
+                  {['Invoice #', 'Client', 'Amount Details', 'Tax', 'Status', 'Dates', 'Actions'].map(h => (
                     <th key={h} className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
                       {h}
                     </th>
@@ -285,23 +306,39 @@ export default function Invoices() {
                   const notes = inv.fields?.Notes || ''
                   const clientMatch = notes.match(/Client: ([^|]+)/)
                   const clientName = clientMatch ? clientMatch[1].trim() : '—'
+                  const amtMatch = notes.match(/Amount: ([0-9.]+)/)
                   const totalMatch = notes.match(/Total: ([0-9.]+)/)
-                  const totalAmount = totalMatch ? Number(totalMatch[1]) : null
+                  const taxSysMatch = notes.match(/Tax System: ([^|]+)/)
 
                   return (
                     <tr key={inv.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                       <td className="p-4 font-mono text-sm font-bold dark:text-white">
-                        #{inv.fields?.['Invoice No']}
+                        #{inv.fields?.['Invoice No'] || 'Auto'}
                       </td>
                       <td className="p-4 font-medium text-sm dark:text-white">{clientName}</td>
-                      <td className="p-4 text-sm text-gray-500">{inv.fields?.['GST %'] || 0}%</td>
+                      <td className="p-4 text-sm">
+                        <div className="text-gray-600 dark:text-gray-300">
+                          Amount: ₹{amtMatch ? Number(amtMatch[1]).toLocaleString() : '—'}
+                        </div>
+                        <div className="text-gray-900 dark:text-white font-bold">
+                          Total: ₹{totalMatch ? Number(totalMatch[1]).toLocaleString() : '—'}
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-gray-500">
+                        {inv.fields?.['GST %']}%
+                        <div className="text-xs text-gray-400">
+                          {taxSysMatch ? taxSysMatch[1].trim().split('(')[0] : ''}
+                        </div>
+                      </td>
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[inv.fields?.['Payment Status']] || 'bg-gray-100 text-gray-600'}`}>
                           {inv.fields?.['Payment Status'] || 'Unpaid'}
                         </span>
                       </td>
-                      <td className="p-4 text-xs text-gray-500">{inv.fields?.['Issue Date'] || '—'}</td>
-                      <td className="p-4 text-xs text-gray-500">{inv.fields?.['Due Date'] || '—'}</td>
+                      <td className="p-4 text-xs text-gray-400">
+                        <div>Issued: {inv.fields?.['Issue Date'] || '—'}</div>
+                        <div>Due: {inv.fields?.['Due Date'] || '—'}</div>
+                      </td>
                       <td className="p-4">
                         <div className="flex gap-1 flex-wrap">
                           {inv.fields?.['Payment Status'] !== 'Paid' && (
@@ -320,7 +357,7 @@ export default function Invoices() {
                           </button>
                           <button
                             onClick={() => handleDelete(inv.id)}
-                            className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -350,12 +387,12 @@ export default function Invoices() {
               )}
               <form onSubmit={handleSubmit} className="space-y-3">
                 {[
-                  { key: 'Client Name', label: 'Client Name *', type: 'text', required: true, placeholder: 'Client company or person' },
+                  { key: 'Client Name', label: 'Client Name *', type: 'text', required: true, placeholder: 'Client or company name' },
                   { key: 'Client Email', label: 'Client Email', type: 'email', required: false, placeholder: 'client@email.com' },
                   { key: 'Client Phone', label: 'Client WhatsApp', type: 'tel', required: false, placeholder: '+91 9876543210' },
-                  { key: 'Amount', label: 'Amount (before tax)', type: 'number', required: true, placeholder: '0' },
+                  { key: 'Amount', label: 'Amount (before tax) *', type: 'number', required: true, placeholder: '0' },
                   { key: 'Due Date', label: 'Due Date', type: 'date', required: false, placeholder: '' },
-                  { key: 'Notes', label: 'Notes', type: 'text', required: false, placeholder: 'Any additional info' },
+                  { key: 'Notes', label: 'Additional Notes', type: 'text', required: false, placeholder: 'Any additional info' },
                 ].map(f => (
                   <div key={f.key}>
                     <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300"
@@ -376,7 +413,7 @@ export default function Invoices() {
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300"
                     style={{ fontFamily: 'Outfit' }}>
-                    Tax Country / System
+                    Tax Country
                   </label>
                   <select
                     value={taxCountry}
@@ -430,7 +467,7 @@ export default function Invoices() {
                   <button
                     type="button"
                     onClick={() => { setShowModal(false); setError('') }}
-                    className="flex-1 border border-gray-300 py-2 rounded-xl text-sm hover:bg-gray-50"
+                    className="flex-1 border border-gray-300 py-2 rounded-xl text-sm"
                   >
                     Cancel
                   </button>
