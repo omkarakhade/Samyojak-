@@ -1,189 +1,294 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
-import OnboardingTour from '@/components/OnboardingTour'
+import { supabase } from '@/lib/supabase'
 import { airtable } from '@/lib/airtable'
-import { Users, DollarSign, FileText, FolderOpen, Activity, TrendingUp, TrendingDown } from 'lucide-react'
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { useRouter } from 'next/navigation'
+import {
+  Users, FileText, Package, UserCheck,
+  FolderOpen, TrendingUp, Brain, Send,
+  AlertCircle, Star
+} from 'lucide-react'
+import { getPlanFromMetadata } from '@/lib/planAccess'
+
+const planOrder = ['CRM Starter', 'ERP Basic', 'Business', 'Complete']
 
 export default function Dashboard() {
-  const [leads, setLeads] = useState<any[]>([])
-  const [invoices, setInvoices] = useState<any[]>([])
+  const [user, setUser] = useState<any>(null)
+  const [plan, setPlan] = useState<string>('No Plan')
+  const [stats, setStats] = useState({ leads: 0, invoices: 0, products: 0, employees: 0, projects: 0 })
   const [loading, setLoading] = useState(true)
-  const [dateStr, setDateStr] = useState('')
+  const [aiMessage, setAiMessage] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiReply, setAiReply] = useState('')
+  const [aiInput, setAiInput] = useState('')
+  const router = useRouter()
 
   useEffect(() => {
-    setDateStr(new Date().toLocaleDateString('en-IN', {
-      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-    }))
-    Promise.all([airtable.get('Leads'), airtable.get('Invoices')])
-      .then(([l, i]) => {
-        setLeads(l.records || [])
-        setInvoices(i.records || [])
-        setLoading(false)
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { router.push('/login'); return }
+      setUser(user)
+      setPlan(getPlanFromMetadata(user) || 'No Plan')
+      loadStats()
+      loadAIGreeting(user)
+    })
+  }, [router])
+
+  const loadStats = async () => {
+    try {
+      const [l, i, p, e, pr] = await Promise.all([
+        airtable.get('Leads'),
+        airtable.get('Invoices'),
+        airtable.get('Products'),
+        airtable.get('Employees'),
+        airtable.get('Projects'),
+      ])
+      setStats({
+        leads: l.records?.length || 0,
+        invoices: i.records?.length || 0,
+        products: p.records?.length || 0,
+        employees: e.records?.length || 0,
+        projects: pr.records?.length || 0,
       })
-      .catch(() => setLoading(false))
-  }, [])
+    } catch (e) {
+      console.error('Stats load error:', e)
+    }
+    setLoading(false)
+  }
 
-  const revenue = invoices
-    .filter(i => i.fields?.Status === 'Paid')
-    .reduce((s, i) => s + (i.fields?.Total || 0), 0)
+  const loadAIGreeting = async (u: any) => {
+    setAiLoading(true)
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: 'Give me a quick encouraging business overview and the one most important thing I should do today',
+          isOnboarding: false,
+        }),
+      })
+      const data = await res.json()
+      setAiMessage(data.reply || '')
+    } catch {
+      setAiMessage('🚀 Your ERP is ready! Add leads in CRM and create invoices to start tracking your business growth.')
+    }
+    setAiLoading(false)
+  }
 
-  const openInvoices = invoices.filter(i => i.fields?.Status === 'Unpaid').length
+  const askAI = async () => {
+    if (!aiInput.trim() || aiLoading) return
+    const question = aiInput.trim()
+    setAiInput('')
+    setAiLoading(true)
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: question }),
+      })
+      const data = await res.json()
+      setAiReply(data.reply || '')
+    } catch {
+      setAiReply('AI temporarily unavailable.')
+    }
+    setAiLoading(false)
+  }
 
-  const pipelineValue = leads
-    .filter(l => l.fields?.Status !== 'Lost')
-    .reduce((s, l) => s + (l.fields?.['Deal Value'] || 0), 0)
+  const planIndex = planOrder.indexOf(plan)
 
-  const forecast = revenue + pipelineValue * 0.15
-
-  const convertedLeads = leads.filter(l => l.fields?.Status === 'Converted').length
-  const healthScore = Math.min(100, Math.floor((convertedLeads / Math.max(leads.length, 1)) * 100 + 30))
-
-  const metrics = [
-    { label: 'Pipeline Growth', value: leads.length, icon: Users, color: 'bg-purple-500', change: '+12%', up: true },
-    { label: 'Revenue Flow', value: `₹${revenue.toLocaleString()}`, icon: DollarSign, color: 'bg-pink-500', change: '+8.4%', up: true },
-    { label: 'Active Ledgers', value: openInvoices, icon: FileText, color: 'bg-orange-500', change: '-2', up: false },
-    { label: 'Ops Velocity', value: 12, icon: FolderOpen, color: 'bg-emerald-500', change: '+1', up: true },
+  const modules = [
+    { label: 'Leads', value: stats.leads, icon: Users, color: '#8B5CF6', bg: '#EDE9FE', path: '/crm', emoji: '👥' },
+    { label: 'Invoices', value: stats.invoices, icon: FileText, color: '#F472B6', bg: '#FCE7F3', path: '/invoices', emoji: '📄' },
+    { label: 'Products', value: stats.products, icon: Package, color: '#FBBF24', bg: '#FEF3C7', path: '/inventory', emoji: '📦' },
+    { label: 'Employees', value: stats.employees, icon: UserCheck, color: '#34D399', bg: '#D1FAE5', path: '/hr', emoji: '👥' },
+    { label: 'Projects', value: stats.projects, icon: FolderOpen, color: '#8B5CF6', bg: '#EDE9FE', path: '/projects', emoji: '🎯' },
   ]
 
-  const revenueData = [
-    { m: 'Jan', v: 8000 },
-    { m: 'Feb', v: 14000 },
-    { m: 'Mar', v: 15000 },
-    { m: 'Apr', v: 18000 },
-    { m: 'May', v: 21000 },
-    { m: 'Jun', v: 28000 },
-    { m: 'Jul', v: 35000 },
-    { m: 'Aug', v: 40000 },
-  ]
-
-  const leadData = [
-    { w: 'W1', v: 48 },
-    { w: 'W2', v: 55 },
-    { w: 'W3', v: 62 },
-    { w: 'W4', v: 68 },
-    { w: 'W5', v: 75 },
-    { w: 'W6', v: 85 },
-    { w: 'W7', v: 95 },
-    { w: 'W8', v: 110 },
-  ]
+  const greeting = () => {
+    const h = new Date().getHours()
+    if (h < 12) return 'Good morning'
+    if (h < 17) return 'Good afternoon'
+    return 'Good evening'
+  }
 
   return (
     <Layout>
-      <OnboardingTour />
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white">
-                System Online 🌤️
-              </h1>
-              <p className="text-gray-400 text-xs uppercase tracking-widest mt-1">
-                {dateStr} · SYNC ACTIVE
-              </p>
-            </div>
-            <button className="hidden md:flex items-center gap-2 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-white/20 transition-colors">
-              <Activity size={16} />
-              Intelligence Export
-            </button>
-          </div>
+      <div className="space-y-6">
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {metrics.map(m => (
-              <div key={m.label} className="bg-white dark:bg-[#1a1a2e] rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-white/5">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`${m.color} w-10 h-10 rounded-xl flex items-center justify-center`}>
-                    <m.icon size={20} className="text-white" />
-                  </div>
-                  <span className={`text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 ${m.up ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
-                    {m.up ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                    {m.change}
-                  </span>
-                </div>
-                <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">{m.label}</p>
-                <p className="text-3xl font-black text-gray-900 dark:text-white">{m.value}</p>
-                <p className="text-gray-400 text-xs mt-1">VARIANCE</p>
+        {/* Greeting */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+              {greeting()}, {user?.user_metadata?.full_name?.split(' ')[0] || 'there'} 👋
+            </h2>
+            <p className="text-gray-500 text-sm mt-1">
+              {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+          </div>
+          <div className="flex-shrink-0">
+            <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${
+              plan === 'Complete' ? 'bg-purple-100 text-purple-700' :
+              plan === 'Business' ? 'bg-blue-100 text-blue-700' :
+              plan === 'ERP Basic' ? 'bg-green-100 text-green-700' :
+              plan === 'CRM Starter' ? 'bg-yellow-100 text-yellow-700' :
+              'bg-gray-100 text-gray-600'
+            }`}>
+              {plan}
+            </span>
+          </div>
+        </div>
+
+        {/* AI Business Intelligence Card */}
+        <div className="rounded-2xl overflow-hidden" style={{ background: '#0F172A', border: '2px solid #334155', boxShadow: '6px 6px 0px #8B5CF6' }}>
+          <div className="p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: '#8B5CF6' }}>
+                <Brain size={20} className="text-white" />
               </div>
+              <div>
+                <p className="font-black text-white" style={{ fontFamily: 'Outfit' }}>
+                  AI Business Intelligence
+                </p>
+                <p className="text-xs text-green-400">Reading your live Airtable data</p>
+              </div>
+              <div className="ml-auto flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                <span className="text-xs text-green-400">Live</span>
+              </div>
+            </div>
+
+            {aiLoading && !aiMessage ? (
+              <div className="flex items-center gap-2 py-2">
+                <div className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                <span className="text-xs text-gray-400">Analyzing your data...</span>
+              </div>
+            ) : (
+              <p className="text-sm leading-relaxed mb-4" style={{ color: '#C4B5FD', fontFamily: 'Plus Jakarta Sans' }}>
+                {aiMessage}
+              </p>
+            )}
+
+            {aiReply && (
+              <div className="mb-4 p-3 rounded-xl text-sm leading-relaxed" style={{ background: 'rgba(139,92,246,0.2)', color: '#E9D5FF', border: '1px solid rgba(139,92,246,0.3)', fontFamily: 'Plus Jakarta Sans' }}>
+                {aiReply}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <input
+                value={aiInput}
+                onChange={e => setAiInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && askAI()}
+                placeholder="Ask AI about your business..."
+                className="flex-1 px-3 py-2 rounded-xl text-sm outline-none"
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', fontFamily: 'Plus Jakarta Sans' }}
+              />
+              <button
+                onClick={askAI}
+                disabled={aiLoading || !aiInput.trim()}
+                className="px-4 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-40 flex items-center gap-2"
+                style={{ background: '#8B5CF6' }}
+              >
+                <Send size={16} />
+              </button>
+            </div>
+
+            <div className="flex gap-2 mt-3 flex-wrap">
+              {['How are my leads?', 'Any overdue invoices?', 'Low stock alerts?', 'Team summary'].map(q => (
+                <button
+                  key={q}
+                  onClick={() => { setAiInput(q); setTimeout(askAI, 100) }}
+                  className="px-2 py-1 rounded-full text-xs font-medium"
+                  style={{ background: 'rgba(139,92,246,0.2)', color: '#C4B5FD', border: '1px solid rgba(139,92,246,0.3)' }}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {modules.map(m => (
+              <a key={m.label} href={m.path}
+                className="block bg-white dark:bg-[#1a2740] rounded-2xl p-5 hover:shadow-lg transition-all"
+                style={{ border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #E2E8F0' }}
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                  style={{ background: m.bg, border: `2px solid ${m.color}` }}>
+                  <m.icon size={20} style={{ color: m.color }} />
+                </div>
+                <p className="text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold mb-1">{m.label}</p>
+                <p className="text-3xl font-black text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+                  {m.value}
+                </p>
+              </a>
             ))}
           </div>
+        )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-[#1a1a2e] rounded-2xl p-6 border border-gray-100 dark:border-white/5">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="font-black text-gray-900 dark:text-white uppercase tracking-wider text-sm">
-                    Revenue Matrix
-                  </h3>
-                  <p className="text-gray-400 text-xs">Cross-Quarter Data</p>
+        {/* Plan Progress */}
+        {plan !== 'Complete' && (
+          <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-5"
+            style={{ border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #E2E8F0' }}>
+            <div className="flex items-center gap-2 mb-3">
+              <Star size={18} style={{ color: '#FBBF24' }} />
+              <h3 className="font-bold text-gray-900 dark:text-white text-sm" style={{ fontFamily: 'Outfit' }}>
+                Your Plan Progress
+              </h3>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              {planOrder.map((p, i) => (
+                <div key={p} className="flex items-center gap-2">
+                  <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    i <= planIndex ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400'
+                  }`}>
+                    {p}
+                  </div>
+                  {i < planOrder.length - 1 && (
+                    <div className={`w-4 h-0.5 ${i < planIndex ? 'bg-violet-600' : 'bg-gray-200'}`} />
+                  )}
                 </div>
-                <span className="text-xs text-purple-500 font-semibold">📈 Scaling Efficiently</span>
-              </div>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f080" />
-                  <XAxis dataKey="m" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ background: '#1a1a2e', border: 'none', borderRadius: 12, color: '#fff' }} />
-                  <Bar dataKey="v" fill="#7c3aed" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              ))}
             </div>
-
-            <div className="bg-white dark:bg-[#1a1a2e] rounded-2xl p-6 border border-gray-100 dark:border-white/5">
-              <div className="mb-4">
-                <h3 className="font-black text-gray-900 dark:text-white uppercase tracking-wider text-sm">
-                  Lead Velocity
-                </h3>
-                <p className="text-gray-400 text-xs">Momentum Flow</p>
-              </div>
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={leadData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f080" />
-                  <XAxis dataKey="w" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ background: '#1a1a2e', border: 'none', borderRadius: 12, color: '#fff' }} />
-                  <Line type="monotone" dataKey="v" stroke="#ef4444" strokeWidth={2} dot={{ fill: '#ef4444', r: 4 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              Upgrade to <strong style={{ color: '#8B5CF6' }}>
+                {planOrder[planIndex + 1] || 'Complete'}
+              </strong> to unlock more modules
+            </p>
           </div>
+        )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-[#1a1a2e] rounded-2xl p-5 border border-gray-100 dark:border-white/5">
-              <h3 className="text-xs uppercase tracking-wider text-gray-400 mb-2">Revenue Forecast</h3>
-              <p className="text-3xl font-black text-gray-900 dark:text-white">
-                ₹{Math.floor(forecast).toLocaleString()}
-              </p>
-              <p className="text-green-500 text-xs mt-1">↑ Projected next 30 days</p>
-            </div>
-            <div className="bg-white dark:bg-[#1a1a2e] rounded-2xl p-5 border border-gray-100 dark:border-white/5">
-              <h3 className="text-xs uppercase tracking-wider text-gray-400 mb-2">Business Health Score</h3>
-              <p className="text-3xl font-black text-gray-900 dark:text-white">
-                {healthScore}
-                <span className="text-lg text-gray-400">/100</span>
-              </p>
-              <div className="w-full bg-gray-200 dark:bg-white/10 rounded-full h-2 mt-2">
-                <div
-                  className="bg-green-500 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${healthScore}%` }}
-                ></div>
-              </div>
-            </div>
-            <div className="bg-white dark:bg-[#1a1a2e] rounded-2xl p-5 border border-gray-100 dark:border-white/5">
-              <h3 className="text-xs uppercase tracking-wider text-gray-400 mb-2">Pipeline Value</h3>
-              <p className="text-3xl font-black text-gray-900 dark:text-white">
-                ₹{pipelineValue.toLocaleString()}
-              </p>
-              <p className="text-blue-500 text-xs mt-1">↑ Active opportunities</p>
-            </div>
-          </div>
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Add Lead', path: '/crm', color: '#8B5CF6', bg: '#EDE9FE', emoji: '➕' },
+            { label: 'Create Invoice', path: '/invoices', color: '#F472B6', bg: '#FCE7F3', emoji: '📄' },
+            { label: 'Add Product', path: '/inventory', color: '#FBBF24', bg: '#FEF3C7', emoji: '📦' },
+            { label: 'New Project', path: '/projects', color: '#34D399', bg: '#D1FAE5', emoji: '🎯' },
+          ].map(a => (
+            <a key={a.label} href={a.path}
+              className="block p-4 rounded-2xl text-center hover:shadow-md transition-all"
+              style={{ background: a.bg, border: `2px solid ${a.color}` }}
+            >
+              <span className="text-2xl block mb-1">{a.emoji}</span>
+              <span className="text-sm font-bold" style={{ color: a.color, fontFamily: 'Outfit' }}>
+                {a.label}
+              </span>
+            </a>
+          ))}
         </div>
-      )}
+
+      </div>
     </Layout>
   )
 }
