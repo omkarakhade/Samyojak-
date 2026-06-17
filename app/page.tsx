@@ -1,400 +1,454 @@
 'use client'
-import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Check, ArrowRight, Star, Zap, Users, BarChart3, Package, FileText, UserCheck, FolderOpen, Menu, X, Brain } from 'lucide-react'
-import { detectRegion } from '@/lib/products'
+import Link from 'next/link'
+import {
+  ArrowRight, Check, Star, Zap, Globe, Shield,
+  Brain, Users, FileText, Package, UserCheck,
+  FolderOpen, BarChart3, ChevronDown, ChevronUp,
+  Building2, Stethoscope, ShoppingBag, Factory,
+  GraduationCap, Truck, Code, UtensilsCrossed,
+} from 'lucide-react'
 
-type Region = 'india' | 'global' | 'western'
-type Billing = 'weekly' | 'monthly' | 'yearly'
-
-const PRICES: Record<Region, Record<Billing, string[]>> = {
-  india: {
-    weekly: ['$4.99', '$9.99', '$16.99', '$21.99'],
-    monthly: ['$15', '$35', '$60', '$79'],
-    yearly: ['$144', '$336', '$576', '$759'],
-  },
-  global: {
-    weekly: ['$6.99', '$13.99', '$22.99', '$29.99'],
-    monthly: ['$21', '$49', '$79', '$99'],
-    yearly: ['$199', '$449', '$749', '$999'],
-  },
-  western: {
-    weekly: ['$9.99', '$19.99', '$29.99', '$39.99'],
-    monthly: ['$29', '$59', '$99', '$149'],
-    yearly: ['$249', '$549', '$899', '$1299'],
-  },
-}
-
-const REGION_LABELS: Record<Region, string> = {
-  india: '🇮🇳 India pricing',
-  global: '🌍 Global pricing',
-  western: '🌎 Western pricing',
-}
-
-const bonuses: Record<Billing, string> = {
-  weekly: '+1 week free',
-  monthly: '+1 month free',
-  yearly: '+2 months free',
-}
-
-const plans = ['CRM Starter', 'ERP Basic', 'Business', 'Complete']
-const planFeatures = [
-  ['CRM & Leads', 'AI Lead Scoring', 'Follow-ups', 'Up to 5 users'],
-  ['CRM + Inventory', 'GST Invoicing', 'QR Codes', 'Up to 10 users'],
-  ['CRM + ERP + HR', 'Projects + Reports', 'Up to 25 users', 'Priority support'],
-  ['Everything', 'AI Assistant', 'Unlimited users', 'API access'],
-]
-const planColors = ['#8B5CF6', '#F472B6', '#FBBF24', '#34D399']
-
-const features = [
-  { icon: Users, title: 'Smart CRM', desc: 'AI-powered lead scoring 0-100, pipeline tracking, follow-up reminders, and WhatsApp integration.', color: '#8B5CF6', bg: '#EDE9FE' },
-  { icon: FileText, title: 'Universal Tax Invoicing', desc: 'GST, VAT, HST, Sales Tax — create compliant invoices for any country with auto calculation.', color: '#F472B6', bg: '#FCE7F3' },
-  { icon: Package, title: 'Inventory + Free QR Codes', desc: 'Every product gets a free auto-generated QR code. Low stock alerts. Scan with any phone.', color: '#FBBF24', bg: '#FEF3C7' },
-  { icon: UserCheck, title: 'HR & Payroll', desc: 'Employee management, attendance tracking, and payroll calculation in one place.', color: '#34D399', bg: '#D1FAE5' },
-  { icon: FolderOpen, title: 'Projects Kanban', desc: 'Visual Kanban board with tasks, deadlines, and progress tracking for your whole team.', color: '#8B5CF6', bg: '#EDE9FE' },
-  { icon: BarChart3, title: 'Tax Reports', desc: 'Auto GSTR-1 format reports. Monthly breakdown by tax rate. PDF and CSV export.', color: '#F472B6', bg: '#FCE7F3' },
+const FEATURES = [
+  { icon: Users, title: 'AI-Powered CRM', desc: 'Smart lead scoring, follow-up reminders, pipeline tracking', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: FileText, title: 'Universal Tax Invoicing', desc: 'GST, VAT, HST, Sales Tax — 15+ countries in one click', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: Package, title: 'Inventory + Free QR Codes', desc: 'Stock tracking with auto-generated QR codes, low stock alerts', color: '#FBBF24', bg: '#FEF3C7' },
+  { icon: UserCheck, title: 'HR & Payroll', desc: 'Employee management, salary tracking, leave balance', color: '#34D399', bg: '#D1FAE5' },
+  { icon: FolderOpen, title: 'Project Management', desc: 'Kanban board, deadlines, progress tracking, client projects', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: BarChart3, title: 'Tax Reports', desc: 'GSTR-1 format, monthly summaries, revenue analytics', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: Brain, title: 'AI Business Intelligence', desc: 'Ask AI anything about your business. Get real answers from your live data.', color: '#FBBF24', bg: '#FEF3C7' },
+  { icon: Globe, title: 'WhatsApp Invoicing', desc: 'Send invoices directly via WhatsApp with one click', color: '#34D399', bg: '#D1FAE5' },
 ]
 
-const marqueeItems = ['CRM', 'GST Invoicing', 'Inventory', 'HR', 'Projects', 'Tax Reports', 'QR Codes', 'WhatsApp', 'AI Scoring', 'Dark Mode', 'Mobile First', 'Powered by Vercel']
+const BUSINESS_TYPES = [
+  { icon: ShoppingBag, name: 'Retail & Trading', desc: 'Inventory, invoicing, customer tracking', color: '#8B5CF6' },
+  { icon: Factory, name: 'Manufacturing', desc: 'Production, stock, supplier management', color: '#F472B6' },
+  { icon: Stethoscope, name: 'Healthcare & Clinics', desc: 'Patients, appointments, billing', color: '#34D399' },
+  { icon: GraduationCap, name: 'Schools & Training', desc: 'Students, fees, staff management', color: '#FBBF24' },
+  { icon: Building2, name: 'Agencies & Consultants', desc: 'Clients, projects, invoices, team', color: '#8B5CF6' },
+  { icon: Truck, name: 'Logistics & Delivery', desc: 'Fleet, shipments, tracking, billing', color: '#F472B6' },
+  { icon: UtensilsCrossed, name: 'Restaurants & Food', desc: 'Orders, inventory, staff, billing', color: '#34D399' },
+  { icon: Code, name: 'SaaS & Tech', desc: 'Leads, subscriptions, projects, team', color: '#FBBF24' },
+]
+
+const FAQS = [
+  { q: 'Does Samyojak work for my type of business?', a: 'Yes. Samyojak adapts to your business — not the other way around. Whether you run a clinic, retail shop, agency, school, or manufacturing unit, Samyojak works with your existing data format.' },
+  { q: 'Can I import my data from Zoho, Odoo, or Excel?', a: 'Yes. Upload any CSV file from any ERP system. Samyojak reads your column names as-is and stores everything without forcing you to rename or restructure your data.' },
+  { q: 'Does it support GST, VAT, and other taxes?', a: 'Yes. Universal tax engine supports GST for India, VAT for UK, Germany, UAE, HST for Canada, Sales Tax for US, and 10+ more countries. Switch between them per invoice.' },
+  { q: 'Is there a free trial?', a: 'Yes. Visit the demo page at /demo for a full Complete plan experience with real data. No credit card required to explore.' },
+  { q: 'Can I cancel anytime?', a: 'Yes. Weekly plans mean you are never locked in. Turn off auto-pay anytime in Settings and your plan simply expires at week end.' },
+  { q: 'Does the AI actually read my real data?', a: 'Yes. The AI assistant on the Complete plan reads your live leads, invoices, inventory, HR, and projects in real time before every response. It knows your actual numbers.' },
+  { q: 'Is my data secure?', a: 'Yes. All data is encrypted in transit. Authentication is handled by Supabase — enterprise grade security. Your data is stored in Airtable and never shared.' },
+]
+
+function detectRegion() {
+  if (typeof window === 'undefined') return 'global'
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+  if (tz.includes('Asia/Kolkata') || tz.includes('Asia/Calcutta')) return 'india'
+  if (tz.includes('America') || tz.includes('Europe') || tz.includes('Australia')) return 'western'
+  return 'global'
+}
+
+const PRICING = {
+  india: { weekly: '$4.99', monthly: '$15', yearly: '$144', currency: '₹', note: 'India pricing' },
+  global: { weekly: '$6.99', monthly: '$21', yearly: '$199', currency: '$', note: 'Global pricing' },
+  western: { weekly: '$9.99', monthly: '$29', yearly: '$279', currency: '$', note: 'Western pricing' },
+}
 
 export default function Home() {
-  const [billing, setBilling] = useState<Billing>('weekly')
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [region, setRegion] = useState<Region>('global')
+  const [billing, setBilling] = useState<'weekly' | 'monthly' | 'yearly'>('weekly')
+  const [region, setRegion] = useState<'india' | 'global' | 'western'>('global')
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   useEffect(() => {
-    setRegion(detectRegion())
+    setRegion(detectRegion() as any)
   }, [])
 
-  const prices = PRICES[region][billing]
+  const price = PRICING[region]
 
-  const starterPrice = PRICES[region]['weekly'][0]
-
-  const faqItems = [
+  const PLANS = [
     {
-      q: 'What is Samyojak?',
-      a: 'Samyojak is an all-in-one ERP software for modern businesses. It includes CRM with AI lead scoring, universal tax invoicing, inventory with free QR codes, HR management, project tracking, and tax reports — all in one beautiful workspace powered by Vercel.',
+      name: 'CRM Starter',
+      emoji: '🚀',
+      price: price.weekly,
+      period: 'wk',
+      bonus: '+1 week free',
+      color: '#8B5CF6',
+      features: ['CRM with AI lead scoring', 'Contact management', 'Follow-up reminders', 'Import & Export CSV', 'Support tickets', 'Mobile app'],
+      locked: ['Invoices', 'Inventory', 'HR', 'Projects', 'AI Assistant'],
     },
     {
-      q: 'How much does Samyojak cost?',
-      a: `Plans start at ${starterPrice}/week in your region. Every plan includes a bonus period — weekly gets +1 week free, monthly gets +1 month free, yearly gets +2 months free. Pay once, get more.`,
+      name: 'ERP Basic',
+      emoji: '⚡',
+      price: billing === 'weekly' ? price.weekly.replace('4', '9').replace('6', '13').replace('9', '19') : price.monthly,
+      period: billing === 'yearly' ? 'yr' : billing === 'monthly' ? 'mo' : 'wk',
+      bonus: billing === 'yearly' ? '+2 months free' : '+1 week free',
+      color: '#F472B6',
+      popular: true,
+      features: ['Everything in CRM Starter', 'Universal tax invoicing', 'Inventory + free QR codes', 'WhatsApp invoice sending', 'GST Reports'],
+      locked: ['HR & Payroll', 'Projects', 'AI Assistant'],
     },
     {
-      q: 'Does Samyojak support GST, VAT, and other taxes?',
-      a: 'Yes! Samyojak has a universal tax engine supporting GST (India, Australia, Singapore), VAT (UK, Germany, UAE, France), HST (Canada), Sales Tax (US), Consumption Tax (Japan), SST (Malaysia) and more. Tax is calculated automatically.',
+      name: 'Business',
+      emoji: '🏢',
+      price: price.monthly,
+      period: 'mo',
+      bonus: '+1 month free',
+      color: '#34D399',
+      features: ['Everything in ERP Basic', 'HR & Payroll management', 'Project management Kanban', 'Team management', 'Advanced reports'],
+      locked: ['AI Assistant'],
     },
     {
-      q: 'What AI features does Samyojak have?',
-      a: 'Complete plan users get AI lead scoring (every lead scored 0-100 automatically), AI business insights on the dashboard, and AI invoice suggestions. The AI analyzes your data and gives actionable recommendations to grow your business.',
-    },
-    {
-      q: 'Does it work on mobile phones?',
-      a: 'Yes. Samyojak is mobile-first and works on any phone or tablet. It has a dedicated bottom navigation bar for easy access to all modules on mobile.',
-    },
-    {
-      q: 'What makes Samyojak different from legacy ERP software?',
-      a: 'Flat pricing not per-user, setup in minutes not weeks, free QR codes for inventory, WhatsApp invoice sending, AI lead scoring, weekly payment plans, and a beautiful mobile-first design. Legacy ERP platforms take months to implement and cost lakhs.',
-    },
-    {
-      q: 'Can I export my data?',
-      a: 'Yes. Every module has CSV export built in. Your data always belongs to you and you can download it anytime with one click. No lock-in ever.',
-    },
-    {
-      q: 'Is my data secure?',
-      a: 'Yes. Samyojak uses Supabase with row-level security, HTTPS everywhere via Vercel, login rate limiting after 5 attempts, auto session timeout, and encrypted data at rest. Enterprise-grade security.',
+      name: 'Complete ERP',
+      emoji: '👑',
+      price: price.yearly,
+      period: 'yr',
+      bonus: '+3 months free',
+      color: '#FBBF24',
+      features: ['Everything in Business', 'AI Business Intelligence', 'AI reads your live data', 'Priority support', 'White label available', 'All future features'],
+      locked: [],
     },
   ]
 
   return (
-    <div className="min-h-screen" style={{ background: '#FFFDF5' }}>
+    <div style={{ background: '#FFFDF5', fontFamily: 'Plus Jakarta Sans' }}>
 
       {/* NAV */}
-      <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4" style={{ background: '#FFFDF5', borderBottom: '2px solid #E2E8F0' }}>
+      <nav className="sticky top-0 z-50 px-6 py-4"
+        style={{ background: 'rgba(255,253,245,0.95)', backdropFilter: 'blur(12px)', borderBottom: '2px solid #E2E8F0' }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg" style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>S</div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg"
+              style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+              S
+            </div>
             <span className="font-black text-xl" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Samyojak</span>
           </Link>
-
-          <div className="hidden md:flex items-center gap-8">
-            {[
-              { label: 'Features', href: '#features' },
-              { label: 'Pricing', href: '#pricing' },
-              { label: 'About', href: '/about' },
-              { label: 'Services', href: '/services' },
-              { label: 'Contact', href: '/contact' },
-            ].map(item => (
-              <Link key={item.label} href={item.href} className="font-semibold text-sm hover:text-violet-600 transition-colors" style={{ fontFamily: 'Plus Jakarta Sans', color: '#1E293B' }}>
-                {item.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="hidden md:flex items-center gap-3">
-            <Link href="/login" className="outline-btn px-5 py-2 text-sm">Sign in</Link>
-            <Link href="/signup" className="candy-btn px-5 py-2 text-sm flex items-center gap-2">
-              Start Trial <ArrowRight size={16} />
-            </Link>
-          </div>
-
-          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2">
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-
-        {menuOpen && (
-          <div className="md:hidden mt-4 p-4 rounded-2xl" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '4px 4px 0px #1E293B' }}>
-            {['Features', 'Pricing', 'About', 'Services', 'Contact'].map(item => (
-              <Link key={item} href={item === 'Features' ? '#features' : item === 'Pricing' ? '#pricing' : `/${item.toLowerCase()}`}
-                className="block py-3 font-semibold border-b last:border-0" style={{ color: '#1E293B', borderColor: '#E2E8F0' }}
-                onClick={() => setMenuOpen(false)}>
+          <div className="hidden md:flex items-center gap-6">
+            {['Features', 'Pricing', 'About'].map(item => (
+              <a key={item} href={`/${item.toLowerCase()}`}
+                className="text-sm font-medium hover:text-violet-600 transition-colors"
+                style={{ color: '#64748B' }}>
                 {item}
-              </Link>
+              </a>
             ))}
-            <div className="flex gap-3 mt-4">
-              <Link href="/login" className="outline-btn px-4 py-2 text-sm flex-1 text-center">Sign in</Link>
-              <Link href="/signup" className="candy-btn px-4 py-2 text-sm flex-1 text-center">Start Trial</Link>
-            </div>
           </div>
-        )}
+          <div className="flex items-center gap-3">
+            <Link href="/login" className="outline-btn px-4 py-2 text-sm hidden md:block">Sign In</Link>
+            <Link href="/signup" className="candy-btn px-4 py-2 text-sm">Start Free</Link>
+          </div>
+        </div>
       </nav>
 
       {/* HERO */}
-      <section className="pt-32 pb-24 px-6 overflow-hidden relative">
-        <div className="absolute top-20 right-10 w-64 h-64 rounded-full opacity-20 float" style={{ background: '#FBBF24' }}></div>
-        <div className="absolute bottom-10 left-10 w-32 h-32 rounded-full opacity-30" style={{ background: '#34D399' }}></div>
-        <div className="absolute top-40 left-1/4 w-16 h-16 rotate-45 opacity-20" style={{ background: '#F472B6' }}></div>
+      <section className="px-6 py-24 text-center">
+        <div className="max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-semibold"
+            style={{ background: '#EDE9FE', border: '2px solid #8B5CF6', color: '#8B5CF6' }}>
+            <Brain size={14} /> AI-Powered Universal ERP · Built for Every Business
+          </div>
 
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            <div className="flex-1 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-semibold" style={{ background: '#EDE9FE', border: '2px solid #8B5CF6', color: '#8B5CF6' }}>
-                <Star size={14} fill="#8B5CF6" /> Now live · Powered by Vercel
-              </div>
+          <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight"
+            style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+            The ERP that{' '}
+            <span style={{ color: '#8B5CF6' }}>adapts to you</span>
+            <br />not the other way
+          </h1>
 
-              <h1 className="text-5xl lg:text-7xl font-black mb-6 leading-tight" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-                One System.<br />
-                <span className="relative inline-block">
-                  <span style={{ color: '#8B5CF6' }}>Every</span>
-                  <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none">
-                    <path d="M2 8 Q50 2 100 8 Q150 14 198 8" stroke="#FBBF24" strokeWidth="4" strokeLinecap="round" fill="none" />
-                  </svg>
-                </span>
-                {' '}Operation.
-              </h1>
+          <p className="text-xl mb-8 max-w-2xl mx-auto" style={{ color: '#64748B' }}>
+            Most ERP software forces you to change how you work. Samyojak learns your business, speaks your language, and works the way you already do.
+          </p>
 
-              <p className="text-lg mb-8 leading-relaxed" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
-                The all-in-one AI-powered ERP for modern businesses globally. CRM, Invoicing, Inventory, HR, and Projects — unified in one beautiful workspace.
-              </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+            <Link href="/signup" className="candy-btn px-8 py-4 text-lg inline-flex items-center gap-2">
+              Start Free — No Card Needed <ArrowRight size={20} />
+            </Link>
+            <Link href="/demo" className="outline-btn px-8 py-4 text-lg inline-flex items-center gap-2">
+              See Live Demo
+            </Link>
+          </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-6">
-                <Link href="/signup" className="candy-btn px-8 py-4 text-lg flex items-center justify-center gap-3">
-                  Start Trial
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'white' }}>
-                    <ArrowRight size={16} style={{ color: '#8B5CF6' }} />
-                  </div>
-                </Link>
-                <Link href="/about" className="outline-btn px-8 py-4 text-lg text-center">Learn More</Link>
-              </div>
-
-              <div className="flex items-center gap-4 flex-wrap justify-center lg:justify-start">
-                <p className="text-sm" style={{ color: '#94A3B8' }}>🎁 Pay for a week · Get an extra week free</p>
-                <div className="flex items-center gap-1 text-xs font-semibold" style={{ color: '#64748B' }}>
-                  <span>Powered by</span>
-                  <span className="font-black" style={{ color: '#000' }}>▲ Vercel</span>
-                </div>
-              </div>
-
-              {region !== 'global' && (
-                <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold" style={{ background: '#D1FAE5', border: '2px solid #34D399', color: '#065F46' }}>
-                  ✅ {REGION_LABELS[region]} applied automatically
-                </div>
-              )}
-            </div>
-
-            <div className="flex-1 relative">
-              <div className="dot-bg rounded-3xl p-6 relative" style={{ border: '2px solid #E2E8F0' }}>
-                <div className="bg-white rounded-2xl p-6" style={{ border: '2px solid #1E293B', boxShadow: '8px 8px 0px #8B5CF6' }}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-3 h-3 rounded-full" style={{ background: '#F472B6' }}></div>
-                    <div className="w-3 h-3 rounded-full" style={{ background: '#FBBF24' }}></div>
-                    <div className="w-3 h-3 rounded-full" style={{ background: '#34D399' }}></div>
-                    <span className="text-xs ml-2 font-semibold" style={{ color: '#64748B' }}>Samyojak · Live</span>
-                    <span className="ml-auto text-xs font-bold" style={{ color: '#34D399' }}>● Online</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { label: 'Total Leads', value: '1,284', change: '+12%', color: '#8B5CF6', bg: '#EDE9FE' },
-                      { label: 'Revenue', value: '₹48.2K', change: '+24%', color: '#34D399', bg: '#D1FAE5' },
-                      { label: 'Open Invoices', value: '37', change: '-3%', color: '#F472B6', bg: '#FCE7F3' },
-                      { label: 'Projects', value: '12', change: '+2', color: '#FBBF24', bg: '#FEF3C7' },
-                    ].map(item => (
-                      <div key={item.label} className="p-4 rounded-xl" style={{ background: item.bg, border: `2px solid ${item.color}` }}>
-                        <p className="text-xs font-semibold mb-1" style={{ color: '#64748B' }}>{item.label}</p>
-                        <p className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>{item.value}</p>
-                        <p className="text-xs font-bold mt-1" style={{ color: item.color }}>{item.change}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="absolute -top-4 -right-4 px-3 py-2 rounded-full font-bold text-sm wiggle" style={{ background: '#FBBF24', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B', fontFamily: 'Outfit' }}>
-                🚀 Free QR Codes!
-              </div>
-              <div className="absolute -bottom-4 -left-4 px-3 py-2 rounded-full font-bold text-sm" style={{ background: '#34D399', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B', fontFamily: 'Outfit' }}>
-                🤖 AI Powered
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-4 justify-center text-sm" style={{ color: '#64748B' }}>
+            {['✅ No setup fee', '✅ Cancel anytime', '✅ Works for any business type', '✅ Powered by Vercel'].map(f => (
+              <span key={f}>{f}</span>
+            ))}
           </div>
         </div>
       </section>
 
       {/* MARQUEE */}
-      <div className="py-4 overflow-hidden" style={{ background: '#1E293B' }}>
+      <div className="overflow-hidden py-4" style={{ background: '#1E293B' }}>
         <div className="flex gap-8 marquee-track whitespace-nowrap">
-          {[...marqueeItems, ...marqueeItems].map((item, i) => (
-            <span key={i} className="flex items-center gap-3 font-bold text-sm px-2" style={{ color: 'white', fontFamily: 'Outfit' }}>
-              <span style={{ color: ['#F472B6', '#FBBF24', '#34D399', '#8B5CF6'][i % 4] }}>◆</span>
-              {item}
-            </span>
-          ))}
+          {[...Array(3)].map((_, i) =>
+            ['CRM', 'Invoicing', 'Inventory + QR', 'HR & Payroll', 'Projects', 'AI Assistant', 'GST Reports', 'WhatsApp Send', 'Universal Tax', 'Import Any CSV'].map(f => (
+              <span key={`${i}-${f}`} className="text-white/70 text-sm font-medium px-4">⚡ {f}</span>
+            ))
+          )}
         </div>
       </div>
 
-      {/* AI SECTION */}
-      <section className="py-24 px-6" style={{ background: '#0F172A' }}>
+      {/* UNIVERSAL ERP VISION SECTION */}
+      <section className="px-6 py-24" style={{ background: '#0F172A' }}>
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col lg:flex-row items-center gap-12">
-            <div className="flex-1 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-semibold" style={{ background: 'rgba(139,92,246,0.2)', border: '2px solid #8B5CF6', color: '#A78BFA' }}>
-                <Brain size={14} /> AI-Powered Features
-              </div>
-              <h2 className="text-4xl lg:text-5xl font-black text-white mb-6" style={{ fontFamily: 'Outfit' }}>
-                Your business has<br />
-                <span style={{ color: '#8B5CF6' }}>an AI co-pilot</span> now
-              </h2>
-              <p className="text-lg mb-8" style={{ color: '#94A3B8', fontFamily: 'Plus Jakarta Sans' }}>
-                Samyojak Complete plan comes with a built-in AI assistant that analyzes your business data and gives you actionable insights — just like having a business analyst working 24/7 for you.
-              </p>
-              <div className="space-y-4">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-semibold"
+              style={{ background: 'rgba(139,92,246,0.2)', border: '1.5px solid rgba(139,92,246,0.5)', color: '#C4B5FD' }}>
+              <Zap size={14} /> Universal Adaptive ERP
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black mb-6 text-white" style={{ fontFamily: 'Outfit' }}>
+              One ERP for{' '}
+              <span style={{ color: '#8B5CF6' }}>every business</span>
+              <br />on the planet
+            </h2>
+            <p className="text-lg max-w-2xl mx-auto" style={{ color: '#94A3B8' }}>
+              Traditional ERP forces you to adapt to their structure. Samyojak flips this entirely — our AI understands your business type and organizes your data the way you already think about it.
+            </p>
+          </div>
+
+          {/* The big difference */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+            <div className="p-8 rounded-2xl" style={{ background: '#1E293B', border: '2px solid #334155' }}>
+              <div className="text-3xl mb-4">😩</div>
+              <h3 className="text-xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>
+                Traditional ERP
+              </h3>
+              <ul className="space-y-3">
                 {[
-                  { title: 'AI Lead Scoring', desc: 'Every lead gets an automatic score 0-100 based on source, status, deal value, and follow-up date. Focus on the leads most likely to convert.', icon: '🎯' },
-                  { title: 'Business Insights', desc: 'AI analyzes your revenue trends, pipeline health, and business metrics to surface insights you would have missed otherwise.', icon: '📊' },
-                  { title: 'Smart Recommendations', desc: 'Get AI recommendations on which leads to follow up, which invoices are at risk, and how to improve your conversion rate.', icon: '💡' },
-                ].map(item => (
-                  <div key={item.title} className="flex items-start gap-4 p-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <span className="text-2xl">{item.icon}</span>
-                    <div>
-                      <h4 className="font-black text-white mb-1" style={{ fontFamily: 'Outfit' }}>{item.title}</h4>
-                      <p className="text-sm" style={{ color: '#94A3B8', fontFamily: 'Plus Jakarta Sans' }}>{item.desc}</p>
-                    </div>
-                  </div>
+                  'Forces you to rename all your columns',
+                  'Months of setup and configuration',
+                  'Separate modules for each industry',
+                  'Expensive consultants to migrate data',
+                  'Your team has to learn a new system',
+                  'Rigid structure that does not fit your workflow',
+                ].map(p => (
+                  <li key={p} className="flex items-center gap-3 text-sm" style={{ color: '#94A3B8' }}>
+                    <span className="text-red-400 flex-shrink-0">✗</span>
+                    {p}
+                  </li>
                 ))}
-              </div>
-              <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm" style={{ background: 'rgba(139,92,246,0.2)', color: '#A78BFA' }}>
-                🤖 AI available on Complete plan · Powered by Groq AI
-              </div>
+              </ul>
             </div>
 
-            <div className="flex-1">
-              <div className="rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.05)', border: '2px solid rgba(139,92,246,0.4)' }}>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#8B5CF6' }}>
-                    <Brain size={20} className="text-white" />
-                  </div>
-                  <div>
-                    <p className="text-white font-bold text-sm" style={{ fontFamily: 'Outfit' }}>Samyojak AI</p>
-                    <p className="text-xs" style={{ color: '#64748B' }}>Business Intelligence</p>
-                  </div>
-                  <div className="ml-auto flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full" style={{ background: '#34D399' }}></div>
-                    <span className="text-xs" style={{ color: '#34D399' }}>Active</span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {[
-                    { role: 'ai', msg: '📊 Your pipeline has 8 high-score leads (70+). Follow up today to hit your monthly target.' },
-                    { role: 'ai', msg: '⚠️ Invoice INV-007 is 15 days overdue. Send a WhatsApp reminder now.' },
-                    { role: 'ai', msg: '🚀 Your conversion rate improved 23% this week. Referral leads are converting best.' },
-                    { role: 'ai', msg: '📦 3 products are below reorder level. Restock before weekend.' },
-                  ].map((m, i) => (
-                    <div key={i} className="p-3 rounded-xl text-sm" style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: '#C4B5FD', fontFamily: 'Plus Jakarta Sans' }}>
-                      {m.msg}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-4 p-3 rounded-xl flex items-center gap-2" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <input className="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-600" placeholder="Ask AI anything about your business..." />
-                  <button className="px-3 py-1 rounded-lg text-xs font-bold" style={{ background: '#8B5CF6', color: 'white' }}>Ask</button>
-                </div>
-              </div>
+            <div className="p-8 rounded-2xl" style={{ background: 'rgba(139,92,246,0.15)', border: '2px solid #8B5CF6', boxShadow: '8px 8px 0px rgba(139,92,246,0.3)' }}>
+              <div className="text-3xl mb-4">🚀</div>
+              <h3 className="text-xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>
+                Samyojak Adaptive ERP
+              </h3>
+              <ul className="space-y-3">
+                {[
+                  'Import any CSV — columns stay exactly as yours',
+                  'Ready in 5 minutes from signup',
+                  'AI adapts to your business type automatically',
+                  'Data migration in one upload, no consultants',
+                  'Familiar structure — zero learning curve',
+                  'Flexible fields that match how you already work',
+                ].map(p => (
+                  <li key={p} className="flex items-center gap-3 text-sm" style={{ color: '#C4B5FD' }}>
+                    <span className="text-green-400 flex-shrink-0">✓</span>
+                    {p}
+                  </li>
+                ))}
+              </ul>
             </div>
+          </div>
+
+          {/* Business Types Grid */}
+          <h3 className="text-2xl font-black text-white text-center mb-8" style={{ fontFamily: 'Outfit' }}>
+            Works for every type of business
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            {BUSINESS_TYPES.map(biz => (
+              <div key={biz.name}
+                className="p-5 rounded-2xl text-center hover:scale-105 transition-transform cursor-default"
+                style={{ background: '#1E293B', border: `2px solid ${biz.color}30` }}>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3"
+                  style={{ background: biz.color + '20', border: `1.5px solid ${biz.color}` }}>
+                  <biz.icon size={22} style={{ color: biz.color }} />
+                </div>
+                <p className="font-black text-white text-sm mb-1" style={{ fontFamily: 'Outfit' }}>{biz.name}</p>
+                <p className="text-xs" style={{ color: '#64748B' }}>{biz.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Vision Statement */}
+          <div className="p-8 rounded-2xl text-center"
+            style={{ background: 'rgba(139,92,246,0.1)', border: '2px solid rgba(139,92,246,0.3)' }}>
+            <Brain size={40} className="mx-auto mb-4" style={{ color: '#8B5CF6' }} />
+            <h3 className="text-2xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>
+              Our Vision
+            </h3>
+            <p className="text-lg max-w-3xl mx-auto leading-relaxed" style={{ color: '#C4B5FD' }}>
+              We are building the world first truly universal ERP — one that intelligently generates the right structure, fields, and workflows for any business type automatically. A school gets student management. A hospital gets patient records. A manufacturer gets production tracking. All without writing a single line of configuration.
+            </p>
+            <p className="mt-4 text-sm font-bold" style={{ color: '#8B5CF6' }}>
+              The ERP that adapts to you. Not the other way around.
+            </p>
           </div>
         </div>
       </section>
 
       {/* FEATURES */}
-      <section id="features" className="py-24 px-6">
+      <section className="px-6 py-24">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 text-sm font-semibold" style={{ background: '#FCE7F3', border: '2px solid #F472B6', color: '#F472B6' }}>
-              <Zap size={14} /> Six Powerful Modules
-            </div>
-            <h2 className="text-4xl lg:text-5xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Everything your business runs on</h2>
-            <p className="text-lg" style={{ color: '#64748B' }}>Zero context-switching. One source of truth. Built for businesses globally.</p>
+            <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+              Everything your business needs
+            </h2>
+            <p className="text-lg" style={{ color: '#64748B' }}>
+              Six powerful modules unified in one workspace
+            </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((f, i) => (
-              <div key={f.title} className="sticker-card p-6 relative">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 wiggle" style={{ background: f.bg, border: `2px solid ${f.color}` }}>
-                  <f.icon size={22} strokeWidth={2.5} style={{ color: f.color }} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {FEATURES.map(f => (
+              <div key={f.title}
+                className="p-6 rounded-2xl hover:shadow-lg transition-all hover:-translate-y-1"
+                style={{ background: 'white', border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #E2E8F0' }}>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: f.bg, border: `2px solid ${f.color}` }}>
+                  <f.icon size={24} style={{ color: f.color }} />
                 </div>
-                <h3 className="text-xl font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>{f.title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: '#64748B' }}>{f.desc}</p>
-                <div className="absolute top-4 right-4 text-2xl">{['👥', '📄', '📦', '👔', '🎯', '📊'][i]}</div>
+                <h3 className="font-black text-base mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                  {f.title}
+                </h3>
+                <p className="text-sm" style={{ color: '#64748B' }}>{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* COMPARISON TABLE */}
-      <section className="py-24 px-6" style={{ background: '#1E293B' }}>
+      {/* PRICING */}
+      <section className="px-6 py-24" style={{ background: '#F8FAFC' }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+              Simple pricing. Big value.
+            </h2>
+            <p className="text-lg mb-6" style={{ color: '#64748B' }}>
+              No annual lock-in. No per-user fees. Cancel anytime.
+            </p>
+            <div className="inline-flex p-1 rounded-full" style={{ background: '#E2E8F0' }}>
+              {(['weekly', 'monthly', 'yearly'] as const).map(b => (
+                <button key={b} onClick={() => setBilling(b)}
+                  className="px-5 py-2 rounded-full text-sm font-bold capitalize transition-all"
+                  style={{
+                    background: billing === b ? '#1E293B' : 'transparent',
+                    color: billing === b ? 'white' : '#64748B',
+                  }}>
+                  {b} {b === 'yearly' && <span style={{ color: '#FBBF24' }}>-20%</span>}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3">
+              <span className="text-xs font-semibold px-3 py-1 rounded-full"
+                style={{ background: '#EDE9FE', color: '#8B5CF6' }}>
+                {price.note} — detected automatically 🌍
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {PLANS.map(plan => (
+              <div key={plan.name}
+                className="relative p-6 rounded-2xl"
+                style={{
+                  background: plan.popular ? '#8B5CF6' : 'white',
+                  border: '2px solid #1E293B',
+                  boxShadow: plan.popular ? '8px 8px 0px #FBBF24' : '6px 6px 0px #E2E8F0',
+                  transform: plan.popular ? 'scale(1.03)' : 'scale(1)',
+                }}>
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-black"
+                    style={{ background: '#FBBF24', border: '2px solid #1E293B', color: '#1E293B', whiteSpace: 'nowrap' }}>
+                    ⭐ MOST POPULAR
+                  </div>
+                )}
+                <div className="text-3xl mb-3">{plan.emoji}</div>
+                <h3 className="font-black text-lg mb-2"
+                  style={{ fontFamily: 'Outfit', color: plan.popular ? 'white' : '#1E293B' }}>
+                  {plan.name}
+                </h3>
+                <div className="mb-3">
+                  <span className="text-4xl font-black"
+                    style={{ fontFamily: 'Outfit', color: plan.popular ? 'white' : '#1E293B' }}>
+                    {plan.price}
+                  </span>
+                  <span className="text-sm ml-1"
+                    style={{ color: plan.popular ? 'rgba(255,255,255,0.7)' : '#94A3B8' }}>
+                    /{plan.period}
+                  </span>
+                </div>
+                <div className="inline-block px-3 py-1 rounded-full text-xs font-bold mb-4"
+                  style={{ background: plan.popular ? 'rgba(255,255,255,0.2)' : '#D1FAE5', color: plan.popular ? 'white' : '#065F46' }}>
+                  🎁 {plan.bonus}
+                </div>
+                <ul className="space-y-2 mb-4">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-center gap-2 text-xs"
+                      style={{ color: plan.popular ? 'rgba(255,255,255,0.9)' : '#475569' }}>
+                      <Check size={14} className="flex-shrink-0" style={{ color: plan.popular ? 'white' : '#34D399' }} />
+                      {f}
+                    </li>
+                  ))}
+                  {plan.locked.map(f => (
+                    <li key={f} className="flex items-center gap-2 text-xs opacity-50"
+                      style={{ color: plan.popular ? 'white' : '#94A3B8' }}>
+                      <span className="flex-shrink-0">🔒</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/signup"
+                  className="block w-full py-3 rounded-full text-sm font-bold text-center transition-all"
+                  style={{
+                    background: plan.popular ? 'white' : '#1E293B',
+                    color: plan.popular ? '#8B5CF6' : 'white',
+                    border: '2px solid #1E293B',
+                  }}>
+                  Get Started
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* COMPARISON */}
+      <section className="px-6 py-24">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: 'white' }}>Why businesses choose Samyojak</h2>
-            <p style={{ color: '#94A3B8' }}>Built to be simpler and smarter than traditional ERP platforms</p>
+            <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+              Why switch to Samyojak?
+            </h2>
           </div>
-          <div className="rounded-2xl overflow-hidden" style={{ border: '2px solid #334155' }}>
+          <div className="rounded-2xl overflow-hidden" style={{ border: '2px solid #1E293B' }}>
             <table className="w-full">
               <thead>
-                <tr style={{ background: '#0F172A' }}>
-                  <th className="p-4 text-left text-sm font-bold" style={{ color: '#94A3B8', fontFamily: 'Outfit' }}>Feature</th>
-                  <th className="p-4 text-center text-sm font-bold" style={{ color: '#8B5CF6', fontFamily: 'Outfit' }}>Samyojak ✨</th>
-                  <th className="p-4 text-center text-sm font-bold" style={{ color: '#64748B', fontFamily: 'Outfit' }}>Legacy ERP</th>
-                  <th className="p-4 text-center text-sm font-bold" style={{ color: '#64748B', fontFamily: 'Outfit' }}>Complex CRM</th>
+                <tr style={{ background: '#1E293B' }}>
+                  <th className="p-4 text-left text-sm font-bold text-white">Feature</th>
+                  <th className="p-4 text-center text-sm font-bold" style={{ color: '#8B5CF6' }}>Samyojak</th>
+                  <th className="p-4 text-center text-sm font-bold text-white/60">Zoho</th>
+                  <th className="p-4 text-center text-sm font-bold text-white/60">Odoo</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100">
                 {[
-                  ['Flat pricing — not per user', true, false, false],
-                  ['Setup in minutes not weeks', true, false, false],
-                  ['Free QR codes built-in', true, false, false],
-                  ['GST and VAT ready globally', true, false, false],
-                  ['Weekly payment plans', true, false, false],
-                  ['WhatsApp invoice sending', true, false, false],
-                  ['AI lead scoring built-in', true, false, false],
-                  ['Mobile-first design', true, false, false],
-                  ['Powered by Vercel infrastructure', true, false, false],
-                ].map(([feature, s, z, o], idx) => (
-                  <tr key={String(feature)} style={{ borderTop: '1px solid #1E293B', background: idx % 2 === 0 ? '#0F172A' : '#1E293B' }}>
-                    <td className="p-4 text-sm font-medium" style={{ color: '#CBD5E1' }}>{String(feature)}</td>
-                    <td className="p-4 text-center">{s ? <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-bold" style={{ background: '#34D399' }}>✓</span> : <span style={{ color: '#475569' }}>—</span>}</td>
-                    <td className="p-4 text-center">{z ? <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-bold" style={{ background: '#34D399' }}>✓</span> : <span style={{ color: '#475569' }}>—</span>}</td>
-                    <td className="p-4 text-center">{o ? <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-bold" style={{ background: '#34D399' }}>✓</span> : <span style={{ color: '#475569' }}>—</span>}</td>
+                  ['Setup time', '5 minutes', '2-4 weeks', '1-3 months'],
+                  ['Import any CSV format', '✅ Yes', '❌ Strict format', '❌ Strict format'],
+                  ['Weekly billing option', '✅ Yes', '❌ No', '❌ No'],
+                  ['Free QR codes', '✅ Included', '❌ Paid add-on', '❌ Not included'],
+                  ['WhatsApp invoicing', '✅ Built-in', '❌ No', '❌ No'],
+                  ['AI on live data', '✅ Real-time', '⚠️ Basic', '❌ No'],
+                  ['India pricing', '✅ ₹ optimized', '⚠️ USD only', '⚠️ USD only'],
+                  ['Universal tax (15+ countries)', '✅ Yes', '⚠️ Per-country setup', '⚠️ Complex config'],
+                  ['Starting price', '$4.99/week', '$14/month/user', '$10/month/user'],
+                ].map(([feature, us, zoho, odoo]) => (
+                  <tr key={feature} className="hover:bg-gray-50">
+                    <td className="p-4 text-sm font-medium text-gray-700">{feature}</td>
+                    <td className="p-4 text-center text-sm font-bold" style={{ color: '#8B5CF6' }}>{us}</td>
+                    <td className="p-4 text-center text-sm text-gray-500">{zoho}</td>
+                    <td className="p-4 text-center text-sm text-gray-500">{odoo}</td>
                   </tr>
                 ))}
               </tbody>
@@ -403,65 +457,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PRICING */}
-      <section id="pricing" className="py-24 px-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10" style={{ background: '#8B5CF6' }}></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-10" style={{ background: '#F472B6' }}></div>
-
-        <div className="max-w-6xl mx-auto relative">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 text-sm font-semibold" style={{ background: '#FEF3C7', border: '2px solid #FBBF24', color: '#92400E' }}>
-              <Star size={14} fill="#FBBF24" /> {REGION_LABELS[region]}
-            </div>
-            <h2 className="text-4xl lg:text-5xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Pay once. Get more.</h2>
-            <p className="text-lg mb-2" style={{ color: '#64748B' }}>Every plan comes with a bonus period — on us.</p>
-          </div>
-
-          <div className="flex justify-center mb-12">
-            <div className="flex p-1 rounded-full" style={{ background: '#F1F5F9', border: '2px solid #E2E8F0' }}>
-              {(['weekly', 'monthly', 'yearly'] as const).map(b => (
-                <button key={b} onClick={() => setBilling(b)} className="px-6 py-2 rounded-full text-sm font-bold capitalize transition-all duration-300"
-                  style={{ background: billing === b ? '#1E293B' : 'transparent', color: billing === b ? 'white' : '#64748B', fontFamily: 'Outfit' }}>
-                  {b}{b === 'yearly' && <span className="ml-1 text-xs" style={{ color: '#FBBF24' }}>-20%</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
-            {plans.map((plan, i) => (
-              <div key={plan} className={`relative p-6 rounded-2xl ${i === 2 ? 'md:-mt-4 md:mb-4' : ''}`}
-                style={{ background: i === 2 ? '#8B5CF6' : 'white', border: '2px solid #1E293B', boxShadow: i === 2 ? '8px 8px 0px #FBBF24' : '6px 6px 0px #E2E8F0', transform: i === 2 ? 'scale(1.05)' : 'scale(1)' }}>
-                {i === 2 && (
-                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black rotate-2 whitespace-nowrap"
-                    style={{ background: '#FBBF24', border: '2px solid #1E293B', color: '#1E293B', fontFamily: 'Outfit' }}>⭐ MOST POPULAR</div>
-                )}
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-                  style={{ background: i === 2 ? 'rgba(255,255,255,0.2)' : planColors[i] + '20', border: `2px solid ${i === 2 ? 'rgba(255,255,255,0.4)' : planColors[i]}` }}>
-                  <span className="text-lg">{['🌱', '⚡', '🚀', '💎'][i]}</span>
-                </div>
-                <h3 className="font-black text-lg mb-1" style={{ fontFamily: 'Outfit', color: i === 2 ? 'white' : '#1E293B' }}>{plan}</h3>
-                <div className="mb-2">
-                  <span className="text-4xl font-black" style={{ fontFamily: 'Outfit', color: i === 2 ? 'white' : '#1E293B' }}>{prices[i]}</span>
-                  <span className="text-sm ml-1" style={{ color: i === 2 ? 'rgba(255,255,255,0.7)' : '#94A3B8' }}>/{billing === 'weekly' ? 'wk' : billing === 'monthly' ? 'mo' : 'yr'}</span>
-                </div>
-                <div className="px-3 py-1 rounded-full text-xs font-bold mb-4 inline-block"
-                  style={{ background: i === 2 ? 'rgba(255,255,255,0.2)' : '#D1FAE5', color: i === 2 ? 'white' : '#065F46' }}>
-                  🎁 {bonuses[billing]}
-                </div>
-                <ul className="space-y-2 mb-6">
-                  {planFeatures[i].map(f => (
-                    <li key={f} className="flex items-center gap-2 text-sm" style={{ color: i === 2 ? 'rgba(255,255,255,0.9)' : '#475569' }}>
-                      <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0"
-                        style={{ background: i === 2 ? 'rgba(255,255,255,0.2)' : '#D1FAE5', color: i === 2 ? 'white' : '#065F46' }}>✓</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/signup" className="block text-center py-3 rounded-full font-bold text-sm transition-all duration-300"
-                  style={{ background: i === 2 ? 'white' : '#1E293B', color: i === 2 ? '#8B5CF6' : 'white', border: '2px solid #1E293B', fontFamily: 'Outfit', boxShadow: '3px 3px 0px ' + (i === 2 ? 'rgba(0,0,0,0.2)' : '#8B5CF6') }}>
-                  Start Trial →
-                </Link>
+      {/* BUILT ON SECTION */}
+      <section className="px-6 py-16" style={{ background: '#F8FAFC' }}>
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-sm font-bold uppercase tracking-wide mb-8" style={{ color: '#94A3B8' }}>
+            Built on enterprise-grade infrastructure
+          </p>
+          <div className="flex flex-wrap justify-center gap-8 items-center">
+            {[
+              { name: '▲ Vercel', desc: 'Hosting & Edge Network' },
+              { name: '⚡ Supabase', desc: 'Auth & Database' },
+              { name: '🤖 Groq AI', desc: 'AI Intelligence' },
+              { name: '📊 Airtable', desc: 'Data Backend' },
+              { name: '💳 Dodo Payments', desc: 'Global Payments' },
+            ].map(item => (
+              <div key={item.name} className="text-center">
+                <p className="font-black text-gray-900" style={{ fontFamily: 'Outfit' }}>{item.name}</p>
+                <p className="text-xs text-gray-400">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -469,99 +481,110 @@ export default function Home() {
       </section>
 
       {/* FAQ */}
-      <section className="py-24 px-6" style={{ background: '#F8FAFC' }}>
+      <section className="px-6 py-24">
         <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 text-sm font-semibold" style={{ background: '#EDE9FE', border: '2px solid #8B5CF6', color: '#8B5CF6' }}>❓ FAQ</div>
-            <h2 className="text-4xl font-black" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Frequently Asked Questions</h2>
-            <p className="mt-3" style={{ color: '#64748B' }}>Everything you need to know about Samyojak</p>
-          </div>
-          <div className="space-y-4">
-            {faqItems.map((item, i) => (
-              <details key={i} className="group rounded-2xl overflow-hidden" style={{ border: '2px solid #E2E8F0', background: 'white', boxShadow: '4px 4px 0px #E2E8F0' }}>
-                <summary className="flex items-center justify-between p-6 cursor-pointer font-bold list-none gap-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-                  <span>{item.q}</span>
-                  <span className="text-2xl flex-shrink-0 transition-transform duration-300 group-open:rotate-45" style={{ color: '#8B5CF6' }}>+</span>
-                </summary>
-                <div className="px-6 pb-6 text-sm leading-relaxed" style={{ color: '#64748B', borderTop: '2px solid #F1F5F9' }}>
-                  <p className="pt-4">{item.a}</p>
-                </div>
-              </details>
+          <h2 className="text-4xl font-black text-center mb-12" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+            Frequently asked questions
+          </h2>
+          <div className="space-y-3">
+            {FAQS.map((faq, i) => (
+              <div key={i}
+                className="rounded-2xl overflow-hidden"
+                style={{ border: '2px solid #E2E8F0', background: 'white' }}>
+                <button
+                  className="w-full flex items-center justify-between p-5 text-left"
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                >
+                  <span className="font-bold text-sm pr-4" style={{ color: '#1E293B', fontFamily: 'Outfit' }}>
+                    {faq.q}
+                  </span>
+                  {openFaq === i
+                    ? <ChevronUp size={18} className="text-gray-400 flex-shrink-0" />
+                    : <ChevronDown size={18} className="text-gray-400 flex-shrink-0" />
+                  }
+                </button>
+                {openFaq === i && (
+                  <div className="px-5 pb-5 text-sm" style={{ color: '#64748B', borderTop: '1px solid #E2E8F0' }}>
+                    <p className="pt-4">{faq.a}</p>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="py-24 px-6" style={{ background: '#8B5CF6' }}>
-        <div className="max-w-3xl mx-auto text-center">
+      <section className="px-6 py-24 text-center" style={{ background: '#1E293B' }}>
+        <div className="max-w-3xl mx-auto">
           <div className="text-6xl mb-6 float">🚀</div>
-          <h2 className="text-4xl lg:text-5xl font-black text-white mb-6" style={{ fontFamily: 'Outfit' }}>Ready to coordinate everything?</h2>
-          <p className="text-lg mb-8 text-white/80">Join 500+ growing businesses using Samyojak to run their operations smarter.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Link href="/signup" className="px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-2"
-              style={{ background: 'white', color: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '4px 4px 0px #1E293B', fontFamily: 'Outfit' }}>
-              Start Trial <ArrowRight size={20} />
+          <h2 className="text-4xl md:text-5xl font-black text-white mb-6" style={{ fontFamily: 'Outfit' }}>
+            Your business deserves an ERP
+            <br />
+            <span style={{ color: '#8B5CF6' }}>that understands it</span>
+          </h2>
+          <p className="text-lg mb-8" style={{ color: '#94A3B8' }}>
+            Join businesses globally who chose simplicity over complexity.
+            Set up in 5 minutes. Cancel anytime. No lock-in.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/signup" className="candy-btn px-10 py-5 text-xl inline-flex items-center gap-2">
+              Start Free Today <ArrowRight size={22} />
             </Link>
-            <Link href="/contact" className="px-8 py-4 rounded-full font-bold text-lg text-center"
-              style={{ background: 'transparent', color: 'white', border: '2px solid rgba(255,255,255,0.5)', fontFamily: 'Outfit' }}>
-              Talk to Us
+            <Link href="/demo" className="px-10 py-5 text-xl inline-flex items-center gap-2 rounded-full font-bold"
+              style={{ border: '2px solid rgba(255,255,255,0.3)', color: 'white' }}>
+              Watch Demo
             </Link>
-          </div>
-          <div className="flex items-center justify-center gap-2 text-white/60 text-sm">
-            <span>Powered by</span>
-            <span className="font-black text-white">▲ Vercel</span>
-            <span>·</span>
-            <span>AI by Groq</span>
-            <span>·</span>
-            <span>Auth by Supabase</span>
           </div>
         </div>
       </section>
 
       {/* FOOTER */}
-      <footer className="py-16 px-6" style={{ background: '#0F172A', borderTop: '2px solid #1E293B' }}>
+      <footer className="px-6 py-12" style={{ background: '#0A1628', borderTop: '2px solid #1E293B' }}>
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg" style={{ background: '#8B5CF6', border: '2px solid #334155' }}>S</div>
-                <span className="font-black text-xl text-white" style={{ fontFamily: 'Outfit' }}>Samyojak</span>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm"
+                  style={{ background: '#8B5CF6' }}>S</div>
+                <span className="font-black text-white" style={{ fontFamily: 'Outfit' }}>Samyojak</span>
               </div>
-              <p className="text-sm leading-relaxed mb-4" style={{ color: '#64748B' }}>
-                Coordinate Everything. Run Anything. The all-in-one AI-powered ERP for modern businesses worldwide.
+              <p className="text-xs" style={{ color: '#64748B' }}>
+                The universal ERP that adapts to your business. Not the other way around.
               </p>
-              <div className="flex items-center gap-2 text-xs" style={{ color: '#475569' }}>
-                <span>Powered by</span>
-                <span className="font-black text-white">▲ Vercel</span>
-              </div>
             </div>
-            {[
-              { title: 'Product', links: ['Features', 'Pricing', 'CRM', 'Invoicing', 'Inventory'] },
-              { title: 'Company', links: ['About', 'Services', 'Contact'] },
-              { title: 'Legal', links: ['Privacy Policy', 'Terms of Service'] },
-            ].map(col => (
-              <div key={col.title}>
-                <h4 className="font-black text-white mb-4 text-sm uppercase tracking-wide" style={{ fontFamily: 'Outfit' }}>{col.title}</h4>
-                <ul className="space-y-2">
-                  {col.links.map(link => (
-                    <li key={link}>
-                      <Link href={link === 'Privacy Policy' ? '/privacy' : link === 'Terms of Service' ? '/terms' : link === 'Features' ? '#features' : link === 'Pricing' ? '#pricing' : `/${link.toLowerCase().replace(' ', '-')}`}
-                        className="text-sm hover:text-violet-400 transition-colors" style={{ color: '#64748B' }}>
-                        {link}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            <div>
+              <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Product</p>
+              {['Features', 'Pricing', 'Demo', 'Changelog'].map(l => (
+                <a key={l} href={`/${l.toLowerCase()}`} className="block text-xs mb-2 hover:text-white transition-colors"
+                  style={{ color: '#64748B' }}>{l}</a>
+              ))}
+            </div>
+            <div>
+              <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Company</p>
+              {['About', 'Contact', 'Referral Program', 'White Label'].map(l => (
+                <a key={l} href={`/${l.toLowerCase().replace(' ', '-')}`} className="block text-xs mb-2 hover:text-white transition-colors"
+                  style={{ color: '#64748B' }}>{l}</a>
+              ))}
+            </div>
+            <div>
+              <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Legal</p>
+              {['Privacy Policy', 'Terms of Service'].map(l => (
+                <a key={l} href={`/${l.toLowerCase().replace(' ', '-')}`} className="block text-xs mb-2 hover:text-white transition-colors"
+                  style={{ color: '#64748B' }}>{l}</a>
+              ))}
+              <p className="text-xs mt-4" style={{ color: '#334155' }}>
+                Made with ❤️ in India 🇮🇳
+              </p>
+            </div>
           </div>
-          <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4" style={{ borderTop: '1px solid #1E293B' }}>
-            <p className="text-sm" style={{ color: '#475569' }}>© 2026 Samyojak. All rights reserved.</p>
-            <div className="flex items-center gap-4 text-xs" style={{ color: '#475569' }}>
-              <span>Made with ❤️ for businesses everywhere 🌍</span>
-              <span>·</span>
-              <span className="flex items-center gap-1">Powered by <span className="font-black text-white">▲ Vercel</span></span>
+          <div className="flex items-center justify-between border-t pt-8" style={{ borderColor: '#1E293B' }}>
+            <p className="text-xs" style={{ color: '#334155' }}>
+              © 2026 Samyojak. All rights reserved.
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-xs" style={{ color: '#334155' }}>Powered by</span>
+              <span className="text-xs font-black text-white">▲ Vercel</span>
             </div>
           </div>
         </div>
