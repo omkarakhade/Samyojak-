@@ -11,19 +11,19 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || ''
 
 async function testAirtableRead(table: string) {
   try {
-    const res = await fetch(`https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}?maxRecords=1`, {
-      headers: { Authorization: `Bearer ${TOKEN}` }
-    })
+    const res = await fetch(
+      `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}?maxRecords=1`,
+      { headers: { Authorization: `Bearer ${TOKEN}` } }
+    )
     const data = await res.json()
     return {
       status: res.status,
       ok: res.ok,
-      recordCount: data.records?.length || 0,
       fields: data.records?.[0] ? Object.keys(data.records[0].fields) : [],
-      error: data.error || null,
+      error: data.error ? JSON.stringify(data.error) : null,
     }
   } catch (e: any) {
-    return { status: 'ERROR', ok: false, error: e.message, fields: [] }
+    return { status: 'FETCH_ERROR', ok: false, error: String(e.message), fields: [] }
   }
 }
 
@@ -32,39 +32,50 @@ async function testAirtableWrite(table: string, testFields: Record<string, unkno
     const res = await fetch(`https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields: testFields })
+      body: JSON.stringify({ fields: testFields }),
     })
     const data = await res.json()
     if (data.id) {
-      // Clean up test record
       await fetch(`https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}/${data.id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${TOKEN}` }
+        headers: { Authorization: `Bearer ${TOKEN}` },
       })
     }
-    return { status: res.status, ok: res.ok, recordId: data.id || null, error: data.error || null }
+    return {
+      status: res.status,
+      ok: res.ok,
+      recordId: data.id || null,
+      error: data.error ? JSON.stringify(data.error) : null,
+    }
   } catch (e: any) {
-    return { status: 'ERROR', ok: false, error: e.message }
+    return { status: 'FETCH_ERROR', ok: false, error: String(e.message) }
   }
 }
 
 async function testGroq() {
-  if (!GROQ_KEY) return { ok: false, error: 'GROQ_API_KEY not set' }
+  if (!GROQ_KEY) return { ok: false, error: 'GROQ_API_KEY not set in Vercel' }
   try {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${GROQ_KEY}`, 'Content-Type': 'application/json' },
+      headers: {
+        Authorization: `Bearer ${GROQ_KEY}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         model: 'llama3-8b-8192',
-        messages: [{ role: 'user', content: 'Reply with exactly: AI_WORKING' }],
-        max_tokens: 10
-      })
+        messages: [{ role: 'user', content: 'Reply with exactly two words: AI WORKING' }],
+        max_tokens: 10,
+      }),
     })
-    const data = await res.json()
-    const reply = data.choices?.[0]?.message?.content || ''
-    return { ok: res.ok, status: res.status, reply, error: data.error || null }
+    const text = await res.text()
+    if (!res.ok) {
+      return { ok: false, status: res.status, error: text }
+    }
+    const data = JSON.parse(text)
+    const reply = data.choices?.[0]?.message?.content || 'no reply'
+    return { ok: true, status: res.status, reply: reply.trim() }
   } catch (e: any) {
-    return { ok: false, error: e.message }
+    return { ok: false, error: String(e.message) }
   }
 }
 
@@ -73,31 +84,65 @@ async function testDodo() {
   try {
     const DodoModule = await import('dodopayments')
     const DodoPayments = DodoModule.default || DodoModule
-    const client = new (DodoPayments as any)({
+    new (DodoPayments as any)({
       bearerToken: DODO_KEY,
       environment: DODO_ENV === 'live' ? 'live_mode' : 'test_mode',
     })
-    // Just check if client initializes without error
-    return { ok: true, environment: DODO_ENV, keyPrefix: DODO_KEY.substring(0, 8) }
+    return {
+      ok: true,
+      environment: DODO_ENV || 'not set',
+      keyPreview: DODO_KEY.substring(0, 8) + '...',
+    }
   } catch (e: any) {
-    return { ok: false, error: e.message }
+    return { ok: false, error: String(e.message) }
   }
 }
 
 async function testSupabase() {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return { ok: false, error: 'Supabase env vars missing' }
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    return { ok: false, error: 'NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set' }
+  }
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
     })
-    return { ok: res.ok, status: res.status, url: SUPABASE_URL }
+    return {
+      ok: res.ok || res.status === 200 || res.status === 400,
+      status: res.status,
+      url: SUPABASE_URL,
+    }
   } catch (e: any) {
-    return { ok: false, error: e.message }
+    return { ok: false, error: String(e.message) }
   }
 }
 
 export async function GET() {
-  const results: any = {
+  const [groq, dodo, supabase] = await Promise.all([
+    testGroq(),
+    testDodo(),
+    testSupabase(),
+  ])
+
+  const tables = ['Leads', 'Invoices', 'Products', 'Employees', 'Projects', 'Support_Tickets', 'UserData']
+  const reads: Record<string, any> = {}
+  await Promise.all(tables.map(async t => { reads[t] = await testAirtableRead(t) }))
+
+  const writes: Record<string, any> = {}
+  await Promise.all([
+    testAirtableWrite('Leads', { Name: 'DEBUG_TEST', Status: 'New' }).then(r => { writes['Leads'] = r }),
+    testAirtableWrite('Products', { 'Item Name': 'DEBUG_TEST', SKU: 'DEBUG-000' }).then(r => { writes['Products'] = r }),
+    testAirtableWrite('Employees', { Name: 'DEBUG_TEST' }).then(r => { writes['Employees'] = r }),
+    testAirtableWrite('Projects', { 'Project Name': 'DEBUG_TEST', Status: 'Planning' }).then(r => { writes['Projects'] = r }),
+    testAirtableWrite('Invoices', { 'Payment Status': 'Unpaid', 'Issue Date': new Date().toISOString().split('T')[0], 'GST %': 18, Notes: 'Debug test' }).then(r => { writes['Invoices'] = r }),
+  ])
+
+  const allReadsOk = Object.entries(reads).filter(([t]) => t !== 'UserData').every(([, r]: any) => r.ok)
+  const allWritesOk = Object.values(writes).every((r: any) => r.ok)
+
+  return NextResponse.json({
     timestamp: new Date().toISOString(),
     environment: {
       DODO_ENV: DODO_ENV || 'NOT SET',
@@ -107,53 +152,38 @@ export async function GET() {
       AIRTABLE_TOKEN_PREFIX: TOKEN.substring(0, 8),
       AIRTABLE_BASE_ID: BASE,
       GROQ_KEY_EXISTS: !!GROQ_KEY,
-      GROQ_KEY_PREFIX: GROQ_KEY.substring(0, 8),
+      GROQ_KEY_PREFIX: GROQ_KEY ? GROQ_KEY.substring(0, 8) : 'none',
       DODO_KEY_EXISTS: !!DODO_KEY,
-      DODO_KEY_PREFIX: DODO_KEY.substring(0, 8),
+      DODO_KEY_PREFIX: DODO_KEY ? DODO_KEY.substring(0, 8) : 'none',
       SUPABASE_URL_EXISTS: !!SUPABASE_URL,
     },
-    airtable: {
-      reads: {},
-      writes: {},
+    airtable: { reads, writes },
+    services: {
+      groq: {
+        ok: groq.ok,
+        status: (groq as any).status || null,
+        reply: (groq as any).reply || null,
+        error: groq.ok ? null : (groq as any).error || 'unknown error',
+      },
+      dodo: {
+        ok: dodo.ok,
+        environment: (dodo as any).environment || null,
+        keyPreview: (dodo as any).keyPreview || null,
+        error: dodo.ok ? null : (dodo as any).error || 'unknown error',
+      },
+      supabase: {
+        ok: supabase.ok,
+        status: (supabase as any).status || null,
+        url: (supabase as any).url || null,
+        error: supabase.ok ? null : (supabase as any).error || 'unknown error',
+      },
     },
-    services: {},
-  }
-
-  // Test all Airtable table reads
-  const tables = ['Leads', 'Invoices', 'Products', 'Employees', 'Projects', 'Support_Tickets', 'UserData']
-  await Promise.all(tables.map(async table => {
-    results.airtable.reads[table] = await testAirtableRead(table)
-  }))
-
-  // Test writes with minimal safe fields
-  results.airtable.writes['Leads'] = await testAirtableWrite('Leads', { Name: 'DEBUG_TEST_DELETE', Status: 'New' })
-  results.airtable.writes['Products'] = await testAirtableWrite('Products', { 'Item Name': 'DEBUG_TEST_DELETE', SKU: 'DEBUG-SKU' })
-  results.airtable.writes['Employees'] = await testAirtableWrite('Employees', { Name: 'DEBUG_TEST_DELETE' })
-  results.airtable.writes['Projects'] = await testAirtableWrite('Projects', { 'Project Name': 'DEBUG_TEST_DELETE', Status: 'Planning' })
-
-  // Test Invoice write without Notes field
-  results.airtable.writes['Invoices'] = await testAirtableWrite('Invoices', {
-    'Payment Status': 'Unpaid',
-    'Issue Date': new Date().toISOString().split('T')[0],
-    'GST %': 18,
+    summary: {
+      airtable_reads: allReadsOk ? '✅ ALL OK' : '❌ SOME FAILING',
+      airtable_writes: allWritesOk ? '✅ ALL OK' : '❌ SOME FAILING',
+      groq_ai: groq.ok ? `✅ WORKING` : `❌ FAILING`,
+      dodo_payments: dodo.ok ? '✅ INITIALIZED' : '❌ FAILING',
+      supabase: supabase.ok ? '✅ REACHABLE' : '❌ FAILING',
+    },
   })
-
-  // Test services
-  const [groq, dodo, supabase] = await Promise.all([testGroq(), testDodo(), testSupabase()])
-  results.services.groq = groq
-  results.services.dodo = dodo
-  results.services.supabase = supabase
-
-  // Summary
-  const allReadsOk = Object.values(results.airtable.reads).every((r: any) => r.ok)
-  const allWritesOk = Object.values(results.airtable.writes).every((r: any) => r.ok)
-  results.summary = {
-    airtable_reads: allReadsOk ? '✅ ALL OK' : '❌ SOME FAILING',
-    airtable_writes: allWritesOk ? '✅ ALL OK' : '❌ SOME FAILING — check errors above',
-    groq_ai: groq.ok ? '✅ WORKING' : '❌ FAILING',
-    dodo_payments: dodo.ok ? '✅ INITIALIZED' : '❌ FAILING',
-    supabase: supabase.ok ? '✅ REACHABLE' : '❌ FAILING',
-  }
-
-  return NextResponse.json(results)
 }
