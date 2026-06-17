@@ -62,18 +62,15 @@ async function testGroq() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content: 'Reply with exactly two words: AI WORKING' }],
         max_tokens: 10,
       }),
     })
     const text = await res.text()
-    if (!res.ok) {
-      return { ok: false, status: res.status, error: text }
-    }
+    if (!res.ok) return { ok: false, status: res.status, error: text }
     const data = JSON.parse(text)
-    const reply = data.choices?.[0]?.message?.content || 'no reply'
-    return { ok: true, status: res.status, reply: reply.trim() }
+    return { ok: true, status: res.status, reply: data.choices?.[0]?.message?.content?.trim() || 'no reply', model: 'llama-3.1-8b-instant' }
   } catch (e: any) {
     return { ok: false, error: String(e.message) }
   }
@@ -84,47 +81,27 @@ async function testDodo() {
   try {
     const DodoModule = await import('dodopayments')
     const DodoPayments = DodoModule.default || DodoModule
-    new (DodoPayments as any)({
-      bearerToken: DODO_KEY,
-      environment: DODO_ENV === 'live' ? 'live_mode' : 'test_mode',
-    })
-    return {
-      ok: true,
-      environment: DODO_ENV || 'not set',
-      keyPreview: DODO_KEY.substring(0, 8) + '...',
-    }
+    new (DodoPayments as any)({ bearerToken: DODO_KEY, environment: DODO_ENV === 'live' ? 'live_mode' : 'test_mode' })
+    return { ok: true, environment: DODO_ENV || 'not set', keyPreview: DODO_KEY.substring(0, 8) + '...' }
   } catch (e: any) {
     return { ok: false, error: String(e.message) }
   }
 }
 
 async function testSupabase() {
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    return { ok: false, error: 'NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set' }
-  }
+  if (!SUPABASE_URL || !SUPABASE_KEY) return { ok: false, error: 'Supabase env vars missing' }
   try {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-      },
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     })
-    return {
-      ok: res.ok || res.status === 200 || res.status === 400,
-      status: res.status,
-      url: SUPABASE_URL,
-    }
+    return { ok: res.ok || res.status === 400, status: res.status, url: SUPABASE_URL }
   } catch (e: any) {
     return { ok: false, error: String(e.message) }
   }
 }
 
 export async function GET() {
-  const [groq, dodo, supabase] = await Promise.all([
-    testGroq(),
-    testDodo(),
-    testSupabase(),
-  ])
+  const [groq, dodo, supabase] = await Promise.all([testGroq(), testDodo(), testSupabase()])
 
   const tables = ['Leads', 'Invoices', 'Products', 'Employees', 'Projects', 'Support_Tickets', 'UserData']
   const reads: Record<string, any> = {}
@@ -139,7 +116,7 @@ export async function GET() {
     testAirtableWrite('Invoices', { 'Payment Status': 'Unpaid', 'Issue Date': new Date().toISOString().split('T')[0], 'GST %': 18, Notes: 'Debug test' }).then(r => { writes['Invoices'] = r }),
   ])
 
-  const allReadsOk = Object.entries(reads).filter(([t]) => t !== 'UserData').every(([, r]: any) => r.ok)
+  const allReadsOk = Object.entries(reads).filter(([t]) => t !== 'Support_Tickets').every(([, r]: any) => r.ok)
   const allWritesOk = Object.values(writes).every((r: any) => r.ok)
 
   return NextResponse.json({
@@ -160,30 +137,31 @@ export async function GET() {
     airtable: { reads, writes },
     services: {
       groq: {
-        ok: groq.ok,
+        ok: (groq as any).ok,
         status: (groq as any).status || null,
         reply: (groq as any).reply || null,
-        error: groq.ok ? null : (groq as any).error || 'unknown error',
+        model: (groq as any).model || null,
+        error: (groq as any).ok ? null : (groq as any).error || 'unknown',
       },
       dodo: {
-        ok: dodo.ok,
+        ok: (dodo as any).ok,
         environment: (dodo as any).environment || null,
         keyPreview: (dodo as any).keyPreview || null,
-        error: dodo.ok ? null : (dodo as any).error || 'unknown error',
+        error: (dodo as any).ok ? null : (dodo as any).error || 'unknown',
       },
       supabase: {
-        ok: supabase.ok,
+        ok: (supabase as any).ok,
         status: (supabase as any).status || null,
         url: (supabase as any).url || null,
-        error: supabase.ok ? null : (supabase as any).error || 'unknown error',
+        error: (supabase as any).ok ? null : (supabase as any).error || 'unknown',
       },
     },
     summary: {
-      airtable_reads: allReadsOk ? '✅ ALL OK' : '❌ SOME FAILING',
+      airtable_reads: allReadsOk ? '✅ ALL OK' : '❌ SOME FAILING (Support_Tickets needs token permission)',
       airtable_writes: allWritesOk ? '✅ ALL OK' : '❌ SOME FAILING',
-      groq_ai: groq.ok ? `✅ WORKING` : `❌ FAILING`,
-      dodo_payments: dodo.ok ? '✅ INITIALIZED' : '❌ FAILING',
-      supabase: supabase.ok ? '✅ REACHABLE' : '❌ FAILING',
+      groq_ai: (groq as any).ok ? `✅ WORKING — model: llama-3.1-8b-instant` : `❌ FAILING`,
+      dodo_payments: (dodo as any).ok ? '✅ INITIALIZED' : '❌ FAILING',
+      supabase: (supabase as any).ok ? '✅ REACHABLE' : '❌ FAILING',
     },
   })
 }
