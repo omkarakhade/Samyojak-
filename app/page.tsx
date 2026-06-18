@@ -5,7 +5,7 @@ import {
   ArrowRight, Check, Brain, Users, FileText, Package, UserCheck,
   FolderOpen, BarChart3, Globe, Zap, ChevronDown, ChevronUp,
   Building2, Stethoscope, ShoppingBag, Factory,
-  GraduationCap, Truck, Code, UtensilsCrossed,
+  GraduationCap, Truck, Code, UtensilsCrossed, Menu, X,
 } from 'lucide-react'
 
 const FEATURES = [
@@ -59,6 +59,7 @@ export default function Home() {
   const [region, setRegion] = useState<'india' | 'global' | 'western'>('global')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [mobileMenu, setMobileMenu] = useState(false)
 
   useEffect(() => {
     setRegion(detectRegion() as any)
@@ -90,12 +91,19 @@ export default function Home() {
     },
   ]
 
+  const navLinks = [
+    { href: '/features', label: 'Features' },
+    { href: '/pricing', label: 'Pricing' },
+    { href: '/about', label: 'About' },
+    { href: '/contact', label: 'Contact' },
+  ]
+
   return (
     <div style={{ background: '#FFFDF5', fontFamily: 'Plus Jakarta Sans' }}>
 
-      {/* NAV */}
+      {/* NAV — with mobile menu */}
       <nav className="sticky top-0 z-50 px-6 py-4"
-        style={{ background: 'rgba(255,253,245,0.95)', backdropFilter: 'blur(12px)', borderBottom: '2px solid #E2E8F0' }}>
+        style={{ background: 'rgba(255,253,245,0.97)', backdropFilter: 'blur(12px)', borderBottom: '2px solid #E2E8F0' }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg"
@@ -104,61 +112,105 @@ export default function Home() {
             </div>
             <span className="font-black text-xl" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Samyojak</span>
           </Link>
+
+          {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/features" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Features</Link>
-            <Link href="/pricing" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Pricing</Link>
-            <Link href="/about" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>About</Link>
-            <Link href="/contact" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Contact</Link>
+            {navLinks.map(l => (
+              <Link key={l.href} href={l.href}
+                className="text-sm font-medium hover:text-violet-600 transition-colors"
+                style={{ color: '#64748B' }}>
+                {l.label}
+              </Link>
+            ))}
           </div>
+
           <div className="flex items-center gap-3">
             <Link href="/login" className="outline-btn px-4 py-2 text-sm hidden md:block">Sign In</Link>
-            {/* START TRIAL — no "Start Free" or "No card needed" */}
-            <Link href="/signup" className="candy-btn px-4 py-2 text-sm">Start Trial</Link>
+            <Link href="/signup" className="candy-btn px-4 py-2 text-sm hidden md:block">Start Trial</Link>
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileMenu(!mobileMenu)}
+              className="md:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors"
+              style={{ border: '2px solid #E2E8F0' }}>
+              {mobileMenu ? <X size={20} style={{ color: '#1E293B' }} /> : <Menu size={20} style={{ color: '#1E293B' }} />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        {mobileMenu && (
+          <div className="md:hidden mt-3 pb-4 border-t border-gray-100">
+            <div className="flex flex-col gap-1 pt-4 px-2">
+              {navLinks.map(l => (
+                <Link key={l.href} href={l.href}
+                  onClick={() => setMobileMenu(false)}
+                  className="px-4 py-3 rounded-xl text-sm font-medium hover:bg-violet-50 transition-colors"
+                  style={{ color: '#1E293B' }}>
+                  {l.label}
+                </Link>
+              ))}
+              <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
+                <Link href="/login" onClick={() => setMobileMenu(false)}
+                  className="flex-1 text-center py-3 rounded-xl text-sm font-bold border-2"
+                  style={{ border: '2px solid #1E293B', color: '#1E293B' }}>
+                  Sign In
+                </Link>
+                <Link href="/signup" onClick={() => setMobileMenu(false)}
+                  className="candy-btn flex-1 text-center py-3 text-sm">
+                  Start Trial
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
-      {/* ═══════════════════════════════════════════════════════
-          HERO — STUNNING PROFESSIONAL WITH ANIMATIONS
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative px-6 py-28 overflow-hidden" style={{ background: '#0A0E1A' }}>
+      {/* ═══════════════════════════════════════════════════
+          HERO — LIGHT, COLORFUL, PROFESSIONAL, ANIMATED
+          ═══════════════════════════════════════════════════ */}
+      <section className="relative px-6 py-24 overflow-hidden"
+        style={{ background: '#FFFDF5' }}>
 
-        {/* Animated background grid */}
+        {/* Subtle dot grid background */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          backgroundImage: 'linear-gradient(rgba(139,92,246,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.06) 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
+          backgroundImage: 'radial-gradient(circle, #8B5CF620 1px, transparent 1px)',
+          backgroundSize: '32px 32px',
         }} />
 
-        {/* Glow orbs */}
-        <div className="absolute top-20 left-1/4 w-96 h-96 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)', filter: 'blur(40px)' }} />
-        <div className="absolute bottom-10 right-1/4 w-80 h-80 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(244,114,182,0.12) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+        {/* Soft color blobs */}
+        <div className="absolute top-10 right-10 w-72 h-72 rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, #EDE9FE 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        <div className="absolute bottom-10 left-10 w-64 h-64 rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, #FCE7F3 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, #FEF3C720 0%, transparent 70%)', filter: 'blur(80px)' }} />
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
 
-          {/* Eyebrow badge */}
+          {/* Eyebrow */}
           <div
             className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full mb-8 text-sm font-semibold transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
             style={{
-              background: 'rgba(139,92,246,0.15)',
-              border: '1.5px solid rgba(139,92,246,0.5)',
-              color: '#C4B5FD',
+              background: 'white',
+              border: '2px solid #8B5CF6',
+              color: '#8B5CF6',
+              boxShadow: '3px 3px 0px #8B5CF6',
               transitionDelay: '100ms',
             }}>
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
             AI-Powered · Universal · Adaptive ERP
           </div>
 
-          {/* Main headline */}
+          {/* Headline — colorful gradient on light background */}
           <h1
             className={`font-black leading-none mb-6 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
             style={{
               fontFamily: 'Outfit',
-              fontSize: 'clamp(3rem, 8vw, 6rem)',
+              fontSize: 'clamp(2.8rem, 8vw, 5.5rem)',
+              color: '#1E293B',
               transitionDelay: '200ms',
             }}>
-            <span style={{ color: 'white' }}>The ERP that </span>
+            The ERP that{' '}
             <span style={{
               background: 'linear-gradient(135deg, #8B5CF6 0%, #F472B6 50%, #FBBF24 100%)',
               WebkitBackgroundClip: 'text',
@@ -169,93 +221,94 @@ export default function Home() {
             </span>
           </h1>
 
-          {/* Subheadline */}
+          {/* Subtext */}
           <p
             className={`text-xl md:text-2xl mb-10 max-w-2xl mx-auto transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
-            style={{ color: '#94A3B8', lineHeight: 1.6, transitionDelay: '300ms' }}>
+            style={{ color: '#64748B', lineHeight: 1.6, transitionDelay: '300ms' }}>
             One platform for CRM, invoicing, inventory, HR, projects, and AI intelligence.
             Works for every business. Ready in 5 minutes.
           </p>
 
-          {/* CTA — Start Trial only, no Demo */}
+          {/* CTA */}
           <div
-            className={`flex flex-col sm:flex-row gap-4 justify-center mb-14 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+            className={`flex flex-col sm:flex-row gap-4 justify-center mb-12 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
             style={{ transitionDelay: '400ms' }}>
             <Link href="/signup"
-              className="inline-flex items-center justify-center gap-3 px-10 py-5 rounded-full font-black text-lg transition-all hover:scale-105 hover:shadow-2xl"
+              className="inline-flex items-center justify-center gap-3 px-10 py-5 rounded-full font-black text-lg transition-all hover:scale-105"
               style={{
                 background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
                 color: 'white',
-                boxShadow: '0 0 40px rgba(139,92,246,0.4)',
+                boxShadow: '0 8px 32px rgba(139,92,246,0.35), 4px 4px 0px #1E293B',
                 fontFamily: 'Outfit',
               }}>
               Start Trial <ArrowRight size={22} />
             </Link>
           </div>
 
-          {/* Trust signals */}
+          {/* Trust pills */}
           <div
-            className={`flex flex-wrap gap-6 justify-center text-sm transition-all duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}
-            style={{ color: '#475569', transitionDelay: '500ms' }}>
+            className={`flex flex-wrap gap-3 justify-center mb-14 transition-all duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}
+            style={{ transitionDelay: '500ms' }}>
             {[
-              '✦ Weekly plans from $4.99',
-              '✦ Cancel anytime',
-              '✦ Works for any business',
-              '✦ Powered by Vercel',
-            ].map(f => <span key={f}>{f}</span>)}
+              { label: 'Weekly plans from $4.99', color: '#8B5CF6', bg: '#EDE9FE' },
+              { label: 'Cancel anytime', color: '#34D399', bg: '#D1FAE5' },
+              { label: 'Works for any business', color: '#F472B6', bg: '#FCE7F3' },
+              { label: 'Powered by Vercel', color: '#1E293B', bg: '#F1F5F9' },
+            ].map(t => (
+              <span key={t.label}
+                className="px-4 py-1.5 rounded-full text-xs font-semibold"
+                style={{ background: t.bg, color: t.color, border: `1.5px solid ${t.color}30` }}>
+                ✦ {t.label}
+              </span>
+            ))}
           </div>
 
-          {/* Floating module cards — decorative */}
+          {/* Dashboard preview — light card */}
           <div
-            className={`mt-16 relative transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+            className={`relative mx-auto max-w-4xl transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
             style={{ transitionDelay: '600ms' }}>
 
-            {/* Dashboard preview — decorative UI showcase */}
-            <div className="relative mx-auto max-w-4xl rounded-2xl overflow-hidden"
-              style={{ border: '1.5px solid rgba(139,92,246,0.3)', boxShadow: '0 0 80px rgba(139,92,246,0.15)' }}>
+            <div className="rounded-2xl overflow-hidden"
+              style={{
+                border: '2px solid #E2E8F0',
+                boxShadow: '0 32px 80px rgba(139,92,246,0.12), 0 8px 24px rgba(0,0,0,0.08), 8px 8px 0px #8B5CF620',
+              }}>
 
-              {/* Fake browser chrome */}
-              <div className="flex items-center gap-2 px-4 py-3" style={{ background: '#1E293B', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              {/* Browser chrome — light */}
+              <div className="flex items-center gap-2 px-4 py-3"
+                style={{ background: '#F8FAFC', borderBottom: '1.5px solid #E2E8F0' }}>
                 <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full" style={{ background: '#EF4444' }}></div>
-                  <div className="w-3 h-3 rounded-full" style={{ background: '#FBBF24' }}></div>
-                  <div className="w-3 h-3 rounded-full" style={{ background: '#34D399' }}></div>
+                  <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-400"></div>
                 </div>
-                <div className="flex-1 mx-4 px-4 py-1 rounded-full text-xs text-center"
-                  style={{ background: 'rgba(255,255,255,0.06)', color: '#64748B' }}>
+                <div className="flex-1 mx-4 px-4 py-1.5 rounded-full text-xs text-center"
+                  style={{ background: 'white', color: '#94A3B8', border: '1px solid #E2E8F0' }}>
                   samyojak.vercel.app/dashboard
                 </div>
               </div>
 
-              {/* Dashboard content */}
-              <div className="p-6" style={{ background: '#0F172A' }}>
+              {/* Dashboard UI */}
+              <div className="p-5" style={{ background: '#FAFBFF' }}>
 
-                {/* Top stats row */}
-                <div className="grid grid-cols-4 gap-3 mb-4">
-                  {[
-                    { label: 'Leads', value: '48', color: '#8B5CF6', bg: '#EDE9FE' },
-                    { label: 'Invoices', value: '23', color: '#F472B6', bg: '#FCE7F3' },
-                    { label: 'Products', value: '156', color: '#FBBF24', bg: '#FEF3C7' },
-                    { label: 'Projects', value: '12', color: '#34D399', bg: '#D1FAE5' },
-                  ].map(s => (
-                    <div key={s.label} className="p-3 rounded-xl"
-                      style={{ background: '#1E293B', border: `1px solid ${s.color}30` }}>
-                      <div className="w-6 h-6 rounded-lg flex items-center justify-center mb-2"
-                        style={{ background: s.color + '20' }}>
-                        <div className="w-2 h-2 rounded-full" style={{ background: s.color }}></div>
-                      </div>
-                      <p className="text-xs" style={{ color: '#64748B' }}>{s.label}</p>
-                      <p className="text-lg font-black text-white" style={{ fontFamily: 'Outfit' }}>{s.value}</p>
-                    </div>
-                  ))}
+                {/* Greeting */}
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="font-black text-sm" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                      Good morning, Omkar 👋
+                    </p>
+                    <p className="text-xs" style={{ color: '#94A3B8' }}>Wednesday, June 18, 2026</p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full text-xs font-black"
+                    style={{ background: '#EDE9FE', color: '#8B5CF6' }}>Complete ERP</span>
                 </div>
 
-                {/* AI Card preview */}
-                <div className="p-4 rounded-xl mb-4" style={{ background: '#1E293B', border: '1px solid rgba(139,92,246,0.3)' }}>
+                {/* AI card */}
+                <div className="p-4 rounded-xl mb-4"
+                  style={{ background: '#0F172A', border: '1.5px solid rgba(139,92,246,0.4)' }}>
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center"
-                      style={{ background: '#8B5CF6' }}>
-                      <Brain size={10} className="text-white" />
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: '#8B5CF6' }}>
+                      <Brain size={12} className="text-white" />
                     </div>
                     <span className="text-xs font-bold" style={{ color: '#C4B5FD' }}>Samyojak AI</span>
                     <div className="ml-auto flex items-center gap-1">
@@ -263,39 +316,59 @@ export default function Home() {
                       <span className="text-xs text-green-400">Live</span>
                     </div>
                   </div>
-                  <p className="text-xs text-left" style={{ color: '#8B5CF6' }}>
-                    💡 You have 8 hot leads this week. Al-Rashid Trading is your biggest opportunity at ₹3,00,000. Follow up today.
+                  <p className="text-xs text-left leading-relaxed" style={{ color: '#8B5CF6' }}>
+                    💡 You have 8 hot leads this week. Al-Rashid Trading is your biggest opportunity at ₹3,00,000. 3 invoices overdue — follow up today to protect cash flow.
                   </p>
                 </div>
 
-                {/* Mini table preview */}
-                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div className="grid grid-cols-4 px-4 py-2"
-                    style={{ background: '#1a2740', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                {/* Stats row */}
+                <div className="grid grid-cols-4 gap-3 mb-4">
+                  {[
+                    { label: 'Leads', value: '48', color: '#8B5CF6', bg: '#EDE9FE' },
+                    { label: 'Invoices', value: '23', color: '#F472B6', bg: '#FCE7F3' },
+                    { label: 'Products', value: '156', color: '#FBBF24', bg: '#FEF3C7' },
+                    { label: 'Team', value: '12', color: '#34D399', bg: '#D1FAE5' },
+                  ].map(s => (
+                    <div key={s.label} className="p-3 rounded-xl"
+                      style={{ background: 'white', border: `1.5px solid ${s.color}30`, boxShadow: '2px 2px 0px #E2E8F0' }}>
+                      <p className="text-xs mb-1" style={{ color: '#94A3B8' }}>{s.label}</p>
+                      <p className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>{s.value}</p>
+                      <div className="w-full h-1 rounded-full mt-2" style={{ background: s.bg }}>
+                        <div className="h-1 rounded-full w-3/4" style={{ background: s.color }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Lead table */}
+                <div className="rounded-xl overflow-hidden" style={{ border: '1.5px solid #E2E8F0', background: 'white' }}>
+                  <div className="grid grid-cols-4 px-4 py-2.5 border-b" style={{ borderColor: '#F1F5F9', background: '#F8FAFC' }}>
                     {['Name', 'Status', 'Value', 'Score'].map(h => (
-                      <span key={h} className="text-xs font-semibold uppercase" style={{ color: '#475569' }}>{h}</span>
+                      <span key={h} className="text-xs font-bold uppercase" style={{ color: '#94A3B8' }}>{h}</span>
                     ))}
                   </div>
                   {[
-                    { name: 'Rahul Sharma', status: 'Contacted', value: '₹85K', score: '92', scoreColor: '#34D399' },
-                    { name: 'James Wilson', status: 'New', value: '$1,800', score: '74', scoreColor: '#FBBF24' },
-                    { name: 'Priya Mehta', status: 'Converted', value: '₹45K', score: '88', scoreColor: '#34D399' },
+                    { name: 'Rahul Sharma', status: 'Contacted', statusColor: '#FBBF24', statusBg: '#FEF3C7', value: '₹85K', score: '92', scoreColor: '#34D399' },
+                    { name: 'James Wilson', status: 'New', statusColor: '#8B5CF6', statusBg: '#EDE9FE', value: '$1,800', score: '74', scoreColor: '#FBBF24' },
+                    { name: 'Priya Mehta', status: 'Converted', statusColor: '#34D399', statusBg: '#D1FAE5', value: '₹45K', score: '88', scoreColor: '#34D399' },
                   ].map(row => (
-                    <div key={row.name} className="grid grid-cols-4 px-4 py-2.5"
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <span className="text-xs text-white font-medium truncate">{row.name}</span>
-                      <span className="text-xs" style={{ color: '#64748B' }}>{row.status}</span>
-                      <span className="text-xs" style={{ color: '#94A3B8' }}>{row.value}</span>
-                      <span className="text-xs font-bold" style={{ color: row.scoreColor }}>{row.score}</span>
+                    <div key={row.name} className="grid grid-cols-4 px-4 py-3 border-b last:border-0" style={{ borderColor: '#F8FAFC' }}>
+                      <span className="text-xs font-semibold truncate" style={{ color: '#1E293B' }}>{row.name}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium w-fit"
+                        style={{ background: row.statusBg, color: row.statusColor }}>
+                        {row.status}
+                      </span>
+                      <span className="text-xs font-medium" style={{ color: '#64748B' }}>{row.value}</span>
+                      <span className="text-xs font-black" style={{ color: row.scoreColor }}>{row.score}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Gradient fade at bottom of dashboard preview */}
-            <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
-              style={{ background: 'linear-gradient(transparent, #0A0E1A)' }} />
+            {/* Soft shadow below */}
+            <div className="absolute -bottom-4 left-8 right-8 h-8 rounded-full pointer-events-none"
+              style={{ background: 'rgba(139,92,246,0.1)', filter: 'blur(16px)' }} />
           </div>
         </div>
       </section>
@@ -311,7 +384,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* UNIVERSAL ERP VISION */}
+      {/* ADAPTIVE ERP SECTION */}
       <section className="px-6 py-24" style={{ background: '#0F172A' }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -324,7 +397,7 @@ export default function Home() {
               <span style={{ color: '#8B5CF6' }}>every business on the planet</span>
             </h2>
             <p className="text-lg max-w-2xl mx-auto" style={{ color: '#94A3B8' }}>
-              Traditional ERP forces you to adapt to their structure. Samyojak flips this — our AI understands your business type and organizes your data the way you already think about it.
+              Traditional ERP forces you to adapt to their structure. Samyojak flips this entirely — our AI understands your business and works the way you already do.
             </p>
           </div>
 
@@ -333,7 +406,7 @@ export default function Home() {
               <div className="text-3xl mb-4">😩</div>
               <h3 className="text-xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>Legacy ERP Software</h3>
               <ul className="space-y-3">
-                {['Forces you to rename all your columns', 'Weeks or months of setup and configuration', 'Separate modules built for specific industries', 'Expensive consultants required to migrate data', 'Your team has to unlearn and relearn everything', 'Rigid structure that does not fit your workflow'].map(p => (
+                {['Forces you to rename all your columns', 'Weeks or months of setup', 'Expensive consultants to migrate data', 'Your team has to unlearn everything', 'Rigid structure that does not fit your workflow'].map(p => (
                   <li key={p} className="flex items-start gap-3 text-sm" style={{ color: '#94A3B8' }}>
                     <span className="text-red-400 flex-shrink-0 mt-0.5">✗</span>{p}
                   </li>
@@ -345,7 +418,7 @@ export default function Home() {
               <div className="text-3xl mb-4">🚀</div>
               <h3 className="text-xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>Samyojak Adaptive ERP</h3>
               <ul className="space-y-3">
-                {['Import any CSV — your column names stay exactly as-is', 'Ready in 5 minutes from the moment you sign up', 'AI adapts to your business type automatically', 'Data migration in one upload — no consultants needed', 'Familiar structure — zero learning curve for your team', 'Flexible fields that match how you already work'].map(p => (
+                {['Import any CSV — columns stay exactly as yours', 'Ready in 5 minutes from signup', 'AI adapts to your business automatically', 'Data migration in one upload — no consultants', 'Familiar structure — zero learning curve'].map(p => (
                   <li key={p} className="flex items-start gap-3 text-sm" style={{ color: '#C4B5FD' }}>
                     <span className="text-green-400 flex-shrink-0 mt-0.5">✓</span>{p}
                   </li>
@@ -415,9 +488,7 @@ export default function Home() {
       <section id="pricing" className="px-6 py-24" style={{ background: '#F8FAFC' }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-              Simple pricing. Big value.
-            </h2>
+            <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Simple pricing. Big value.</h2>
             <p className="text-lg mb-6" style={{ color: '#64748B' }}>No annual lock-in. No per-user fees. Cancel anytime.</p>
             <div className="inline-flex p-1 rounded-full" style={{ background: '#E2E8F0' }}>
               {(['weekly', 'monthly', 'yearly'] as const).map(b => (
@@ -484,9 +555,8 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                {/* START TRIAL — not Start Free */}
                 <Link href="/signup"
-                  className="block w-full py-3 rounded-full text-sm font-bold text-center transition-all hover:opacity-90"
+                  className="block w-full py-3 rounded-full text-sm font-bold text-center hover:opacity-90 transition-opacity"
                   style={{
                     background: plan.popular ? 'white' : '#1E293B',
                     color: plan.popular ? '#8B5CF6' : 'white',
@@ -521,14 +591,14 @@ export default function Home() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {[
-                  ['Setup time', '5 minutes', '2-4 weeks', '1-3 months'],
+                  ['Setup time', '5 minutes', '2–4 weeks', '1–3 months'],
                   ['Import any CSV format', '✅ Yes', '❌ Strict format only', '❌ Strict format only'],
                   ['Weekly billing option', '✅ Yes', '❌ No', '❌ No'],
-                  ['Free QR codes', '✅ Included free', '❌ Paid add-on', '❌ Not available'],
+                  ['Free QR codes', '✅ Included', '❌ Paid add-on', '❌ Not available'],
                   ['WhatsApp invoicing', '✅ Built-in', '❌ No', '❌ No'],
-                  ['AI on live data', '✅ Real-time insights', '⚠️ Basic analytics', '❌ Not available'],
+                  ['AI on live data', '✅ Real-time', '⚠️ Basic', '❌ No'],
                   ['India & global pricing', '✅ Geo-optimized', '⚠️ USD only', '⚠️ USD only'],
-                  ['Universal tax (15+ countries)', '✅ One click', '⚠️ Complex setup', '⚠️ Per-country config'],
+                  ['Universal tax 15+ countries', '✅ One click', '⚠️ Complex setup', '⚠️ Per-country'],
                   ['Starting price', '$4.99/week', '$14+/month/user', '$10+/month/user'],
                 ].map(([feature, us, a, b]) => (
                   <tr key={feature} className="hover:bg-gray-50">
@@ -551,23 +621,19 @@ export default function Home() {
             Built on enterprise-grade infrastructure
           </p>
           <div className="flex flex-wrap justify-center gap-10 items-center">
-            {[
-              { name: '▲ Vercel', desc: 'Hosting & Edge Network' },
-              { name: '⚡ Supabase', desc: 'Auth & Security' },
-              { name: '🤖 Groq AI', desc: 'AI Intelligence' },
-              { name: '📊 Airtable', desc: 'Data Backend' },
-              { name: '💳 Dodo Payments', desc: 'Global Payments' },
-            ].map(item => (
-              <div key={item.name} className="text-center">
-                <p className="font-black text-gray-900 text-sm" style={{ fontFamily: 'Outfit' }}>{item.name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{item.desc}</p>
+            {['▲ Vercel · Hosting', '⚡ Supabase · Auth', '🤖 Groq AI · Intelligence', '📊 Airtable · Data', '💳 Dodo · Payments'].map(item => (
+              <div key={item} className="text-center">
+                <p className="font-black text-gray-900 text-sm" style={{ fontFamily: 'Outfit' }}>
+                  {item.split(' · ')[0]}
+                </p>
+                <p className="text-xs text-gray-400">{item.split(' · ')[1]}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FAQ — Free trial question REMOVED */}
+      {/* FAQ */}
       <section className="px-6 py-24">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-4xl font-black text-center mb-12" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
@@ -597,7 +663,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA — No demo button */}
+      {/* CTA */}
       <section className="px-6 py-24 text-center" style={{ background: '#1E293B' }}>
         <div className="max-w-3xl mx-auto">
           <div className="text-6xl mb-6 float">🚀</div>
@@ -607,11 +673,9 @@ export default function Home() {
             <span style={{ color: '#8B5CF6' }}>that understands it</span>
           </h2>
           <p className="text-lg mb-8" style={{ color: '#94A3B8' }}>
-            Join businesses globally who chose simplicity over complexity.
-            Set up in 5 minutes. Cancel anytime.
+            Join businesses globally. Set up in 5 minutes. Cancel anytime.
           </p>
-          <Link href="/signup"
-            className="candy-btn px-12 py-5 text-xl inline-flex items-center gap-2">
+          <Link href="/signup" className="candy-btn px-12 py-5 text-xl inline-flex items-center gap-2">
             Start Trial <ArrowRight size={22} />
           </Link>
         </div>
@@ -630,29 +694,27 @@ export default function Home() {
               <p className="text-xs mb-3" style={{ color: '#64748B' }}>
                 The universal ERP that adapts to your business. Not the other way around.
               </p>
-              {/* MADE FOR THE WORLD */}
               <p className="text-xs font-medium" style={{ color: '#475569' }}>🌍 Made for the world</p>
             </div>
             <div>
               <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Product</p>
-              <Link href="/features" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Features</Link>
-              <Link href="/pricing" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Pricing</Link>
-              <Link href="/referral" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Referral Program</Link>
+              <Link href="/features" className="block text-xs mb-2 hover:text-white" style={{ color: '#64748B' }}>Features</Link>
+              <Link href="/pricing" className="block text-xs mb-2 hover:text-white" style={{ color: '#64748B' }}>Pricing</Link>
+              <Link href="/referral" className="block text-xs mb-2 hover:text-white" style={{ color: '#64748B' }}>Referral Program</Link>
             </div>
             <div>
               <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Company</p>
-              <Link href="/about" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>About Us</Link>
-              <Link href="/contact" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Contact</Link>
-              <Link href="/support" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Support</Link>
+              <Link href="/about" className="block text-xs mb-2 hover:text-white" style={{ color: '#64748B' }}>About Us</Link>
+              <Link href="/contact" className="block text-xs mb-2 hover:text-white" style={{ color: '#64748B' }}>Contact</Link>
+              <Link href="/support" className="block text-xs mb-2 hover:text-white" style={{ color: '#64748B' }}>Support</Link>
             </div>
             <div>
               <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Legal</p>
-              <Link href="/privacy" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Privacy Policy</Link>
-              <Link href="/terms" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Terms of Service</Link>
+              <Link href="/privacy" className="block text-xs mb-2 hover:text-white" style={{ color: '#64748B' }}>Privacy Policy</Link>
+              <Link href="/terms" className="block text-xs mb-2 hover:text-white" style={{ color: '#64748B' }}>Terms of Service</Link>
             </div>
           </div>
-          <div className="flex items-center justify-between border-t pt-8 flex-wrap gap-4"
-            style={{ borderColor: '#1E293B' }}>
+          <div className="flex items-center justify-between border-t pt-8 flex-wrap gap-4" style={{ borderColor: '#1E293B' }}>
             <p className="text-xs" style={{ color: '#334155' }}>© 2026 Samyojak. All rights reserved.</p>
             <div className="flex items-center gap-2">
               <span className="text-xs" style={{ color: '#334155' }}>Powered by</span>
@@ -663,4 +725,4 @@ export default function Home() {
       </footer>
     </div>
   )
-}
+      }
