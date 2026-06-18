@@ -33,9 +33,9 @@ const BUSINESS_TYPES = [
 
 const FAQS = [
   { q: 'Does Samyojak work for my type of business?', a: 'Yes. Samyojak adapts to your business — not the other way around. Whether you run a clinic, retail shop, agency, school, or manufacturing unit, Samyojak works with your existing data format.' },
-  { q: 'Can I import my data from Zoho, Odoo, or Excel?', a: 'Yes. Upload any CSV file from any ERP system. Samyojak reads your column names as-is and stores everything without forcing you to rename or restructure your data.' },
+  { q: 'Can I import my data from any existing ERP or spreadsheet?', a: 'Yes. Upload any CSV file from any ERP system. Samyojak reads your column names as-is and stores everything without forcing you to rename or restructure your data.' },
   { q: 'Does it support GST, VAT, and other taxes?', a: 'Yes. Universal tax engine supports GST for India, VAT for UK, Germany, UAE, HST for Canada, Sales Tax for US, and 10+ more countries. Switch between them per invoice.' },
-  { q: 'Is there a free trial?', a: 'Yes. Visit the demo page at /demo for a full Complete plan experience with real data. No credit card required to explore.' },
+  { q: 'Is there a free trial?', a: 'Yes. Visit the demo page for a full Complete plan experience with real data. No credit card required to explore.' },
   { q: 'Can I cancel anytime?', a: 'Yes. Weekly plans mean you are never locked in. Turn off auto-pay anytime in Settings and your plan simply expires at week end.' },
   { q: 'Does the AI actually read my real data?', a: 'Yes. The AI assistant on the Complete plan reads your live leads, invoices, inventory, HR, and projects in real time before every response. It knows your actual numbers.' },
   { q: 'Is my data secure?', a: 'Yes. All data is encrypted in transit. Authentication is handled by Supabase — enterprise grade security. Your data is stored in Airtable and never shared.' },
@@ -49,10 +49,10 @@ function detectRegion() {
   return 'global'
 }
 
-const PRICING = {
-  india: { weekly: '$4.99', monthly: '$15', yearly: '$144', currency: '₹', note: 'India pricing' },
-  global: { weekly: '$6.99', monthly: '$21', yearly: '$199', currency: '$', note: 'Global pricing' },
-  western: { weekly: '$9.99', monthly: '$29', yearly: '$279', currency: '$', note: 'Western pricing' },
+const PRICING: Record<string, { weekly: string; monthly: string; yearly: string; note: string }> = {
+  india: { weekly: '$4.99', monthly: '$15', yearly: '$144', note: 'India pricing' },
+  global: { weekly: '$6.99', monthly: '$21', yearly: '$199', note: 'Global pricing' },
+  western: { weekly: '$9.99', monthly: '$29', yearly: '$279', note: 'Western pricing' },
 }
 
 export default function Home() {
@@ -60,51 +60,32 @@ export default function Home() {
   const [region, setRegion] = useState<'india' | 'global' | 'western'>('global')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
-  useEffect(() => {
-    setRegion(detectRegion() as any)
-  }, [])
+  useEffect(() => { setRegion(detectRegion() as any) }, [])
 
   const price = PRICING[region]
 
   const PLANS = [
     {
-      name: 'CRM Starter',
-      emoji: '🚀',
-      price: price.weekly,
-      period: 'wk',
-      bonus: '+1 week free',
-      color: '#8B5CF6',
+      name: 'CRM Starter', emoji: '🚀',
+      price: price.weekly, period: 'wk', bonus: '+1 week free', popular: false,
       features: ['CRM with AI lead scoring', 'Contact management', 'Follow-up reminders', 'Import & Export CSV', 'Support tickets', 'Mobile app'],
       locked: ['Invoices', 'Inventory', 'HR', 'Projects', 'AI Assistant'],
     },
     {
-      name: 'ERP Basic',
-      emoji: '⚡',
-      price: billing === 'weekly' ? price.weekly.replace('4', '9').replace('6', '13').replace('9', '19') : price.monthly,
-      period: billing === 'yearly' ? 'yr' : billing === 'monthly' ? 'mo' : 'wk',
-      bonus: billing === 'yearly' ? '+2 months free' : '+1 week free',
-      color: '#F472B6',
-      popular: true,
+      name: 'ERP Basic', emoji: '⚡',
+      price: price.monthly, period: 'mo', bonus: '+1 week free', popular: true,
       features: ['Everything in CRM Starter', 'Universal tax invoicing', 'Inventory + free QR codes', 'WhatsApp invoice sending', 'GST Reports'],
       locked: ['HR & Payroll', 'Projects', 'AI Assistant'],
     },
     {
-      name: 'Business',
-      emoji: '🏢',
-      price: price.monthly,
-      period: 'mo',
-      bonus: '+1 month free',
-      color: '#34D399',
+      name: 'Business', emoji: '🏢',
+      price: price.monthly, period: 'mo', bonus: '+1 month free', popular: false,
       features: ['Everything in ERP Basic', 'HR & Payroll management', 'Project management Kanban', 'Team management', 'Advanced reports'],
       locked: ['AI Assistant'],
     },
     {
-      name: 'Complete ERP',
-      emoji: '👑',
-      price: price.yearly,
-      period: 'yr',
-      bonus: '+3 months free',
-      color: '#FBBF24',
+      name: 'Complete ERP', emoji: '👑',
+      price: price.yearly, period: 'yr', bonus: '+3 months free', popular: false,
       features: ['Everything in Business', 'AI Business Intelligence', 'AI reads your live data', 'Priority support', 'White label available', 'All future features'],
       locked: [],
     },
@@ -124,15 +105,15 @@ export default function Home() {
             </div>
             <span className="font-black text-xl" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Samyojak</span>
           </Link>
+
+          {/* NAV LINKS — Features and Pricing point to sections on homepage, About and Contact are pages */}
           <div className="hidden md:flex items-center gap-6">
-            {['Features', 'Pricing', 'About'].map(item => (
-              <a key={item} href={`/${item.toLowerCase()}`}
-                className="text-sm font-medium hover:text-violet-600 transition-colors"
-                style={{ color: '#64748B' }}>
-                {item}
-              </a>
-            ))}
+            <a href="#features" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Features</a>
+            <a href="#pricing" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Pricing</a>
+            <Link href="/about" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>About</Link>
+            <Link href="/contact" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Contact</Link>
           </div>
+
           <div className="flex items-center gap-3">
             <Link href="/login" className="outline-btn px-4 py-2 text-sm hidden md:block">Sign In</Link>
             <Link href="/signup" className="candy-btn px-4 py-2 text-sm">Start Free</Link>
@@ -145,18 +126,18 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-semibold"
             style={{ background: '#EDE9FE', border: '2px solid #8B5CF6', color: '#8B5CF6' }}>
-            <Brain size={14} /> AI-Powered Universal ERP · Built for Every Business
+            <Brain size={14} /> AI-Powered · Universal · Adaptive ERP
           </div>
 
+          {/* UPDATED HERO HEADLINE */}
           <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight"
             style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
             The ERP that{' '}
             <span style={{ color: '#8B5CF6' }}>adapts to you</span>
-            <br />not the other way
           </h1>
 
           <p className="text-xl mb-8 max-w-2xl mx-auto" style={{ color: '#64748B' }}>
-            Most ERP software forces you to change how you work. Samyojak learns your business, speaks your language, and works the way you already do.
+            Most business software forces you to change how you work. Samyojak learns your business, speaks your language, and fits the way you already operate.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
@@ -169,7 +150,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap gap-4 justify-center text-sm" style={{ color: '#64748B' }}>
-            {['✅ No setup fee', '✅ Cancel anytime', '✅ Works for any business type', '✅ Powered by Vercel'].map(f => (
+            {['✅ No setup fee', '✅ Cancel anytime', '✅ Works for any business', '✅ Powered by Vercel'].map(f => (
               <span key={f}>{f}</span>
             ))}
           </div>
@@ -187,7 +168,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* UNIVERSAL ERP VISION SECTION */}
+      {/* UNIVERSAL ERP VISION */}
       <section className="px-6 py-24" style={{ background: '#0F172A' }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -197,54 +178,54 @@ export default function Home() {
             </div>
             <h2 className="text-4xl md:text-5xl font-black mb-6 text-white" style={{ fontFamily: 'Outfit' }}>
               One ERP for{' '}
-              <span style={{ color: '#8B5CF6' }}>every business</span>
-              <br />on the planet
+              <span style={{ color: '#8B5CF6' }}>every business on the planet</span>
             </h2>
             <p className="text-lg max-w-2xl mx-auto" style={{ color: '#94A3B8' }}>
-              Traditional ERP forces you to adapt to their structure. Samyojak flips this entirely — our AI understands your business type and organizes your data the way you already think about it.
+              Traditional ERP forces you to adapt to their structure. Samyojak flips this — our AI understands your business type and organizes your data the way you already think about it.
             </p>
           </div>
 
-          {/* The big difference */}
+          {/* Comparison — NO competitor names */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
             <div className="p-8 rounded-2xl" style={{ background: '#1E293B', border: '2px solid #334155' }}>
               <div className="text-3xl mb-4">😩</div>
               <h3 className="text-xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>
-                Traditional ERP
+                Legacy ERP Software
               </h3>
               <ul className="space-y-3">
                 {[
                   'Forces you to rename all your columns',
-                  'Months of setup and configuration',
-                  'Separate modules for each industry',
-                  'Expensive consultants to migrate data',
-                  'Your team has to learn a new system',
+                  'Weeks or months of setup and configuration',
+                  'Separate modules built for specific industries',
+                  'Expensive consultants required to migrate data',
+                  'Your team has to unlearn and relearn everything',
                   'Rigid structure that does not fit your workflow',
                 ].map(p => (
-                  <li key={p} className="flex items-center gap-3 text-sm" style={{ color: '#94A3B8' }}>
-                    <span className="text-red-400 flex-shrink-0">✗</span>
+                  <li key={p} className="flex items-start gap-3 text-sm" style={{ color: '#94A3B8' }}>
+                    <span className="text-red-400 flex-shrink-0 mt-0.5">✗</span>
                     {p}
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="p-8 rounded-2xl" style={{ background: 'rgba(139,92,246,0.15)', border: '2px solid #8B5CF6', boxShadow: '8px 8px 0px rgba(139,92,246,0.3)' }}>
+            <div className="p-8 rounded-2xl"
+              style={{ background: 'rgba(139,92,246,0.15)', border: '2px solid #8B5CF6', boxShadow: '8px 8px 0px rgba(139,92,246,0.3)' }}>
               <div className="text-3xl mb-4">🚀</div>
               <h3 className="text-xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>
                 Samyojak Adaptive ERP
               </h3>
               <ul className="space-y-3">
                 {[
-                  'Import any CSV — columns stay exactly as yours',
-                  'Ready in 5 minutes from signup',
+                  'Import any CSV — your column names stay exactly as-is',
+                  'Ready in 5 minutes from the moment you sign up',
                   'AI adapts to your business type automatically',
-                  'Data migration in one upload, no consultants',
-                  'Familiar structure — zero learning curve',
+                  'Data migration in one upload — no consultants needed',
+                  'Familiar structure — zero learning curve for your team',
                   'Flexible fields that match how you already work',
                 ].map(p => (
-                  <li key={p} className="flex items-center gap-3 text-sm" style={{ color: '#C4B5FD' }}>
-                    <span className="text-green-400 flex-shrink-0">✓</span>
+                  <li key={p} className="flex items-start gap-3 text-sm" style={{ color: '#C4B5FD' }}>
+                    <span className="text-green-400 flex-shrink-0 mt-0.5">✓</span>
                     {p}
                   </li>
                 ))}
@@ -252,15 +233,15 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Business Types Grid */}
+          {/* Business Types */}
           <h3 className="text-2xl font-black text-white text-center mb-8" style={{ fontFamily: 'Outfit' }}>
             Works for every type of business
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
             {BUSINESS_TYPES.map(biz => (
               <div key={biz.name}
-                className="p-5 rounded-2xl text-center hover:scale-105 transition-transform cursor-default"
-                style={{ background: '#1E293B', border: `2px solid ${biz.color}30` }}>
+                className="p-5 rounded-2xl text-center hover:scale-105 transition-transform"
+                style={{ background: '#1E293B', border: `2px solid ${biz.color}40` }}>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3"
                   style={{ background: biz.color + '20', border: `1.5px solid ${biz.color}` }}>
                   <biz.icon size={22} style={{ color: biz.color }} />
@@ -271,7 +252,7 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Vision Statement */}
+          {/* Vision */}
           <div className="p-8 rounded-2xl text-center"
             style={{ background: 'rgba(139,92,246,0.1)', border: '2px solid rgba(139,92,246,0.3)' }}>
             <Brain size={40} className="mx-auto mb-4" style={{ color: '#8B5CF6' }} />
@@ -279,7 +260,7 @@ export default function Home() {
               Our Vision
             </h3>
             <p className="text-lg max-w-3xl mx-auto leading-relaxed" style={{ color: '#C4B5FD' }}>
-              We are building the world first truly universal ERP — one that intelligently generates the right structure, fields, and workflows for any business type automatically. A school gets student management. A hospital gets patient records. A manufacturer gets production tracking. All without writing a single line of configuration.
+              We are building the world's first truly universal ERP — one that intelligently generates the right structure, fields, and workflows for any business automatically. A school gets student management. A hospital gets patient records. A manufacturer gets production tracking. All without configuration.
             </p>
             <p className="mt-4 text-sm font-bold" style={{ color: '#8B5CF6' }}>
               The ERP that adapts to you. Not the other way around.
@@ -289,7 +270,7 @@ export default function Home() {
       </section>
 
       {/* FEATURES */}
-      <section className="px-6 py-24">
+      <section id="features" className="px-6 py-24">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
@@ -319,7 +300,7 @@ export default function Home() {
       </section>
 
       {/* PRICING */}
-      <section className="px-6 py-24" style={{ background: '#F8FAFC' }}>
+      <section id="pricing" className="px-6 py-24" style={{ background: '#F8FAFC' }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
@@ -336,7 +317,7 @@ export default function Home() {
                     background: billing === b ? '#1E293B' : 'transparent',
                     color: billing === b ? 'white' : '#64748B',
                   }}>
-                  {b} {b === 'yearly' && <span style={{ color: '#FBBF24' }}>-20%</span>}
+                  {b}{b === 'yearly' && <span style={{ color: '#FBBF24' }}> -20%</span>}
                 </button>
               ))}
             </div>
@@ -359,8 +340,8 @@ export default function Home() {
                   transform: plan.popular ? 'scale(1.03)' : 'scale(1)',
                 }}>
                 {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-black"
-                    style={{ background: '#FBBF24', border: '2px solid #1E293B', color: '#1E293B', whiteSpace: 'nowrap' }}>
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-black whitespace-nowrap"
+                    style={{ background: '#FBBF24', border: '2px solid #1E293B', color: '#1E293B' }}>
                     ⭐ MOST POPULAR
                   </div>
                 )}
@@ -383,16 +364,16 @@ export default function Home() {
                   style={{ background: plan.popular ? 'rgba(255,255,255,0.2)' : '#D1FAE5', color: plan.popular ? 'white' : '#065F46' }}>
                   🎁 {plan.bonus}
                 </div>
-                <ul className="space-y-2 mb-4">
+                <ul className="space-y-2 mb-6">
                   {plan.features.map(f => (
-                    <li key={f} className="flex items-center gap-2 text-xs"
+                    <li key={f} className="flex items-start gap-2 text-xs"
                       style={{ color: plan.popular ? 'rgba(255,255,255,0.9)' : '#475569' }}>
-                      <Check size={14} className="flex-shrink-0" style={{ color: plan.popular ? 'white' : '#34D399' }} />
+                      <Check size={14} className="flex-shrink-0 mt-0.5" style={{ color: plan.popular ? 'white' : '#34D399' }} />
                       {f}
                     </li>
                   ))}
                   {plan.locked.map(f => (
-                    <li key={f} className="flex items-center gap-2 text-xs opacity-50"
+                    <li key={f} className="flex items-start gap-2 text-xs opacity-40"
                       style={{ color: plan.popular ? 'white' : '#94A3B8' }}>
                       <span className="flex-shrink-0">🔒</span>
                       {f}
@@ -400,7 +381,7 @@ export default function Home() {
                   ))}
                 </ul>
                 <Link href="/signup"
-                  className="block w-full py-3 rounded-full text-sm font-bold text-center transition-all"
+                  className="block w-full py-3 rounded-full text-sm font-bold text-center transition-all hover:opacity-90"
                   style={{
                     background: plan.popular ? 'white' : '#1E293B',
                     color: plan.popular ? '#8B5CF6' : 'white',
@@ -414,13 +395,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* COMPARISON */}
+      {/* COMPARISON — NO competitor names */}
       <section className="px-6 py-24">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-              Why switch to Samyojak?
+              Why businesses choose Samyojak
             </h2>
+            <p style={{ color: '#64748B' }}>See how we compare to legacy ERP platforms</p>
           </div>
           <div className="rounded-2xl overflow-hidden" style={{ border: '2px solid #1E293B' }}>
             <table className="w-full">
@@ -428,27 +410,27 @@ export default function Home() {
                 <tr style={{ background: '#1E293B' }}>
                   <th className="p-4 text-left text-sm font-bold text-white">Feature</th>
                   <th className="p-4 text-center text-sm font-bold" style={{ color: '#8B5CF6' }}>Samyojak</th>
-                  <th className="p-4 text-center text-sm font-bold text-white/60">Zoho</th>
-                  <th className="p-4 text-center text-sm font-bold text-white/60">Odoo</th>
+                  <th className="p-4 text-center text-sm font-bold text-white/60">Legacy ERP A</th>
+                  <th className="p-4 text-center text-sm font-bold text-white/60">Legacy ERP B</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {[
                   ['Setup time', '5 minutes', '2-4 weeks', '1-3 months'],
-                  ['Import any CSV format', '✅ Yes', '❌ Strict format', '❌ Strict format'],
+                  ['Import any CSV format', '✅ Yes', '❌ Strict format only', '❌ Strict format only'],
                   ['Weekly billing option', '✅ Yes', '❌ No', '❌ No'],
-                  ['Free QR codes', '✅ Included', '❌ Paid add-on', '❌ Not included'],
+                  ['Free QR codes', '✅ Included free', '❌ Paid add-on', '❌ Not available'],
                   ['WhatsApp invoicing', '✅ Built-in', '❌ No', '❌ No'],
-                  ['AI on live data', '✅ Real-time', '⚠️ Basic', '❌ No'],
-                  ['India pricing', '✅ ₹ optimized', '⚠️ USD only', '⚠️ USD only'],
-                  ['Universal tax (15+ countries)', '✅ Yes', '⚠️ Per-country setup', '⚠️ Complex config'],
-                  ['Starting price', '$4.99/week', '$14/month/user', '$10/month/user'],
-                ].map(([feature, us, zoho, odoo]) => (
+                  ['AI on live data', '✅ Real-time insights', '⚠️ Basic analytics', '❌ Not available'],
+                  ['India & global pricing', '✅ Geo-optimized', '⚠️ USD only', '⚠️ USD only'],
+                  ['Universal tax (15+ countries)', '✅ One click', '⚠️ Complex setup', '⚠️ Per-country config'],
+                  ['Starting price', '$4.99/week', '$14+/month/user', '$10+/month/user'],
+                ].map(([feature, us, a, b]) => (
                   <tr key={feature} className="hover:bg-gray-50">
                     <td className="p-4 text-sm font-medium text-gray-700">{feature}</td>
                     <td className="p-4 text-center text-sm font-bold" style={{ color: '#8B5CF6' }}>{us}</td>
-                    <td className="p-4 text-center text-sm text-gray-500">{zoho}</td>
-                    <td className="p-4 text-center text-sm text-gray-500">{odoo}</td>
+                    <td className="p-4 text-center text-sm text-gray-500">{a}</td>
+                    <td className="p-4 text-center text-sm text-gray-500">{b}</td>
                   </tr>
                 ))}
               </tbody>
@@ -457,23 +439,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* BUILT ON SECTION */}
+      {/* INFRASTRUCTURE */}
       <section className="px-6 py-16" style={{ background: '#F8FAFC' }}>
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-sm font-bold uppercase tracking-wide mb-8" style={{ color: '#94A3B8' }}>
             Built on enterprise-grade infrastructure
           </p>
-          <div className="flex flex-wrap justify-center gap-8 items-center">
+          <div className="flex flex-wrap justify-center gap-10 items-center">
             {[
               { name: '▲ Vercel', desc: 'Hosting & Edge Network' },
-              { name: '⚡ Supabase', desc: 'Auth & Database' },
+              { name: '⚡ Supabase', desc: 'Auth & Security' },
               { name: '🤖 Groq AI', desc: 'AI Intelligence' },
               { name: '📊 Airtable', desc: 'Data Backend' },
               { name: '💳 Dodo Payments', desc: 'Global Payments' },
             ].map(item => (
               <div key={item.name} className="text-center">
-                <p className="font-black text-gray-900" style={{ fontFamily: 'Outfit' }}>{item.name}</p>
-                <p className="text-xs text-gray-400">{item.desc}</p>
+                <p className="font-black text-gray-900 text-sm" style={{ fontFamily: 'Outfit' }}>{item.name}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -488,8 +470,7 @@ export default function Home() {
           </h2>
           <div className="space-y-3">
             {FAQS.map((faq, i) => (
-              <div key={i}
-                className="rounded-2xl overflow-hidden"
+              <div key={i} className="rounded-2xl overflow-hidden"
                 style={{ border: '2px solid #E2E8F0', background: 'white' }}>
                 <button
                   className="w-full flex items-center justify-between p-5 text-left"
@@ -504,7 +485,7 @@ export default function Home() {
                   }
                 </button>
                 {openFaq === i && (
-                  <div className="px-5 pb-5 text-sm" style={{ color: '#64748B', borderTop: '1px solid #E2E8F0' }}>
+                  <div className="px-5 pb-5 text-sm border-t border-gray-100" style={{ color: '#64748B' }}>
                     <p className="pt-4">{faq.a}</p>
                   </div>
                 )}
@@ -531,7 +512,8 @@ export default function Home() {
             <Link href="/signup" className="candy-btn px-10 py-5 text-xl inline-flex items-center gap-2">
               Start Free Today <ArrowRight size={22} />
             </Link>
-            <Link href="/demo" className="px-10 py-5 text-xl inline-flex items-center gap-2 rounded-full font-bold"
+            <Link href="/demo"
+              className="px-10 py-5 text-xl inline-flex items-center gap-2 rounded-full font-bold transition-colors hover:bg-white/10"
               style={{ border: '2px solid rgba(255,255,255,0.3)', color: 'white' }}>
               Watch Demo
             </Link>
@@ -549,36 +531,40 @@ export default function Home() {
                   style={{ background: '#8B5CF6' }}>S</div>
                 <span className="font-black text-white" style={{ fontFamily: 'Outfit' }}>Samyojak</span>
               </div>
-              <p className="text-xs" style={{ color: '#64748B' }}>
+              <p className="text-xs mb-3" style={{ color: '#64748B' }}>
                 The universal ERP that adapts to your business. Not the other way around.
               </p>
-            </div>
-            <div>
-              <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Product</p>
-              {['Features', 'Pricing', 'Demo', 'Changelog'].map(l => (
-                <a key={l} href={`/${l.toLowerCase()}`} className="block text-xs mb-2 hover:text-white transition-colors"
-                  style={{ color: '#64748B' }}>{l}</a>
-              ))}
-            </div>
-            <div>
-              <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Company</p>
-              {['About', 'Contact', 'Referral Program', 'White Label'].map(l => (
-                <a key={l} href={`/${l.toLowerCase().replace(' ', '-')}`} className="block text-xs mb-2 hover:text-white transition-colors"
-                  style={{ color: '#64748B' }}>{l}</a>
-              ))}
-            </div>
-            <div>
-              <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Legal</p>
-              {['Privacy Policy', 'Terms of Service'].map(l => (
-                <a key={l} href={`/${l.toLowerCase().replace(' ', '-')}`} className="block text-xs mb-2 hover:text-white transition-colors"
-                  style={{ color: '#64748B' }}>{l}</a>
-              ))}
-              <p className="text-xs mt-4" style={{ color: '#334155' }}>
-                Made with ❤️ in India 🇮🇳
+              {/* UPDATED: Made for the world */}
+              <p className="text-xs font-medium" style={{ color: '#475569' }}>
+                🌍 Made for the world
               </p>
             </div>
+
+            <div>
+              <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Product</p>
+              <a href="#features" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Features</a>
+              <a href="#pricing" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Pricing</a>
+              <Link href="/demo" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Demo</Link>
+              <Link href="/referral" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Referral Program</Link>
+            </div>
+
+            <div>
+              <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Company</p>
+              <Link href="/about" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>About Us</Link>
+              <Link href="/contact" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Contact</Link>
+              <Link href="/support" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Support</Link>
+              <Link href="/whitelabel" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>White Label</Link>
+            </div>
+
+            <div>
+              <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Legal</p>
+              <Link href="/privacy" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Privacy Policy</Link>
+              <Link href="/terms" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Terms of Service</Link>
+            </div>
           </div>
-          <div className="flex items-center justify-between border-t pt-8" style={{ borderColor: '#1E293B' }}>
+
+          <div className="flex items-center justify-between border-t pt-8 flex-wrap gap-4"
+            style={{ borderColor: '#1E293B' }}>
             <p className="text-xs" style={{ color: '#334155' }}>
               © 2026 Samyojak. All rights reserved.
             </p>
