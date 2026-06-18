@@ -2,9 +2,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
-  ArrowRight, Check, Star, Zap, Globe, Shield,
-  Brain, Users, FileText, Package, UserCheck,
-  FolderOpen, BarChart3, ChevronDown, ChevronUp,
+  ArrowRight, Check, Brain, Users, FileText, Package, UserCheck,
+  FolderOpen, BarChart3, Globe, Zap, ChevronDown, ChevronUp,
   Building2, Stethoscope, ShoppingBag, Factory,
   GraduationCap, Truck, Code, UtensilsCrossed,
 } from 'lucide-react'
@@ -35,8 +34,8 @@ const FAQS = [
   { q: 'Does Samyojak work for my type of business?', a: 'Yes. Samyojak adapts to your business — not the other way around. Whether you run a clinic, retail shop, agency, school, or manufacturing unit, Samyojak works with your existing data format.' },
   { q: 'Can I import my data from any existing ERP or spreadsheet?', a: 'Yes. Upload any CSV file from any ERP system. Samyojak reads your column names as-is and stores everything without forcing you to rename or restructure your data.' },
   { q: 'Does it support GST, VAT, and other taxes?', a: 'Yes. Universal tax engine supports GST for India, VAT for UK, Germany, UAE, HST for Canada, Sales Tax for US, and 10+ more countries. Switch between them per invoice.' },
-  { q: 'Is there a free trial?', a: 'Yes. Visit the demo page for a full Complete plan experience with real data. No credit card required to explore.' },
-  { q: 'Can I cancel anytime?', a: 'Yes. Weekly plans mean you are never locked in. Turn off auto-pay anytime in Settings and your plan simply expires at week end.' },
+  { q: 'Can I cancel anytime?', a: 'Yes. Weekly plans expire at the end of the week if you turn off auto-pay. No cancellation fees. No lock-in ever.' },
+  { q: 'Do you charge per user?', a: 'No. All plans are flat-rate. One price for your whole team regardless of how many people use it.' },
   { q: 'Does the AI actually read my real data?', a: 'Yes. The AI assistant on the Complete plan reads your live leads, invoices, inventory, HR, and projects in real time before every response. It knows your actual numbers.' },
   { q: 'Is my data secure?', a: 'Yes. All data is encrypted in transit. Authentication is handled by Supabase — enterprise grade security. Your data is stored in Airtable and never shared.' },
 ]
@@ -59,33 +58,33 @@ export default function Home() {
   const [billing, setBilling] = useState<'weekly' | 'monthly' | 'yearly'>('weekly')
   const [region, setRegion] = useState<'india' | 'global' | 'western'>('global')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [mounted, setMounted] = useState(false)
 
-  useEffect(() => { setRegion(detectRegion() as any) }, [])
+  useEffect(() => {
+    setRegion(detectRegion() as any)
+    setMounted(true)
+  }, [])
 
   const price = PRICING[region]
 
   const PLANS = [
     {
-      name: 'CRM Starter', emoji: '🚀',
-      price: price.weekly, period: 'wk', bonus: '+1 week free', popular: false,
-      features: ['CRM with AI lead scoring', 'Contact management', 'Follow-up reminders', 'Import & Export CSV', 'Support tickets', 'Mobile app'],
+      name: 'CRM Starter', emoji: '🚀', price: price.weekly, period: 'wk', bonus: '+1 week free', popular: false,
+      features: ['CRM with AI lead scoring', 'Contact management', 'Follow-up reminders', 'Import & Export CSV', 'Support tickets', 'Mobile-friendly'],
       locked: ['Invoices', 'Inventory', 'HR', 'Projects', 'AI Assistant'],
     },
     {
-      name: 'ERP Basic', emoji: '⚡',
-      price: price.monthly, period: 'mo', bonus: '+1 week free', popular: true,
+      name: 'ERP Basic', emoji: '⚡', price: price.monthly, period: 'mo', bonus: '+1 week free', popular: true,
       features: ['Everything in CRM Starter', 'Universal tax invoicing', 'Inventory + free QR codes', 'WhatsApp invoice sending', 'GST Reports'],
       locked: ['HR & Payroll', 'Projects', 'AI Assistant'],
     },
     {
-      name: 'Business', emoji: '🏢',
-      price: price.monthly, period: 'mo', bonus: '+1 month free', popular: false,
+      name: 'Business', emoji: '🏢', price: price.monthly, period: 'mo', bonus: '+1 month free', popular: false,
       features: ['Everything in ERP Basic', 'HR & Payroll management', 'Project management Kanban', 'Team management', 'Advanced reports'],
       locked: ['AI Assistant'],
     },
     {
-      name: 'Complete ERP', emoji: '👑',
-      price: price.yearly, period: 'yr', bonus: '+3 months free', popular: false,
+      name: 'Complete ERP', emoji: '👑', price: price.yearly, period: 'yr', bonus: '+3 months free', popular: false,
       features: ['Everything in Business', 'AI Business Intelligence', 'AI reads your live data', 'Priority support', 'White label available', 'All future features'],
       locked: [],
     },
@@ -105,54 +104,198 @@ export default function Home() {
             </div>
             <span className="font-black text-xl" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Samyojak</span>
           </Link>
-
-          {/* NAV LINKS — Features and Pricing point to sections on homepage, About and Contact are pages */}
           <div className="hidden md:flex items-center gap-6">
-            <a href="#features" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Features</a>
-            <a href="#pricing" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Pricing</a>
+            <Link href="/features" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Features</Link>
+            <Link href="/pricing" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Pricing</Link>
             <Link href="/about" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>About</Link>
             <Link href="/contact" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Contact</Link>
           </div>
-
           <div className="flex items-center gap-3">
             <Link href="/login" className="outline-btn px-4 py-2 text-sm hidden md:block">Sign In</Link>
-            <Link href="/signup" className="candy-btn px-4 py-2 text-sm">Start Free</Link>
+            {/* START TRIAL — no "Start Free" or "No card needed" */}
+            <Link href="/signup" className="candy-btn px-4 py-2 text-sm">Start Trial</Link>
           </div>
         </div>
       </nav>
 
-      {/* HERO */}
-      <section className="px-6 py-24 text-center">
-        <div className="max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-semibold"
-            style={{ background: '#EDE9FE', border: '2px solid #8B5CF6', color: '#8B5CF6' }}>
-            <Brain size={14} /> AI-Powered · Universal · Adaptive ERP
+      {/* ═══════════════════════════════════════════════════════
+          HERO — STUNNING PROFESSIONAL WITH ANIMATIONS
+          ═══════════════════════════════════════════════════════ */}
+      <section className="relative px-6 py-28 overflow-hidden" style={{ background: '#0A0E1A' }}>
+
+        {/* Animated background grid */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          backgroundImage: 'linear-gradient(rgba(139,92,246,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.06) 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
+        }} />
+
+        {/* Glow orbs */}
+        <div className="absolute top-20 left-1/4 w-96 h-96 rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+        <div className="absolute bottom-10 right-1/4 w-80 h-80 rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(244,114,182,0.12) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+
+        <div className="max-w-5xl mx-auto text-center relative z-10">
+
+          {/* Eyebrow badge */}
+          <div
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full mb-8 text-sm font-semibold transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+            style={{
+              background: 'rgba(139,92,246,0.15)',
+              border: '1.5px solid rgba(139,92,246,0.5)',
+              color: '#C4B5FD',
+              transitionDelay: '100ms',
+            }}>
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+            AI-Powered · Universal · Adaptive ERP
           </div>
 
-          {/* UPDATED HERO HEADLINE */}
-          <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight"
-            style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-            The ERP that{' '}
-            <span style={{ color: '#8B5CF6' }}>adapts to you</span>
+          {/* Main headline */}
+          <h1
+            className={`font-black leading-none mb-6 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+            style={{
+              fontFamily: 'Outfit',
+              fontSize: 'clamp(3rem, 8vw, 6rem)',
+              transitionDelay: '200ms',
+            }}>
+            <span style={{ color: 'white' }}>The ERP that </span>
+            <span style={{
+              background: 'linear-gradient(135deg, #8B5CF6 0%, #F472B6 50%, #FBBF24 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}>
+              adapts to you
+            </span>
           </h1>
 
-          <p className="text-xl mb-8 max-w-2xl mx-auto" style={{ color: '#64748B' }}>
-            Most business software forces you to change how you work. Samyojak learns your business, speaks your language, and fits the way you already operate.
+          {/* Subheadline */}
+          <p
+            className={`text-xl md:text-2xl mb-10 max-w-2xl mx-auto transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+            style={{ color: '#94A3B8', lineHeight: 1.6, transitionDelay: '300ms' }}>
+            One platform for CRM, invoicing, inventory, HR, projects, and AI intelligence.
+            Works for every business. Ready in 5 minutes.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Link href="/signup" className="candy-btn px-8 py-4 text-lg inline-flex items-center gap-2">
-              Start Free — No Card Needed <ArrowRight size={20} />
-            </Link>
-            <Link href="/demo" className="outline-btn px-8 py-4 text-lg inline-flex items-center gap-2">
-              See Live Demo
+          {/* CTA — Start Trial only, no Demo */}
+          <div
+            className={`flex flex-col sm:flex-row gap-4 justify-center mb-14 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+            style={{ transitionDelay: '400ms' }}>
+            <Link href="/signup"
+              className="inline-flex items-center justify-center gap-3 px-10 py-5 rounded-full font-black text-lg transition-all hover:scale-105 hover:shadow-2xl"
+              style={{
+                background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+                color: 'white',
+                boxShadow: '0 0 40px rgba(139,92,246,0.4)',
+                fontFamily: 'Outfit',
+              }}>
+              Start Trial <ArrowRight size={22} />
             </Link>
           </div>
 
-          <div className="flex flex-wrap gap-4 justify-center text-sm" style={{ color: '#64748B' }}>
-            {['✅ No setup fee', '✅ Cancel anytime', '✅ Works for any business', '✅ Powered by Vercel'].map(f => (
-              <span key={f}>{f}</span>
-            ))}
+          {/* Trust signals */}
+          <div
+            className={`flex flex-wrap gap-6 justify-center text-sm transition-all duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}
+            style={{ color: '#475569', transitionDelay: '500ms' }}>
+            {[
+              '✦ Weekly plans from $4.99',
+              '✦ Cancel anytime',
+              '✦ Works for any business',
+              '✦ Powered by Vercel',
+            ].map(f => <span key={f}>{f}</span>)}
+          </div>
+
+          {/* Floating module cards — decorative */}
+          <div
+            className={`mt-16 relative transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+            style={{ transitionDelay: '600ms' }}>
+
+            {/* Dashboard preview — decorative UI showcase */}
+            <div className="relative mx-auto max-w-4xl rounded-2xl overflow-hidden"
+              style={{ border: '1.5px solid rgba(139,92,246,0.3)', boxShadow: '0 0 80px rgba(139,92,246,0.15)' }}>
+
+              {/* Fake browser chrome */}
+              <div className="flex items-center gap-2 px-4 py-3" style={{ background: '#1E293B', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full" style={{ background: '#EF4444' }}></div>
+                  <div className="w-3 h-3 rounded-full" style={{ background: '#FBBF24' }}></div>
+                  <div className="w-3 h-3 rounded-full" style={{ background: '#34D399' }}></div>
+                </div>
+                <div className="flex-1 mx-4 px-4 py-1 rounded-full text-xs text-center"
+                  style={{ background: 'rgba(255,255,255,0.06)', color: '#64748B' }}>
+                  samyojak.vercel.app/dashboard
+                </div>
+              </div>
+
+              {/* Dashboard content */}
+              <div className="p-6" style={{ background: '#0F172A' }}>
+
+                {/* Top stats row */}
+                <div className="grid grid-cols-4 gap-3 mb-4">
+                  {[
+                    { label: 'Leads', value: '48', color: '#8B5CF6', bg: '#EDE9FE' },
+                    { label: 'Invoices', value: '23', color: '#F472B6', bg: '#FCE7F3' },
+                    { label: 'Products', value: '156', color: '#FBBF24', bg: '#FEF3C7' },
+                    { label: 'Projects', value: '12', color: '#34D399', bg: '#D1FAE5' },
+                  ].map(s => (
+                    <div key={s.label} className="p-3 rounded-xl"
+                      style={{ background: '#1E293B', border: `1px solid ${s.color}30` }}>
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center mb-2"
+                        style={{ background: s.color + '20' }}>
+                        <div className="w-2 h-2 rounded-full" style={{ background: s.color }}></div>
+                      </div>
+                      <p className="text-xs" style={{ color: '#64748B' }}>{s.label}</p>
+                      <p className="text-lg font-black text-white" style={{ fontFamily: 'Outfit' }}>{s.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* AI Card preview */}
+                <div className="p-4 rounded-xl mb-4" style={{ background: '#1E293B', border: '1px solid rgba(139,92,246,0.3)' }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center"
+                      style={{ background: '#8B5CF6' }}>
+                      <Brain size={10} className="text-white" />
+                    </div>
+                    <span className="text-xs font-bold" style={{ color: '#C4B5FD' }}>Samyojak AI</span>
+                    <div className="ml-auto flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
+                      <span className="text-xs text-green-400">Live</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-left" style={{ color: '#8B5CF6' }}>
+                    💡 You have 8 hot leads this week. Al-Rashid Trading is your biggest opportunity at ₹3,00,000. Follow up today.
+                  </p>
+                </div>
+
+                {/* Mini table preview */}
+                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div className="grid grid-cols-4 px-4 py-2"
+                    style={{ background: '#1a2740', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    {['Name', 'Status', 'Value', 'Score'].map(h => (
+                      <span key={h} className="text-xs font-semibold uppercase" style={{ color: '#475569' }}>{h}</span>
+                    ))}
+                  </div>
+                  {[
+                    { name: 'Rahul Sharma', status: 'Contacted', value: '₹85K', score: '92', scoreColor: '#34D399' },
+                    { name: 'James Wilson', status: 'New', value: '$1,800', score: '74', scoreColor: '#FBBF24' },
+                    { name: 'Priya Mehta', status: 'Converted', value: '₹45K', score: '88', scoreColor: '#34D399' },
+                  ].map(row => (
+                    <div key={row.name} className="grid grid-cols-4 px-4 py-2.5"
+                      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <span className="text-xs text-white font-medium truncate">{row.name}</span>
+                      <span className="text-xs" style={{ color: '#64748B' }}>{row.status}</span>
+                      <span className="text-xs" style={{ color: '#94A3B8' }}>{row.value}</span>
+                      <span className="text-xs font-bold" style={{ color: row.scoreColor }}>{row.score}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Gradient fade at bottom of dashboard preview */}
+            <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
+              style={{ background: 'linear-gradient(transparent, #0A0E1A)' }} />
           </div>
         </div>
       </section>
@@ -185,62 +328,38 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Comparison — NO competitor names */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
             <div className="p-8 rounded-2xl" style={{ background: '#1E293B', border: '2px solid #334155' }}>
               <div className="text-3xl mb-4">😩</div>
-              <h3 className="text-xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>
-                Legacy ERP Software
-              </h3>
+              <h3 className="text-xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>Legacy ERP Software</h3>
               <ul className="space-y-3">
-                {[
-                  'Forces you to rename all your columns',
-                  'Weeks or months of setup and configuration',
-                  'Separate modules built for specific industries',
-                  'Expensive consultants required to migrate data',
-                  'Your team has to unlearn and relearn everything',
-                  'Rigid structure that does not fit your workflow',
-                ].map(p => (
+                {['Forces you to rename all your columns', 'Weeks or months of setup and configuration', 'Separate modules built for specific industries', 'Expensive consultants required to migrate data', 'Your team has to unlearn and relearn everything', 'Rigid structure that does not fit your workflow'].map(p => (
                   <li key={p} className="flex items-start gap-3 text-sm" style={{ color: '#94A3B8' }}>
-                    <span className="text-red-400 flex-shrink-0 mt-0.5">✗</span>
-                    {p}
+                    <span className="text-red-400 flex-shrink-0 mt-0.5">✗</span>{p}
                   </li>
                 ))}
               </ul>
             </div>
-
             <div className="p-8 rounded-2xl"
               style={{ background: 'rgba(139,92,246,0.15)', border: '2px solid #8B5CF6', boxShadow: '8px 8px 0px rgba(139,92,246,0.3)' }}>
               <div className="text-3xl mb-4">🚀</div>
-              <h3 className="text-xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>
-                Samyojak Adaptive ERP
-              </h3>
+              <h3 className="text-xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>Samyojak Adaptive ERP</h3>
               <ul className="space-y-3">
-                {[
-                  'Import any CSV — your column names stay exactly as-is',
-                  'Ready in 5 minutes from the moment you sign up',
-                  'AI adapts to your business type automatically',
-                  'Data migration in one upload — no consultants needed',
-                  'Familiar structure — zero learning curve for your team',
-                  'Flexible fields that match how you already work',
-                ].map(p => (
+                {['Import any CSV — your column names stay exactly as-is', 'Ready in 5 minutes from the moment you sign up', 'AI adapts to your business type automatically', 'Data migration in one upload — no consultants needed', 'Familiar structure — zero learning curve for your team', 'Flexible fields that match how you already work'].map(p => (
                   <li key={p} className="flex items-start gap-3 text-sm" style={{ color: '#C4B5FD' }}>
-                    <span className="text-green-400 flex-shrink-0 mt-0.5">✓</span>
-                    {p}
+                    <span className="text-green-400 flex-shrink-0 mt-0.5">✓</span>{p}
                   </li>
                 ))}
               </ul>
             </div>
           </div>
 
-          {/* Business Types */}
           <h3 className="text-2xl font-black text-white text-center mb-8" style={{ fontFamily: 'Outfit' }}>
             Works for every type of business
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
             {BUSINESS_TYPES.map(biz => (
-              <div key={biz.name}
-                className="p-5 rounded-2xl text-center hover:scale-105 transition-transform"
+              <div key={biz.name} className="p-5 rounded-2xl text-center hover:scale-105 transition-transform"
                 style={{ background: '#1E293B', border: `2px solid ${biz.color}40` }}>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3"
                   style={{ background: biz.color + '20', border: `1.5px solid ${biz.color}` }}>
@@ -252,13 +371,10 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Vision */}
           <div className="p-8 rounded-2xl text-center"
             style={{ background: 'rgba(139,92,246,0.1)', border: '2px solid rgba(139,92,246,0.3)' }}>
             <Brain size={40} className="mx-auto mb-4" style={{ color: '#8B5CF6' }} />
-            <h3 className="text-2xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>
-              Our Vision
-            </h3>
+            <h3 className="text-2xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>Our Vision</h3>
             <p className="text-lg max-w-3xl mx-auto leading-relaxed" style={{ color: '#C4B5FD' }}>
               We are building the world's first truly universal ERP — one that intelligently generates the right structure, fields, and workflows for any business automatically. A school gets student management. A hospital gets patient records. A manufacturer gets production tracking. All without configuration.
             </p>
@@ -276,9 +392,7 @@ export default function Home() {
             <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
               Everything your business needs
             </h2>
-            <p className="text-lg" style={{ color: '#64748B' }}>
-              Six powerful modules unified in one workspace
-            </p>
+            <p className="text-lg" style={{ color: '#64748B' }}>Six powerful modules unified in one workspace</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {FEATURES.map(f => (
@@ -289,9 +403,7 @@ export default function Home() {
                   style={{ background: f.bg, border: `2px solid ${f.color}` }}>
                   <f.icon size={24} style={{ color: f.color }} />
                 </div>
-                <h3 className="font-black text-base mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-                  {f.title}
-                </h3>
+                <h3 className="font-black text-base mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>{f.title}</h3>
                 <p className="text-sm" style={{ color: '#64748B' }}>{f.desc}</p>
               </div>
             ))}
@@ -306,17 +418,12 @@ export default function Home() {
             <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
               Simple pricing. Big value.
             </h2>
-            <p className="text-lg mb-6" style={{ color: '#64748B' }}>
-              No annual lock-in. No per-user fees. Cancel anytime.
-            </p>
+            <p className="text-lg mb-6" style={{ color: '#64748B' }}>No annual lock-in. No per-user fees. Cancel anytime.</p>
             <div className="inline-flex p-1 rounded-full" style={{ background: '#E2E8F0' }}>
               {(['weekly', 'monthly', 'yearly'] as const).map(b => (
                 <button key={b} onClick={() => setBilling(b)}
                   className="px-5 py-2 rounded-full text-sm font-bold capitalize transition-all"
-                  style={{
-                    background: billing === b ? '#1E293B' : 'transparent',
-                    color: billing === b ? 'white' : '#64748B',
-                  }}>
+                  style={{ background: billing === b ? '#1E293B' : 'transparent', color: billing === b ? 'white' : '#64748B' }}>
                   {b}{b === 'yearly' && <span style={{ color: '#FBBF24' }}> -20%</span>}
                 </button>
               ))}
@@ -331,8 +438,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {PLANS.map(plan => (
-              <div key={plan.name}
-                className="relative p-6 rounded-2xl"
+              <div key={plan.name} className="relative p-6 rounded-2xl"
                 style={{
                   background: plan.popular ? '#8B5CF6' : 'white',
                   border: '2px solid #1E293B',
@@ -355,8 +461,7 @@ export default function Home() {
                     style={{ fontFamily: 'Outfit', color: plan.popular ? 'white' : '#1E293B' }}>
                     {plan.price}
                   </span>
-                  <span className="text-sm ml-1"
-                    style={{ color: plan.popular ? 'rgba(255,255,255,0.7)' : '#94A3B8' }}>
+                  <span className="text-sm ml-1" style={{ color: plan.popular ? 'rgba(255,255,255,0.7)' : '#94A3B8' }}>
                     /{plan.period}
                   </span>
                 </div>
@@ -375,11 +480,11 @@ export default function Home() {
                   {plan.locked.map(f => (
                     <li key={f} className="flex items-start gap-2 text-xs opacity-40"
                       style={{ color: plan.popular ? 'white' : '#94A3B8' }}>
-                      <span className="flex-shrink-0">🔒</span>
-                      {f}
+                      <span className="flex-shrink-0">🔒</span>{f}
                     </li>
                   ))}
                 </ul>
+                {/* START TRIAL — not Start Free */}
                 <Link href="/signup"
                   className="block w-full py-3 rounded-full text-sm font-bold text-center transition-all hover:opacity-90"
                   style={{
@@ -387,7 +492,7 @@ export default function Home() {
                     color: plan.popular ? '#8B5CF6' : 'white',
                     border: '2px solid #1E293B',
                   }}>
-                  Get Started
+                  Start Trial
                 </Link>
               </div>
             ))}
@@ -395,7 +500,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* COMPARISON — NO competitor names */}
+      {/* COMPARISON */}
       <section className="px-6 py-24">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
@@ -462,7 +567,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* FAQ — Free trial question REMOVED */}
       <section className="px-6 py-24">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-4xl font-black text-center mb-12" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
@@ -472,21 +577,18 @@ export default function Home() {
             {FAQS.map((faq, i) => (
               <div key={i} className="rounded-2xl overflow-hidden"
                 style={{ border: '2px solid #E2E8F0', background: 'white' }}>
-                <button
-                  className="w-full flex items-center justify-between p-5 text-left"
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                >
+                <button className="w-full flex items-center justify-between p-5 text-left"
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}>
                   <span className="font-bold text-sm pr-4" style={{ color: '#1E293B', fontFamily: 'Outfit' }}>
                     {faq.q}
                   </span>
                   {openFaq === i
                     ? <ChevronUp size={18} className="text-gray-400 flex-shrink-0" />
-                    : <ChevronDown size={18} className="text-gray-400 flex-shrink-0" />
-                  }
+                    : <ChevronDown size={18} className="text-gray-400 flex-shrink-0" />}
                 </button>
                 {openFaq === i && (
-                  <div className="px-5 pb-5 text-sm border-t border-gray-100" style={{ color: '#64748B' }}>
-                    <p className="pt-4">{faq.a}</p>
+                  <div className="px-5 pb-5 border-t border-gray-100">
+                    <p className="pt-4 text-sm" style={{ color: '#64748B' }}>{faq.a}</p>
                   </div>
                 )}
               </div>
@@ -495,7 +597,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA — No demo button */}
       <section className="px-6 py-24 text-center" style={{ background: '#1E293B' }}>
         <div className="max-w-3xl mx-auto">
           <div className="text-6xl mb-6 float">🚀</div>
@@ -506,18 +608,12 @@ export default function Home() {
           </h2>
           <p className="text-lg mb-8" style={{ color: '#94A3B8' }}>
             Join businesses globally who chose simplicity over complexity.
-            Set up in 5 minutes. Cancel anytime. No lock-in.
+            Set up in 5 minutes. Cancel anytime.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup" className="candy-btn px-10 py-5 text-xl inline-flex items-center gap-2">
-              Start Free Today <ArrowRight size={22} />
-            </Link>
-            <Link href="/demo"
-              className="px-10 py-5 text-xl inline-flex items-center gap-2 rounded-full font-bold transition-colors hover:bg-white/10"
-              style={{ border: '2px solid rgba(255,255,255,0.3)', color: 'white' }}>
-              Watch Demo
-            </Link>
-          </div>
+          <Link href="/signup"
+            className="candy-btn px-12 py-5 text-xl inline-flex items-center gap-2">
+            Start Trial <ArrowRight size={22} />
+          </Link>
         </div>
       </section>
 
@@ -534,40 +630,30 @@ export default function Home() {
               <p className="text-xs mb-3" style={{ color: '#64748B' }}>
                 The universal ERP that adapts to your business. Not the other way around.
               </p>
-              {/* UPDATED: Made for the world */}
-              <p className="text-xs font-medium" style={{ color: '#475569' }}>
-                🌍 Made for the world
-              </p>
+              {/* MADE FOR THE WORLD */}
+              <p className="text-xs font-medium" style={{ color: '#475569' }}>🌍 Made for the world</p>
             </div>
-
             <div>
               <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Product</p>
-              <a href="#features" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Features</a>
-              <a href="#pricing" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Pricing</a>
-              <Link href="/demo" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Demo</Link>
+              <Link href="/features" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Features</Link>
+              <Link href="/pricing" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Pricing</Link>
               <Link href="/referral" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Referral Program</Link>
             </div>
-
             <div>
               <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Company</p>
               <Link href="/about" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>About Us</Link>
               <Link href="/contact" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Contact</Link>
               <Link href="/support" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Support</Link>
-              <Link href="/whitelabel" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>White Label</Link>
             </div>
-
             <div>
               <p className="font-bold text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Legal</p>
               <Link href="/privacy" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Privacy Policy</Link>
               <Link href="/terms" className="block text-xs mb-2 hover:text-white transition-colors" style={{ color: '#64748B' }}>Terms of Service</Link>
             </div>
           </div>
-
           <div className="flex items-center justify-between border-t pt-8 flex-wrap gap-4"
             style={{ borderColor: '#1E293B' }}>
-            <p className="text-xs" style={{ color: '#334155' }}>
-              © 2026 Samyojak. All rights reserved.
-            </p>
+            <p className="text-xs" style={{ color: '#334155' }}>© 2026 Samyojak. All rights reserved.</p>
             <div className="flex items-center gap-2">
               <span className="text-xs" style={{ color: '#334155' }}>Powered by</span>
               <span className="text-xs font-black text-white">▲ Vercel</span>
