@@ -1,3 +1,4 @@
+import React from 'react'
 import Link from 'next/link'
 import { ArrowRight, Brain, Globe, Shield, Zap } from 'lucide-react'
 
@@ -17,12 +18,12 @@ export default function About() {
             <span className="font-black text-xl" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Samyojak</span>
           </Link>
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/features" className="text-sm font-medium hover:text-violet-600" style={{ color: '#64748B' }}>Features</Link>
-            <Link href="/pricing" className="text-sm font-medium hover:text-violet-600" style={{ color: '#64748B' }}>Pricing</Link>
+            <Link href="/features" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Features</Link>
+            <Link href="/pricing" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Pricing</Link>
             <Link href="/about" className="text-sm font-medium" style={{ color: '#8B5CF6' }}>About</Link>
-            <Link href="/contact" className="text-sm font-medium hover:text-violet-600" style={{ color: '#64748B' }}>Contact</Link>
+            <Link href="/contact" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Contact</Link>
           </div>
-          <Link href="/signup" className="candy-btn px-4 py-2 text-sm">Start Free</Link>
+          <Link href="/signup" className="candy-btn px-4 py-2 text-sm">Start Trial</Link>
         </div>
       </nav>
 
@@ -40,7 +41,7 @@ export default function About() {
             <span style={{ color: '#8B5CF6' }}>Not the other way around.</span>
           </h1>
           <p className="text-xl leading-relaxed" style={{ color: '#64748B' }}>
-            Samyojak was built on a simple belief: every business deserves powerful software that fits how they already work — not software that forces them to change.
+            Samyojak was built on a simple belief — every business deserves powerful software that fits how they already work, not software that forces them to change.
           </p>
         </div>
       </section>
@@ -56,13 +57,15 @@ export default function About() {
               Samyojak was built by a solo founder using only an Android phone — no laptop, no funding, no team. The entire product was designed, coded, and deployed from a mobile device. That constraint became the product's greatest strength: everything had to be simple, fast, and mobile-first by necessity.
             </p>
             <p>
-              The name Samyojak comes from Sanskrit — meaning <em style={{ color: '#C4B5FD' }}>"the one who coordinates and connects."</em> That is exactly what the product does: connects your CRM, invoicing, inventory, HR, projects, and AI intelligence into one unified workspace.
+              The name Samyojak comes from Sanskrit — meaning{' '}
+              <em style={{ color: '#C4B5FD' }}>"the one who coordinates and connects."</em>{' '}
+              That is exactly what the product does: connects your CRM, invoicing, inventory, HR, projects, and AI intelligence into one unified workspace.
             </p>
             <p>
-              We watched small and medium businesses struggle with ERP software that was built for enterprises. They were forced to spend weeks configuring systems, hire consultants to migrate their data, and retrain their teams on entirely new workflows. The result? Most gave up and stayed on Excel.
+              We watched small and medium businesses struggle with ERP software that was built for enterprises. They were forced to spend weeks configuring systems, hire consultants to migrate their data, and retrain their teams on entirely new workflows. The result? Most gave up and stayed on spreadsheets.
             </p>
             <p>
-              We built Samyojak to change that. A business should be able to sign up, import their existing data in whatever format it is in, and be running in under 5 minutes. The AI should understand their data structure — not force them to restructure it.
+              We built Samyojak to change that. A business should be able to sign up, import their existing data in whatever format it is already in, and be running in under 5 minutes. The AI should understand their data structure — not force them to restructure it.
             </p>
           </div>
         </div>
@@ -83,10 +86,34 @@ export default function About() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
-              { icon: Brain, title: 'AI-First', desc: 'AI that reads your real data and gives you specific, actionable business insights — not generic advice.', color: '#8B5CF6', bg: '#EDE9FE' },
-              { icon: Globe, title: 'Global by Design', desc: 'Built for every country — GST, VAT, HST, Sales Tax, local currencies, and geo-based pricing that respects where you are.', color: '#34D399', bg: '#D1FAE5' },
-              { icon: Zap, title: 'Instant Setup', desc: 'From signup to fully running ERP in 5 minutes. Import your existing data in any format. Zero configuration.', color: '#FBBF24', bg: '#FEF3C7' },
-              { icon: Shield, title: 'Business-First Security', desc: 'Enterprise authentication, encrypted data, rate limiting, session timeouts — security that does not compromise usability.', color: '#F472B6', bg: '#FCE7F3' },
+              {
+                icon: Brain,
+                title: 'AI-First',
+                desc: 'AI that reads your real data and gives you specific, actionable business insights — not generic advice.',
+                color: '#8B5CF6',
+                bg: '#EDE9FE',
+              },
+              {
+                icon: Globe,
+                title: 'Global by Design',
+                desc: 'Built for every country — GST, VAT, HST, Sales Tax, and geo-based pricing that respects where you are.',
+                color: '#34D399',
+                bg: '#D1FAE5',
+              },
+              {
+                icon: Zap,
+                title: 'Instant Setup',
+                desc: 'From signup to fully running ERP in 5 minutes. Import your existing data in any format. Zero configuration.',
+                color: '#FBBF24',
+                bg: '#FEF3C7',
+              },
+              {
+                icon: Shield,
+                title: 'Business-First Security',
+                desc: 'Enterprise authentication, encrypted data, rate limiting, session timeouts — security that does not compromise usability.',
+                color: '#F472B6',
+                bg: '#FCE7F3',
+              },
             ].map(item => (
               <div key={item.title} className="p-6 rounded-2xl"
                 style={{ background: 'white', border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #F1F5F9' }}>
@@ -102,7 +129,7 @@ export default function About() {
         </div>
       </section>
 
-      {/* BUILT FOR THE WORLD */}
+      {/* MADE FOR THE WORLD */}
       <section className="px-6 py-16" style={{ background: '#F8FAFC' }}>
         <div className="max-w-4xl mx-auto text-center">
           <div className="text-6xl mb-6">🌍</div>
@@ -143,7 +170,7 @@ export default function About() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { name: '▲ Vercel', desc: 'The same infrastructure used by Fortune 500 companies. Global edge network. 99.99% uptime.' },
-              { name: '⚡ Supabase', desc: 'Open-source Firebase alternative. Enterprise-grade PostgreSQL database with row-level security.' },
+              { name: '⚡ Supabase', desc: 'Open-source Firebase alternative. Enterprise-grade authentication with row-level security.' },
               { name: '🤖 Groq AI', desc: 'The fastest AI inference in the world. Real-time business intelligence from your live data.' },
             ].map(item => (
               <div key={item.name} className="p-6 rounded-2xl"
@@ -169,9 +196,13 @@ export default function About() {
             Start Trial <ArrowRight size={18} />
           </Link>
           <Link href="/contact"
-            className="px-8 py-4 text-base rounded-full font-bold inline-flex items-center gap-2"
+            className="px-8 py-4 text-base rounded-full font-bold inline-flex items-center gap-2 transition-colors hover:bg-white/10"
             style={{ border: '2px solid rgba(255,255,255,0.3)', color: 'white' }}>
             Talk to Us
           </Link>
         </div>
       </section>
+
+    </div>
+  )
+}
