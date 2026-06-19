@@ -156,17 +156,17 @@ export default function About() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA — Start Trial only, no Live Demo */}
       <section className="px-6 py-20 text-center" style={{ background: '#1E293B' }}>
         <h2 className="text-4xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>
           Join us in building the future of ERP
         </h2>
         <p className="mb-8" style={{ color: '#94A3B8' }}>
-          Start for free. No credit card. Set up in 5 minutes.
+          Start your trial. Set up in 5 minutes. Cancel anytime.
         </p>
         <div className="flex gap-4 justify-center flex-wrap">
           <Link href="/signup" className="candy-btn px-8 py-4 text-base inline-flex items-center gap-2">
-            Get Started Free <ArrowRight size={18} />
+            Start Trial <ArrowRight size={18} />
           </Link>
           <Link href="/contact"
             className="px-8 py-4 text-base rounded-full font-bold inline-flex items-center gap-2"
@@ -175,6 +175,3 @@ export default function About() {
           </Link>
         </div>
       </section>
-    </div>
-  )
-}
