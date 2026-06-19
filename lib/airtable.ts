@@ -2,14 +2,19 @@ const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
 const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
 const BASE_URL = `https://api.airtable.com/v0/${BASE}`
 
-// Simple in-memory cache — reduces API calls significantly
 const cache = new Map<string, { data: any; expires: number }>()
-const CACHE_TTL = 60 * 1000 // 60 seconds
+const CACHE_TTL = 60 * 1000
 
 const getHeaders = () => ({
   Authorization: `Bearer ${TOKEN}`,
   'Content-Type': 'application/json',
 })
+
+function invalidateTable(table: string) {
+  Array.from(cache.keys()).forEach(key => {
+    if (key.startsWith(`${table}:`)) cache.delete(key)
+  })
+}
 
 export const airtable = {
   async get(table: string, params?: string) {
@@ -18,29 +23,21 @@ export const airtable = {
     if (cached && cached.expires > Date.now()) {
       return cached.data
     }
-
     const url = params
       ? `${BASE_URL}/${encodeURIComponent(table)}?${params}`
       : `${BASE_URL}/${encodeURIComponent(table)}`
-
     const r = await fetch(url, { headers: getHeaders() })
     if (!r.ok) {
       const err = await r.text()
       throw new Error(`Airtable GET ${table} failed ${r.status}: ${err}`)
     }
     const data = await r.json()
-
-    // Cache successful reads
     cache.set(cacheKey, { data, expires: Date.now() + CACHE_TTL })
     return data
   },
 
   async create(table: string, fields: Record<string, unknown>) {
-    // Invalidate cache for this table on write
-    for (const key of cache.keys()) {
-      if (key.startsWith(`${table}:`)) cache.delete(key)
-    }
-
+    invalidateTable(table)
     const url = `${BASE_URL}/${encodeURIComponent(table)}`
     const r = await fetch(url, {
       method: 'POST',
@@ -55,11 +52,7 @@ export const airtable = {
   },
 
   async update(table: string, id: string, fields: Record<string, unknown>) {
-    // Invalidate cache on write
-    for (const key of cache.keys()) {
-      if (key.startsWith(`${table}:`)) cache.delete(key)
-    }
-
+    invalidateTable(table)
     const url = `${BASE_URL}/${encodeURIComponent(table)}/${id}`
     const r = await fetch(url, {
       method: 'PATCH',
@@ -74,11 +67,7 @@ export const airtable = {
   },
 
   async del(table: string, id: string) {
-    // Invalidate cache on delete
-    for (const key of cache.keys()) {
-      if (key.startsWith(`${table}:`)) cache.delete(key)
-    }
-
+    invalidateTable(table)
     const url = `${BASE_URL}/${encodeURIComponent(table)}/${id}`
     const r = await fetch(url, {
       method: 'DELETE',
@@ -91,7 +80,6 @@ export const airtable = {
     return r.json()
   },
 
-  // Force fresh data — use when you need latest
   async getForce(table: string, params?: string) {
     const cacheKey = `${table}:${params || ''}`
     cache.delete(cacheKey)
