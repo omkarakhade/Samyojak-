@@ -38,7 +38,6 @@ const REGION_LABELS: Record<string, string> = {
 const FAQS = [
   { q: 'Can I cancel anytime?', a: 'Yes. Weekly plans expire at the end of the week if you turn off auto-pay. Monthly and yearly plans expire at the end of the period. No cancellation fees ever.' },
   { q: 'What happens when I upgrade?', a: 'You immediately get access to all features in the new plan. The difference is prorated to your billing cycle.' },
-  { q: 'Is there a free trial?', a: 'Yes. Visit the demo page for a complete full-access demo with no credit card required.' },
   { q: 'How does geo-based pricing work?', a: 'We detect your timezone to determine your region and apply the appropriate pricing. India users get India pricing, Western users get Western pricing, others get Global pricing.' },
   { q: 'Do you charge per user?', a: 'No. All plans are flat-rate. One price for your whole team regardless of how many people use it.' },
   { q: 'What payment methods are accepted?', a: 'Cards (Visa, Mastercard), UPI for India, and other local payment methods via Dodo Payments.' },
@@ -283,23 +282,15 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA — Start Trial only */}
       <section className="px-6 py-20 text-center" style={{ background: '#1E293B' }}>
         <h2 className="text-3xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>
-          Start free. No card needed.
+          Start your trial today.
         </h2>
-        <p className="mb-8" style={{ color: '#94A3B8' }}>Try the full demo or create your account today.</p>
-        <div className="flex gap-4 justify-center flex-wrap">
-          <Link href="/signup" className="candy-btn px-8 py-4 text-base inline-flex items-center gap-2">
-            Create Account <ArrowRight size={18} />
-          </Link>
-          <Link href="/demo"
-            className="px-8 py-4 text-base rounded-full font-bold inline-flex items-center gap-2"
-            style={{ border: '2px solid rgba(255,255,255,0.3)', color: 'white' }}>
-            See Live Demo
-          </Link>
-        </div>
+        <p className="mb-8" style={{ color: '#94A3B8' }}>
+          Weekly plans from $4.99. Cancel anytime. No lock-in.
+        </p>
+        <Link href="/signup" className="candy-btn px-10 py-5 text-xl inline-flex items-center gap-2">
+          Start Trial <ArrowRight size={18} />
+        </Link>
       </section>
-    </div>
-  )
-}
