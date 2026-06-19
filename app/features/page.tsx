@@ -1,3 +1,4 @@
+import React from 'react'
 import Link from 'next/link'
 import {
   Users, FileText, Package, UserCheck,
@@ -7,45 +8,129 @@ import {
 
 const MODULES = [
   {
-    icon: Users, title: 'CRM with AI Lead Scoring', color: '#8B5CF6', bg: '#EDE9FE',
+    icon: Users,
+    title: 'CRM with AI Lead Scoring',
+    color: '#8B5CF6',
+    bg: '#EDE9FE',
     desc: 'Manage your entire sales pipeline with AI-powered lead scoring, follow-up reminders, and status tracking.',
-    features: ['AI lead scoring 0-100', 'Pipeline stages — New, Contacted, Converted, Lost', 'Follow-up date reminders', 'Import leads from any CSV format', 'Export to CSV anytime', 'Business type categorization'],
+    features: [
+      'AI lead scoring 0–100',
+      'Pipeline stages — New, Contacted, Converted, Lost',
+      'Follow-up date reminders',
+      'Import leads from any CSV format',
+      'Export to CSV anytime',
+      'Business type categorization',
+    ],
   },
   {
-    icon: FileText, title: 'Universal Tax Invoicing', color: '#F472B6', bg: '#FCE7F3',
+    icon: FileText,
+    title: 'Universal Tax Invoicing',
+    color: '#F472B6',
+    bg: '#FCE7F3',
     desc: 'Create professional invoices with automatic tax calculation for any country in one click.',
-    features: ['GST for India (0%, 5%, 12%, 18%, 28%)', 'VAT for UK, Germany, UAE, France, South Africa', 'HST/GST for Canada', 'Sales Tax for USA', 'GST for Australia, New Zealand, Singapore', 'WhatsApp invoice sending', 'Mark paid / unpaid / overdue', 'Export all invoices to CSV'],
+    features: [
+      'GST for India (0%, 5%, 12%, 18%, 28%)',
+      'VAT for UK, Germany, UAE, France, South Africa',
+      'HST/GST for Canada',
+      'Sales Tax for USA',
+      'GST for Australia, New Zealand, Singapore',
+      'WhatsApp invoice sending',
+      'Mark paid / unpaid / overdue',
+      'Export all invoices to CSV',
+    ],
   },
   {
-    icon: Package, title: 'Inventory + Free QR Codes', color: '#FBBF24', bg: '#FEF3C7',
+    icon: Package,
+    title: 'Inventory + Free QR Codes',
+    color: '#FBBF24',
+    bg: '#FEF3C7',
     desc: 'Track your stock with automatic QR code generation, low stock alerts, and reorder management.',
-    features: ['Free auto-generated QR codes for every product', 'Real-time stock level tracking', 'Low stock alerts and reorder levels', 'Category management', 'SKU tracking', 'Import products from CSV', 'Export inventory to CSV'],
+    features: [
+      'Free auto-generated QR codes for every product',
+      'Real-time stock level tracking',
+      'Low stock alerts and reorder levels',
+      'Category management',
+      'SKU tracking',
+      'Import products from CSV',
+      'Export inventory to CSV',
+    ],
   },
   {
-    icon: UserCheck, title: 'HR & Payroll', color: '#34D399', bg: '#D1FAE5',
+    icon: UserCheck,
+    title: 'HR & Payroll',
+    color: '#34D399',
+    bg: '#D1FAE5',
     desc: 'Manage your entire team — salaries, departments, joining dates, leave balance, and more.',
-    features: ['Employee profiles with roles and departments', 'Monthly salary tracking', 'Total payroll calculation', 'Leave balance tracking', 'Joining date management', 'Import team from CSV', 'Export HR data anytime'],
+    features: [
+      'Employee profiles with roles and departments',
+      'Monthly salary tracking',
+      'Total payroll calculation',
+      'Leave balance tracking',
+      'Joining date management',
+      'Import team from CSV',
+      'Export HR data anytime',
+    ],
   },
   {
-    icon: FolderOpen, title: 'Project Management Kanban', color: '#8B5CF6', bg: '#EDE9FE',
+    icon: FolderOpen,
+    title: 'Project Management Kanban',
+    color: '#8B5CF6',
+    bg: '#EDE9FE',
     desc: 'Track all your client projects on a visual Kanban board with deadlines and progress.',
-    features: ['4-column Kanban — Planning, In Progress, Review, Done', 'Deadline tracking with overdue alerts', 'Progress percentage tracking', 'One-click status moves between columns', 'Project start date and deadline', 'Create and delete projects instantly'],
+    features: [
+      '4-column Kanban — Planning, In Progress, Review, Done',
+      'Deadline tracking with overdue alerts',
+      'Progress percentage tracking',
+      'One-click status moves between columns',
+      'Project start date and deadline',
+      'Create and delete projects instantly',
+    ],
   },
   {
-    icon: BarChart3, title: 'Tax Reports & Analytics', color: '#F472B6', bg: '#FCE7F3',
+    icon: BarChart3,
+    title: 'Tax Reports & Analytics',
+    color: '#F472B6',
+    bg: '#FCE7F3',
     desc: 'Generate GSTR-1 compatible reports, monthly tax breakdowns, and revenue analytics.',
-    features: ['GSTR-1 format tax reports', 'Monthly revenue summaries', 'Tax collected by rate (5%, 12%, 18%, 28%)', 'Paid vs unpaid vs overdue breakdown', 'Collection rate by month', 'Export reports to CSV'],
+    features: [
+      'GSTR-1 format tax reports',
+      'Monthly revenue summaries',
+      'Tax collected by rate (5%, 12%, 18%, 28%)',
+      'Paid vs unpaid vs overdue breakdown',
+      'Collection rate by month',
+      'Export reports to CSV',
+    ],
   },
   {
-    icon: Brain, title: 'AI Business Intelligence', color: '#FBBF24', bg: '#FEF3C7',
+    icon: Brain,
+    title: 'AI Business Intelligence',
+    color: '#FBBF24',
+    bg: '#FEF3C7',
     desc: 'Ask your AI assistant anything about your business. It reads your live data and gives real answers.',
-    features: ['Reads your live Airtable data in real-time', 'Analyzes leads, invoices, inventory, HR, projects', 'Gives specific answers using your actual numbers', 'Quick question buttons for common queries', 'Floating AI bubble available on every page', 'Powered by Groq AI — free and fast'],
     badge: 'Complete plan only',
+    features: [
+      'Reads your live Airtable data in real-time',
+      'Analyzes leads, invoices, inventory, HR, projects',
+      'Gives specific answers using your actual numbers',
+      'Quick question buttons for common queries',
+      'Floating AI bubble available on every page',
+      'Powered by Groq AI — lightning fast',
+    ],
   },
   {
-    icon: Globe, title: 'Import Any CSV Format', color: '#34D399', bg: '#D1FAE5',
+    icon: Globe,
+    title: 'Import Any CSV Format',
+    color: '#34D399',
+    bg: '#D1FAE5',
     desc: 'Migrate from any existing ERP or spreadsheet without renaming a single column.',
-    features: ['Accepts any CSV column naming convention', 'Smart AI mapping of your columns to our fields', 'Preview before importing', 'Batch import hundreds of records', 'Source tracking — know where data came from', 'Works with exports from any business software'],
+    features: [
+      'Accepts any CSV column naming convention',
+      'Smart AI mapping of your columns to our fields',
+      'Preview before importing',
+      'Batch import hundreds of records',
+      'Source tracking — know where data came from',
+      'Works with exports from any business software',
+    ],
   },
 ]
 
@@ -65,12 +150,12 @@ export default function Features() {
             <span className="font-black text-xl" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Samyojak</span>
           </Link>
           <div className="hidden md:flex items-center gap-6">
-            <a href="/#features" className="text-sm font-medium" style={{ color: '#8B5CF6' }}>Features</a>
-            <a href="/#pricing" className="text-sm font-medium hover:text-violet-600" style={{ color: '#64748B' }}>Pricing</a>
-            <Link href="/about" className="text-sm font-medium hover:text-violet-600" style={{ color: '#64748B' }}>About</Link>
-            <Link href="/contact" className="text-sm font-medium hover:text-violet-600" style={{ color: '#64748B' }}>Contact</Link>
+            <Link href="/features" className="text-sm font-medium" style={{ color: '#8B5CF6' }}>Features</Link>
+            <Link href="/pricing" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Pricing</Link>
+            <Link href="/about" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>About</Link>
+            <Link href="/contact" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Contact</Link>
           </div>
-          <Link href="/signup" className="candy-btn px-4 py-2 text-sm">Start Free</Link>
+          <Link href="/signup" className="candy-btn px-4 py-2 text-sm">Start Trial</Link>
         </div>
       </nav>
 
@@ -95,11 +180,12 @@ export default function Features() {
       {/* MODULES */}
       <section className="px-6 pb-24">
         <div className="max-w-6xl mx-auto space-y-8">
-          {MODULES.map((mod, i) => (
+          {MODULES.map(mod => (
             <div key={mod.title}
               className="rounded-2xl overflow-hidden"
               style={{ border: '2px solid #E2E8F0', background: 'white', boxShadow: '6px 6px 0px #F1F5F9' }}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+              <div className="grid grid-cols-1 md:grid-cols-2">
+
                 {/* Left */}
                 <div className="p-8">
                   <div className="flex items-center gap-3 mb-4">
@@ -124,10 +210,11 @@ export default function Features() {
                     Try it free <ArrowRight size={16} />
                   </Link>
                 </div>
+
                 {/* Right */}
                 <div className="p-8 border-t md:border-t-0 md:border-l border-gray-100">
                   <p className="text-xs font-bold uppercase tracking-wide mb-4" style={{ color: '#94A3B8' }}>
-                    What's included
+                    What is included
                   </p>
                   <ul className="space-y-3">
                     {mod.features.map(f => (
@@ -168,7 +255,7 @@ export default function Features() {
         </div>
       </section>
 
-      {/* CTA — was: Start Free + Live Demo. Now: Start Trial only */}
+      {/* CTA — Start Trial only, no Live Demo */}
       <section className="px-6 py-20 text-center" style={{ background: '#1E293B' }}>
         <h2 className="text-4xl font-black text-white mb-6" style={{ fontFamily: 'Outfit' }}>
           Ready to see it in action?
@@ -180,3 +267,7 @@ export default function Features() {
           Start Trial <ArrowRight size={20} />
         </Link>
       </section>
+
+    </div>
+  )
+}
