@@ -168,22 +168,15 @@ export default function Features() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA — was: Start Free + Live Demo. Now: Start Trial only */}
       <section className="px-6 py-20 text-center" style={{ background: '#1E293B' }}>
         <h2 className="text-4xl font-black text-white mb-6" style={{ fontFamily: 'Outfit' }}>
           Ready to see it in action?
         </h2>
-        <div className="flex gap-4 justify-center flex-wrap">
-          <Link href="/signup" className="candy-btn px-8 py-4 text-lg inline-flex items-center gap-2">
-            Start Free <ArrowRight size={20} />
-          </Link>
-          <Link href="/demo"
-            className="px-8 py-4 text-lg rounded-full font-bold inline-flex items-center gap-2"
-            style={{ border: '2px solid rgba(255,255,255,0.3)', color: 'white' }}>
-            Live Demo
-          </Link>
-        </div>
+        <p className="text-lg mb-8" style={{ color: '#94A3B8' }}>
+          Set up your ERP in 5 minutes. No configuration. No consultants.
+        </p>
+        <Link href="/signup" className="candy-btn px-10 py-5 text-xl inline-flex items-center gap-2">
+          Start Trial <ArrowRight size={20} />
+        </Link>
       </section>
-    </div>
-  )
-}
