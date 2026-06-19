@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Check, ChevronDown, ChevronUp } from 'lucide-react'
 
@@ -35,12 +35,14 @@ const REGION_LABELS: Record<string, string> = {
   western: '🌎 Western pricing detected',
 }
 
+// No free trial question
 const FAQS = [
   { q: 'Can I cancel anytime?', a: 'Yes. Weekly plans expire at the end of the week if you turn off auto-pay. Monthly and yearly plans expire at the end of the period. No cancellation fees ever.' },
   { q: 'What happens when I upgrade?', a: 'You immediately get access to all features in the new plan. The difference is prorated to your billing cycle.' },
   { q: 'How does geo-based pricing work?', a: 'We detect your timezone to determine your region and apply the appropriate pricing. India users get India pricing, Western users get Western pricing, others get Global pricing.' },
   { q: 'Do you charge per user?', a: 'No. All plans are flat-rate. One price for your whole team regardless of how many people use it.' },
   { q: 'What payment methods are accepted?', a: 'Cards (Visa, Mastercard), UPI for India, and other local payment methods via Dodo Payments.' },
+  { q: 'Is my data secure?', a: 'Yes. All data is encrypted in transit via SSL. Authentication is powered by Supabase — enterprise grade. Your data is stored in Airtable and never shared with third parties.' },
 ]
 
 export default function Pricing() {
@@ -54,27 +56,74 @@ export default function Pricing() {
 
   const PLANS = [
     {
-      name: 'CRM Starter', emoji: '🚀', price: prices.crm, color: '#8B5CF6', popular: false,
+      name: 'CRM Starter',
+      emoji: '🚀',
+      price: prices.crm,
+      color: '#8B5CF6',
+      popular: false,
       desc: 'Perfect for solo founders and small sales teams',
-      features: ['CRM with AI lead scoring', 'Contact & lead management', 'Follow-up date reminders', 'Import any CSV format', 'Export to CSV', 'Support ticket system', 'Mobile-friendly interface'],
+      features: [
+        'CRM with AI lead scoring',
+        'Contact & lead management',
+        'Follow-up date reminders',
+        'Import any CSV format',
+        'Export to CSV',
+        'Support ticket system',
+        'Mobile-friendly interface',
+      ],
       locked: ['Invoices & Tax', 'Inventory & QR codes', 'HR & Payroll', 'Projects & Kanban', 'AI Assistant'],
     },
     {
-      name: 'ERP Basic', emoji: '⚡', price: prices.erp, color: '#F472B6', popular: true,
+      name: 'ERP Basic',
+      emoji: '⚡',
+      price: prices.erp,
+      color: '#F472B6',
+      popular: true,
       desc: 'For growing businesses that need full operations management',
-      features: ['Everything in CRM Starter', 'Universal tax invoicing (15+ countries)', 'Inventory management', 'Free auto QR codes for products', 'WhatsApp invoice sending', 'GST / VAT / HST tax reports', 'Low stock alerts'],
+      features: [
+        'Everything in CRM Starter',
+        'Universal tax invoicing (15+ countries)',
+        'Inventory management',
+        'Free auto QR codes for products',
+        'WhatsApp invoice sending',
+        'GST / VAT / HST tax reports',
+        'Low stock alerts',
+      ],
       locked: ['HR & Payroll', 'Projects & Kanban', 'AI Assistant'],
     },
     {
-      name: 'Business', emoji: '🏢', price: prices.business, color: '#34D399', popular: false,
+      name: 'Business',
+      emoji: '🏢',
+      price: prices.business,
+      color: '#34D399',
+      popular: false,
       desc: 'For established businesses managing teams and multiple clients',
-      features: ['Everything in ERP Basic', 'HR & Payroll management', 'Project management with Kanban', 'Team management', 'Advanced analytics', 'Multi-department tracking'],
+      features: [
+        'Everything in ERP Basic',
+        'HR & Payroll management',
+        'Project management with Kanban',
+        'Team management',
+        'Advanced analytics',
+        'Multi-department tracking',
+      ],
       locked: ['AI Business Intelligence'],
     },
     {
-      name: 'Complete ERP', emoji: '👑', price: prices.complete, color: '#FBBF24', popular: false,
+      name: 'Complete ERP',
+      emoji: '👑',
+      price: prices.complete,
+      color: '#FBBF24',
+      popular: false,
       desc: 'The complete platform for scaling businesses that want AI-powered insights',
-      features: ['Everything in Business', 'AI Business Intelligence — reads your live data', 'Real-time AI analysis of leads, invoices, inventory', 'Floating AI assistant on every page', 'Priority support', 'White label program access', 'All future features included'],
+      features: [
+        'Everything in Business',
+        'AI Business Intelligence — reads your live data',
+        'Real-time AI analysis of leads, invoices, inventory',
+        'Floating AI assistant on every page',
+        'Priority support',
+        'White label program access',
+        'All future features included',
+      ],
       locked: [],
     },
   ]
@@ -97,12 +146,12 @@ export default function Pricing() {
             <span className="font-black text-xl" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Samyojak</span>
           </Link>
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/features" className="text-sm font-medium hover:text-violet-600" style={{ color: '#64748B' }}>Features</Link>
+            <Link href="/features" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Features</Link>
             <Link href="/pricing" className="text-sm font-medium" style={{ color: '#8B5CF6' }}>Pricing</Link>
-            <Link href="/about" className="text-sm font-medium hover:text-violet-600" style={{ color: '#64748B' }}>About</Link>
-            <Link href="/contact" className="text-sm font-medium hover:text-violet-600" style={{ color: '#64748B' }}>Contact</Link>
+            <Link href="/about" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>About</Link>
+            <Link href="/contact" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Contact</Link>
           </div>
-          <Link href="/signup" className="candy-btn px-4 py-2 text-sm">Start Free</Link>
+          <Link href="/signup" className="candy-btn px-4 py-2 text-sm">Start Trial</Link>
         </div>
       </nav>
 
@@ -118,13 +167,11 @@ export default function Pricing() {
             No per-user fees. No annual lock-in. Cancel anytime. Every plan includes bonus time.
           </p>
 
-          {/* Region badge */}
           <div className="inline-block px-4 py-2 rounded-full text-sm font-semibold mb-6"
             style={{ background: '#EDE9FE', color: '#8B5CF6' }}>
             {REGION_LABELS[region]} — auto-detected from your timezone
           </div>
 
-          {/* Billing Toggle */}
           <div className="flex justify-center">
             <div className="inline-flex p-1 rounded-full" style={{ background: '#E2E8F0' }}>
               {(['weekly', 'monthly', 'yearly'] as const).map(b => (
@@ -198,7 +245,7 @@ export default function Pricing() {
                   {plan.locked.length > 0 && (
                     <li className="pt-2 border-t" style={{ borderColor: plan.popular ? 'rgba(255,255,255,0.2)' : '#F1F5F9' }}>
                       <p className="text-xs mb-2" style={{ color: plan.popular ? 'rgba(255,255,255,0.5)' : '#94A3B8' }}>
-                        🔒 Locked in this plan:
+                        🔒 Not included:
                       </p>
                       {plan.locked.map(f => (
                         <p key={f} className="text-xs mb-1 opacity-50"
@@ -217,7 +264,7 @@ export default function Pricing() {
                     color: plan.popular ? '#8B5CF6' : 'white',
                     border: '2px solid #1E293B',
                   }}>
-                  Get Started Free
+                  Start Trial
                 </Link>
               </div>
             ))}
@@ -251,7 +298,7 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* FAQ — no free trial question */}
       <section className="px-6 py-16" style={{ background: '#F8FAFC' }}>
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl font-black text-center mb-10" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
@@ -268,8 +315,7 @@ export default function Pricing() {
                   </span>
                   {openFaq === i
                     ? <ChevronUp size={18} className="text-gray-400 flex-shrink-0" />
-                    : <ChevronDown size={18} className="text-gray-400 flex-shrink-0" />
-                  }
+                    : <ChevronDown size={18} className="text-gray-400 flex-shrink-0" />}
                 </button>
                 {openFaq === i && (
                   <div className="px-5 pb-5 border-t border-gray-100">
@@ -294,3 +340,7 @@ export default function Pricing() {
           Start Trial <ArrowRight size={18} />
         </Link>
       </section>
+
+    </div>
+  )
+}
