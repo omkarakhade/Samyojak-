@@ -4,15 +4,30 @@ import Link from 'next/link'
 import { Mail, MapPin, ArrowRight, Send, MessageSquare } from 'lucide-react'
 
 export default function Contact() {
-  const [form, setForm] = useState({ name: '', email: '', company: '', message: '' })
+  const [form, setForm] = useState({ name: '', email: '', company: '', subject: '', message: '' })
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1000))
-    setSent(true)
+    setError('')
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSent(true)
+      } else {
+        setError(data.error || 'Failed to send. Please email us directly at hello.samyojak@gmail.com')
+      }
+    } catch {
+      setError('Failed to send. Please email us directly at hello.samyojak@gmail.com')
+    }
     setLoading(false)
   }
 
@@ -48,12 +63,14 @@ export default function Contact() {
               We would love to<br />
               <span style={{ color: '#34D399' }}>hear from you</span>
             </h1>
-            <p className="text-lg" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
+            <p className="text-lg" style={{ color: '#64748B' }}>
               Have questions? We respond within 24 hours on business days.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+
+            {/* Left info */}
             <div className="space-y-6">
               <div className="p-8 rounded-2xl"
                 style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '6px 6px 0px #E2E8F0' }}>
@@ -61,6 +78,8 @@ export default function Contact() {
                   Contact Information
                 </h3>
                 <div className="grid grid-cols-2 gap-4 mb-6">
+
+                  {/* Email */}
                   <div className="flex flex-col items-center text-center p-4 rounded-2xl"
                     style={{ background: '#EDE9FE', border: '2px solid #8B5CF6' }}>
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3"
@@ -69,12 +88,13 @@ export default function Contact() {
                     </div>
                     <p className="text-xs font-bold uppercase tracking-wide mb-1"
                       style={{ color: '#8B5CF6', fontFamily: 'Outfit' }}>Email Us</p>
-                    {/* UPDATED EMAIL */}
                     <p className="text-sm font-semibold break-all"
                       style={{ color: '#1E293B', fontFamily: 'Plus Jakarta Sans' }}>
                       hello.samyojak@gmail.com
                     </p>
                   </div>
+
+                  {/* Location — INDIA */}
                   <div className="flex flex-col items-center text-center p-4 rounded-2xl"
                     style={{ background: '#FCE7F3', border: '2px solid #F472B6' }}>
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3"
@@ -82,26 +102,29 @@ export default function Contact() {
                       <MapPin size={22} strokeWidth={2.5} style={{ color: '#F472B6' }} />
                     </div>
                     <p className="text-xs font-bold uppercase tracking-wide mb-1"
-                      style={{ color: '#F472B6', fontFamily: 'Outfit' }}>Location</p>
+                      style={{ color: '#F472B6', fontFamily: 'Outfit' }}>Based In</p>
                     <p className="text-sm font-semibold"
                       style={{ color: '#1E293B', fontFamily: 'Plus Jakarta Sans' }}>
-                      🌍 Global
+                      🇮🇳 Pune, India
                     </p>
                   </div>
                 </div>
+
                 <div className="p-4 rounded-xl"
                   style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0' }}>
                   <p className="text-sm" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
                     💬 We typically respond within <strong>24 hours</strong> on business days.
-                    For urgent support email directly at{' '}
-                    <span style={{ color: '#8B5CF6', fontWeight: 700 }}>hello.samyojak@gmail.com</span>
+                    For urgent matters email directly at{' '}
+                    <a href="mailto:hello.samyojak@gmail.com" style={{ color: '#8B5CF6', fontWeight: 700 }}>
+                      hello.samyojak@gmail.com
+                    </a>
                   </p>
                 </div>
               </div>
 
               <div className="p-8 rounded-2xl"
                 style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '6px 6px 0px #FBBF24' }}>
-                <div className="text-4xl mb-4 float">🚀</div>
+                <div className="text-4xl mb-4">🚀</div>
                 <h3 className="text-2xl font-black text-white mb-3" style={{ fontFamily: 'Outfit' }}>
                   Ready to get started?
                 </h3>
@@ -109,26 +132,28 @@ export default function Contact() {
                   Start your trial and see how Samyojak adapts to your business in minutes.
                 </p>
                 <Link href="/signup"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all hover:scale-105"
                   style={{ background: 'white', color: '#8B5CF6', fontFamily: 'Outfit' }}>
                   Start Trial <ArrowRight size={18} />
                 </Link>
               </div>
             </div>
 
+            {/* Right form */}
             <div className="p-8 rounded-2xl"
               style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '8px 8px 0px #F472B6' }}>
               {sent ? (
                 <div className="text-center py-12">
-                  <div className="text-6xl mb-6 float">🎉</div>
+                  <div className="text-6xl mb-6">🎉</div>
                   <h3 className="text-2xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
                     Message Sent!
                   </h3>
-                  <p className="mb-6" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
-                    We will get back to you within 24 hours at <strong>{form.email}</strong>
+                  <p className="mb-2" style={{ color: '#64748B' }}>
+                    We will get back to you within 24 hours at
                   </p>
+                  <p className="font-bold mb-6" style={{ color: '#8B5CF6' }}>{form.email}</p>
                   <button
-                    onClick={() => { setSent(false); setForm({ name: '', email: '', company: '', message: '' }) }}
+                    onClick={() => { setSent(false); setForm({ name: '', email: '', company: '', subject: '', message: '' }) }}
                     className="outline-btn px-6 py-2 text-sm">
                     Send Another Message
                   </button>
@@ -138,15 +163,26 @@ export default function Contact() {
                   <h3 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
                     Send us a message
                   </h3>
-                  <form onSubmit={handleSubmit} className="space-y-5">
+
+                  {error && (
+                    <div className="p-3 rounded-xl mb-4 text-sm"
+                      style={{ background: '#FEE2E2', color: '#DC2626', border: '1.5px solid #FCA5A5' }}>
+                      {error}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
                     {[
                       { key: 'name', label: 'Your Name', type: 'text', ph: 'Your full name', required: true },
                       { key: 'email', label: 'Email Address', type: 'email', ph: 'you@company.com', required: true },
                       { key: 'company', label: 'Company Name', type: 'text', ph: 'Your business name', required: false },
+                      { key: 'subject', label: 'Subject', type: 'text', ph: 'How can we help?', required: true },
                     ].map(f => (
                       <div key={f.key}>
                         <label className="block text-xs font-bold uppercase tracking-wide mb-2"
-                          style={{ color: '#1E293B', fontFamily: 'Outfit' }}>{f.label}</label>
+                          style={{ color: '#1E293B', fontFamily: 'Outfit' }}>
+                          {f.label}{f.required && ' *'}
+                        </label>
                         <input
                           type={f.type}
                           required={f.required}
@@ -154,27 +190,31 @@ export default function Contact() {
                           value={form[f.key as keyof typeof form]}
                           onChange={e => setForm({ ...form, [f.key]: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl outline-none transition-all"
-                          style={{ border: '2px solid #CBD5E1', fontFamily: 'Plus Jakarta Sans', color: '#1E293B' }}
-                          onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '4px 4px 0px #8B5CF6' }}
-                          onBlur={e => { e.target.style.borderColor = '#CBD5E1'; e.target.style.boxShadow = 'none' }}
+                          style={{ border: '2px solid #E2E8F0', fontFamily: 'Plus Jakarta Sans', color: '#1E293B', background: '#FAFBFF' }}
+                          onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '3px 3px 0px #8B5CF6' }}
+                          onBlur={e => { e.target.style.borderColor = '#E2E8F0'; e.target.style.boxShadow = 'none' }}
                         />
                       </div>
                     ))}
+
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wide mb-2"
-                        style={{ color: '#1E293B', fontFamily: 'Outfit' }}>Message</label>
+                        style={{ color: '#1E293B', fontFamily: 'Outfit' }}>
+                        Message *
+                      </label>
                       <textarea
                         required
-                        placeholder="Tell us how we can help you..."
+                        placeholder="Tell us how we can help..."
                         value={form.message}
                         onChange={e => setForm({ ...form, message: e.target.value })}
                         rows={5}
                         className="w-full px-4 py-3 rounded-xl outline-none transition-all resize-none"
-                        style={{ border: '2px solid #CBD5E1', fontFamily: 'Plus Jakarta Sans', color: '#1E293B' }}
-                        onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '4px 4px 0px #8B5CF6' }}
-                        onBlur={e => { e.target.style.borderColor = '#CBD5E1'; e.target.style.boxShadow = 'none' }}
+                        style={{ border: '2px solid #E2E8F0', fontFamily: 'Plus Jakarta Sans', color: '#1E293B', background: '#FAFBFF' }}
+                        onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '3px 3px 0px #8B5CF6' }}
+                        onBlur={e => { e.target.style.borderColor = '#E2E8F0'; e.target.style.boxShadow = 'none' }}
                       />
                     </div>
+
                     <button type="submit" disabled={loading}
                       className="candy-btn w-full py-4 flex items-center justify-center gap-3 text-base disabled:opacity-50">
                       {loading
@@ -182,7 +222,7 @@ export default function Contact() {
                         : <><Send size={20} /> Send Message</>}
                     </button>
                     <p className="text-center text-xs" style={{ color: '#94A3B8' }}>
-                      We will reply to <strong>{form.email || 'your email'}</strong> within 24 hours
+                      We reply to every message within 24 hours
                     </p>
                   </form>
                 </>
@@ -193,4 +233,4 @@ export default function Contact() {
       </section>
     </div>
   )
-                          }
+}
