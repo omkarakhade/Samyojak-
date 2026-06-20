@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import LockedModule from '@/components/LockedModule'
 import { supabase } from '@/lib/supabase'
@@ -7,6 +7,7 @@ import { getPlanFromMetadata, canAccessModuleSync } from '@/lib/planAccess'
 import { airtable } from '@/lib/airtable'
 import { Plus, Download, Upload, AlertCircle, Trash2 } from 'lucide-react'
 import ImportModal from '@/components/ImportModal'
+import UniversalDataView from '@/components/UniversalDataView'
 
 const COLORS = ['bg-violet-500', 'bg-pink-500', 'bg-green-500', 'bg-orange-500', 'bg-blue-500', 'bg-teal-500', 'bg-red-500', 'bg-yellow-500']
 
@@ -19,12 +20,22 @@ export default function HR() {
   const [showImport, setShowImport] = useState(false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({ Name: '', Role: '', Department: '', Salary: '', 'Joining Date': '' })
+  const [userId, setUserId] = useState('')
+  const [form, setForm] = useState({
+    Name: '',
+    Role: '',
+    Department: '',
+    Salary: '',
+    'Joining Date': '',
+  })
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setPlan(getPlanFromMetadata(user))
-      setChecking(false)
+      if (user) {
+        setPlan(getPlanFromMetadata(user))
+        setUserId(user.id)
+        setChecking(false)
+      }
     })
   }, [])
 
@@ -72,7 +83,10 @@ export default function HR() {
   const exportCSV = () => {
     const rows = [
       ['Name', 'Role', 'Department', 'Salary', 'Joining Date', 'Leave Balance'],
-      ...employees.map(e => [e.fields?.Name || '', e.fields?.Role || '', e.fields?.Department || '', e.fields?.Salary || '', e.fields?.['Joining Date'] || '', e.fields?.['Leave Balance'] || ''])
+      ...employees.map(e => [
+        e.fields?.Name || '', e.fields?.Role || '', e.fields?.Department || '',
+        e.fields?.Salary || '', e.fields?.['Joining Date'] || '', e.fields?.['Leave Balance'] || '',
+      ])
     ]
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
     const a = document.createElement('a')
@@ -84,12 +98,17 @@ export default function HR() {
   const getInitials = (name: string) => (name || '??').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   const totalPayroll = employees.reduce((s, e) => s + (e.fields?.Salary || 0), 0)
 
-  if (checking) return <Layout><div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div></div></Layout>
-  if (!canAccessModuleSync(plan as any, 'hr')) return <Layout><LockedModule moduleName="HR" requiredPlan="Business" /></Layout>
+  if (checking) return (
+    <Layout><div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div></div></Layout>
+  )
+  if (!canAccessModuleSync(plan as any, 'hr')) {
+    return <Layout><LockedModule moduleName="HR" requiredPlan="Business" /></Layout>
+  }
 
   return (
     <Layout>
       <div className="space-y-4">
+
         {showImport && <ImportModal module="Employees" onClose={() => setShowImport(false)} onSuccess={fetchEmployees} />}
 
         {error && (
@@ -166,6 +185,21 @@ export default function HR() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* UNIVERSAL IMPORT SECTION */}
+        {userId && (
+          <div className="mt-6 pt-6 border-t-2 border-dashed border-gray-200 dark:border-white/10">
+            <div className="mb-3">
+              <h3 className="text-base font-black dark:text-white" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                📂 Imported HR Data
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Import from any HR or payroll system — every column preserved
+              </p>
+            </div>
+            <UniversalDataView userId={userId} module="HR" color="#34D399" bg="#D1FAE5" />
           </div>
         )}
 
