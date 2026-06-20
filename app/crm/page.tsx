@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import { airtable } from '@/lib/airtable'
 import { supabase } from '@/lib/supabase'
-import { Plus, Download, Search, AlertCircle, Upload, Trash2 } from 'lucide-react'
+import { Plus, Download, Search, AlertCircle, Upload, Trash2, RefreshCw } from 'lucide-react'
 import ImportModal from '@/components/ImportModal'
 import UniversalDataView from '@/components/UniversalDataView'
 
@@ -61,13 +61,19 @@ export default function CRM() {
     setSaving(true)
     setError('')
     try {
-      const fields: Record<string, unknown> = { Name: form.Name.trim(), Status: form.Status }
+      // Only write text fields — no single select fields that could reject values
+      const fields: Record<string, unknown> = {
+        Name: form.Name.trim(),
+      }
+      // Store status as plain text — make sure your Airtable field is Single Line Text not Single Select
+      if (form.Status) fields['Status'] = form.Status
       if (form.Email.trim()) fields['Email'] = form.Email.trim()
       if (form.Phone.trim()) fields['Phone'] = form.Phone.trim()
       if (form['Lead Source']) fields['Lead Source'] = form['Lead Source']
       if (form.Notes.trim()) fields['Notes'] = form.Notes.trim()
       if (form['Next Follow-up Date']) fields['Next Follow-up Date'] = form['Next Follow-up Date']
       if (form['Business Type'].trim()) fields['Business Type'] = form['Business Type'].trim()
+
       await airtable.create('Leads', fields)
       setShowModal(false)
       setForm({ Name: '', Email: '', Phone: '', 'Lead Source': 'Website', Status: 'New', Notes: '', 'Next Follow-up Date': '', 'Business Type': '' })
@@ -93,7 +99,7 @@ export default function CRM() {
       await airtable.update('Leads', id, { Status: status })
       await fetchLeads()
     } catch (e: any) {
-      setError('Update failed: ' + e.message)
+      setError('Status update failed — make sure Status field in Airtable is Single Line Text, not Single Select: ' + e.message)
     }
   }
 
@@ -138,7 +144,7 @@ export default function CRM() {
       <div className="space-y-4">
 
         {showImport && (
-          <ImportModal module="Leads" onClose={() => setShowImport(false)} onSuccess={fetchLeads} />
+          <ImportModal module="CRM" onClose={() => setShowImport(false)} onSuccess={fetchLeads} />
         )}
 
         {todayFollowUps > 0 && (
@@ -159,17 +165,21 @@ export default function CRM() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>CRM</h2>
-            <p className="text-gray-500 text-sm">{leads.length} leads · Manage your sales pipeline</p>
+            <p className="text-gray-500 text-sm">{leads.length} leads in Airtable · Manage your sales pipeline</p>
           </div>
           <div className="flex gap-2 flex-wrap">
             <button onClick={() => setShowImport(true)}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium"
               style={{ background: '#EDE9FE', color: '#8B5CF6', border: '2px solid #8B5CF6' }}>
-              <Upload size={16} /> Import
+              <Upload size={16} /> Import CSV
             </button>
             <button onClick={exportCSV}
               className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-white/10 dark:text-white">
               <Download size={16} /> Export
+            </button>
+            <button onClick={fetchLeads}
+              className="p-2 border border-gray-300 dark:border-white/20 rounded-xl hover:bg-gray-50 dark:hover:bg-white/10">
+              <RefreshCw size={16} className="text-gray-500 dark:text-gray-400" />
             </button>
             <button onClick={() => { setShowModal(true); setError('') }}
               className="candy-btn flex items-center gap-2 px-4 py-2 text-sm">
@@ -199,10 +209,12 @@ export default function CRM() {
           <div className="text-center py-16 bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10">
             <div className="text-5xl mb-4">🚀</div>
             <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2" style={{ fontFamily: 'Outfit' }}>
-              {leads.length === 0 ? 'No leads yet' : 'No results found'}
+              {leads.length === 0 ? 'No leads in Airtable yet' : 'No results found'}
             </h3>
             <p className="text-gray-500 text-sm mb-6">
-              {leads.length === 0 ? 'Add your first lead or import from any CSV format' : 'Try different search terms'}
+              {leads.length === 0
+                ? 'Import your CSV from any CRM software below, or add leads manually'
+                : 'Try different search terms'}
             </p>
             <div className="flex gap-3 justify-center flex-wrap">
               <button onClick={() => setShowImport(true)}
@@ -264,32 +276,36 @@ export default function CRM() {
           </div>
         )}
 
-        {/* UNIVERSAL IMPORT SECTION — shows all imported data from any CSV */}
+        {/* UNIVERSAL IMPORT SECTION — all imported CSVs shown here */}
         {userId && (
           <div className="mt-6 pt-6 border-t-2 border-dashed border-gray-200 dark:border-white/10">
             <div className="mb-3">
-              <h3 className="text-base font-black dark:text-white" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-                📂 Imported Data
-              </h3>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Import from Zoho, Salesforce, HubSpot, Tally, Excel, or any CSV — every column preserved
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-base font-black dark:text-white" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                  📂 Imported CRM Data
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-xs font-bold"
+                  style={{ background: '#EDE9FE', color: '#8B5CF6' }}>
+                  Zero data loss
+                </span>
+              </div>
+              <p className="text-xs text-gray-400">
+                Imported from Zoho, Salesforce, HubSpot, Excel, or any CSV — every column and row preserved exactly
               </p>
             </div>
-            <UniversalDataView
-              userId={userId}
-              module="CRM"
-              color="#8B5CF6"
-              bg="#EDE9FE"
-            />
+            <UniversalDataView userId={userId} module="CRM" color="#8B5CF6" bg="#EDE9FE" />
           </div>
         )}
 
+        {/* Add Lead Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
               style={{ border: '2px solid #1E293B', boxShadow: '8px 8px 0px #8B5CF6' }}>
               <h3 className="font-black text-lg mb-4 dark:text-white" style={{ fontFamily: 'Outfit' }}>Add New Lead</h3>
-              {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-red-600 text-sm">{error}</div>}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-red-600 text-sm">{error}</div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-3">
                 {[
                   { key: 'Name', label: 'Full Name *', type: 'text', required: true, ph: 'Contact full name' },
@@ -338,6 +354,7 @@ export default function CRM() {
             </div>
           </div>
         )}
+
       </div>
     </Layout>
   )
