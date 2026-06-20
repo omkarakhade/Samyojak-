@@ -1,9 +1,11 @@
 'use client'
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import { airtable } from '@/lib/airtable'
+import { supabase } from '@/lib/supabase'
 import { Plus, Download, Search, AlertCircle, Upload, Trash2 } from 'lucide-react'
 import ImportModal from '@/components/ImportModal'
+import UniversalDataView from '@/components/UniversalDataView'
 
 const STATUS_COLORS: Record<string, string> = {
   New: 'bg-blue-100 text-blue-700',
@@ -21,6 +23,7 @@ export default function CRM() {
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
+  const [userId, setUserId] = useState('')
   const [form, setForm] = useState({
     Name: '',
     Email: '',
@@ -31,6 +34,12 @@ export default function CRM() {
     'Next Follow-up Date': '',
     'Business Type': '',
   })
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id)
+    })
+  }, [])
 
   const fetchLeads = async () => {
     setLoading(true)
@@ -127,6 +136,7 @@ export default function CRM() {
   return (
     <Layout>
       <div className="space-y-4">
+
         {showImport && (
           <ImportModal module="Leads" onClose={() => setShowImport(false)} onSuccess={fetchLeads} />
         )}
@@ -229,8 +239,7 @@ export default function CRM() {
                         <select
                           value={lead.fields?.Status || 'New'}
                           onChange={e => handleStatusChange(lead.id, e.target.value)}
-                          className={`px-2 py-1 rounded-full text-xs font-medium border-0 outline-none cursor-pointer ${STATUS_COLORS[lead.fields?.Status] || 'bg-gray-100 text-gray-600'}`}
-                        >
+                          className={`px-2 py-1 rounded-full text-xs font-medium border-0 outline-none cursor-pointer ${STATUS_COLORS[lead.fields?.Status] || 'bg-gray-100 text-gray-600'}`}>
                           {['New', 'Contacted', 'Converted', 'Lost'].map(s => <option key={s}>{s}</option>)}
                         </select>
                       </td>
@@ -252,6 +261,26 @@ export default function CRM() {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* UNIVERSAL IMPORT SECTION — shows all imported data from any CSV */}
+        {userId && (
+          <div className="mt-6 pt-6 border-t-2 border-dashed border-gray-200 dark:border-white/10">
+            <div className="mb-3">
+              <h3 className="text-base font-black dark:text-white" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                📂 Imported Data
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Import from Zoho, Salesforce, HubSpot, Tally, Excel, or any CSV — every column preserved
+              </p>
+            </div>
+            <UniversalDataView
+              userId={userId}
+              module="CRM"
+              color="#8B5CF6"
+              bg="#EDE9FE"
+            />
           </div>
         )}
 
