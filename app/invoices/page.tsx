@@ -5,7 +5,7 @@ import LockedModule from '@/components/LockedModule'
 import { supabase } from '@/lib/supabase'
 import { getPlanFromMetadata, canAccessModuleSync } from '@/lib/planAccess'
 import { airtable } from '@/lib/airtable'
-import { Plus, Download, AlertCircle, Upload, Trash2 } from 'lucide-react'
+import { Plus, Download, AlertCircle, Upload, Trash2, RefreshCw } from 'lucide-react'
 import ImportModal from '@/components/ImportModal'
 import UniversalDataView from '@/components/UniversalDataView'
 
@@ -103,11 +103,12 @@ export default function Invoices() {
         form.extraNotes ? `Notes: ${form.extraNotes.trim()}` : '',
       ].filter(Boolean).join(' | ')
 
+      // Only write writable fields — Invoice No and Total are computed
       const fields: Record<string, unknown> = {
         'Payment Status': 'Unpaid',
         'Issue Date': new Date().toISOString().split('T')[0],
         'GST %': taxRate,
-        'Notes': noteParts,
+        Notes: noteParts,
       }
       if (form.dueDate) fields['Due Date'] = form.dueDate
 
@@ -144,7 +145,9 @@ export default function Invoices() {
     const clientName = clientMatch ? clientMatch[1].trim() : 'Customer'
     const totalMatch = notes.match(/Total: ([0-9.]+)/)
     const totalAmt = totalMatch ? Number(totalMatch[1]).toLocaleString() : ''
-    const msg = encodeURIComponent(`Hi ${clientName}, Invoice #${inv.fields?.['Invoice No'] || ''} for ₹${totalAmt} is due. Please make payment. Thank you! — Samyojak`)
+    const msg = encodeURIComponent(
+      `Hi ${clientName}, Invoice #${inv.fields?.['Invoice No'] || ''} for ₹${totalAmt} is due. Please make payment. Thank you! — Samyojak`
+    )
     if (phone) window.open(`https://wa.me/${phone}?text=${msg}`, '_blank')
     else alert('No phone number saved for this invoice.')
   }
@@ -158,7 +161,15 @@ export default function Invoices() {
         const amt = notes.match(/Amount: ([0-9.]+)/)?.[1] || ''
         const taxAmt = notes.match(/[\w]+ \d+(?:\.\d+)?%: ([0-9.]+)/)?.[1] || ''
         const tot = notes.match(/Total: ([0-9.]+)/)?.[1] || ''
-        return [i.fields?.['Invoice No'] || '', client, amt, i.fields?.['GST %'] || '', taxAmt, tot, i.fields?.['Payment Status'] || '', i.fields?.['Issue Date'] || '', i.fields?.['Due Date'] || '']
+        return [
+          i.fields?.['Invoice No'] || '',
+          client, amt,
+          i.fields?.['GST %'] || '',
+          taxAmt, tot,
+          i.fields?.['Payment Status'] || '',
+          i.fields?.['Issue Date'] || '',
+          i.fields?.['Due Date'] || '',
+        ]
       })
     ]
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -168,17 +179,18 @@ export default function Invoices() {
     a.click()
   }
 
+  const parseNote = (notes: string) => {
+    const client = notes.match(/Client: ([^|]+)/)?.[1]?.trim() || '—'
+    const total = notes.match(/Total: ([0-9.]+)/)?.[1] || null
+    const amt = notes.match(/Amount: ([0-9.]+)/)?.[1] || null
+    return { client, total: total ? Number(total) : null, amt: amt ? Number(amt) : null }
+  }
+
   const overdue = invoices.filter(i =>
     i.fields?.['Payment Status'] === 'Unpaid' &&
     i.fields?.['Due Date'] &&
     new Date(i.fields['Due Date']) < new Date()
   )
-
-  const parseNote = (notes: string) => {
-    const client = notes.match(/Client: ([^|]+)/)?.[1]?.trim() || '—'
-    const total = notes.match(/Total: ([0-9.]+)/)?.[1] || null
-    return { client, total: total ? Number(total) : null }
-  }
 
   if (checking) return (
     <Layout><div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div></div></Layout>
@@ -191,7 +203,9 @@ export default function Invoices() {
     <Layout>
       <div className="space-y-4">
 
-        {showImport && <ImportModal module="Invoices" onClose={() => setShowImport(false)} onSuccess={fetchInvoices} />}
+        {showImport && (
+          <ImportModal module="Invoices" onClose={() => setShowImport(false)} onSuccess={fetchInvoices} />
+        )}
 
         {overdue.length > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 text-red-800">
@@ -217,11 +231,15 @@ export default function Invoices() {
             <button onClick={() => setShowImport(true)}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium"
               style={{ background: '#FCE7F3', color: '#9D174D', border: '2px solid #F472B6' }}>
-              <Upload size={16} /> Import
+              <Upload size={16} /> Import CSV
             </button>
             <button onClick={exportCSV}
               className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-white/10 dark:text-white">
               <Download size={16} /> Export
+            </button>
+            <button onClick={fetchInvoices}
+              className="p-2 border border-gray-300 dark:border-white/20 rounded-xl hover:bg-gray-50 dark:hover:bg-white/10">
+              <RefreshCw size={16} className="text-gray-500 dark:text-gray-400" />
             </button>
             <button onClick={() => { setShowModal(true); setError('') }}
               className="candy-btn flex items-center gap-2 px-4 py-2 text-sm">
@@ -236,13 +254,16 @@ export default function Invoices() {
           <div className="text-center py-16 bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10">
             <div className="text-5xl mb-4">📄</div>
             <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2" style={{ fontFamily: 'Outfit' }}>No invoices yet</h3>
-            <div className="flex gap-3 justify-center flex-wrap mt-4">
+            <p className="text-gray-500 text-sm mb-6">Create your first invoice or import from any billing software</p>
+            <div className="flex gap-3 justify-center flex-wrap">
               <button onClick={() => setShowImport(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
                 style={{ background: '#FCE7F3', color: '#9D174D', border: '2px solid #F472B6' }}>
                 <Upload size={16} /> Import CSV
               </button>
-              <button onClick={() => setShowModal(true)} className="candy-btn px-6 py-2 text-sm">Create First Invoice</button>
+              <button onClick={() => setShowModal(true)} className="candy-btn px-6 py-2 text-sm">
+                Create First Invoice
+              </button>
             </div>
           </div>
         ) : (
@@ -258,14 +279,15 @@ export default function Invoices() {
               <tbody className="divide-y divide-gray-100 dark:divide-white/10">
                 {invoices.map(inv => {
                   const notes = inv.fields?.Notes || ''
-                  const { client, total: parsedTotal } = parseNote(notes)
-                  const amtMatch = notes.match(/Amount: ([0-9.]+)/)
+                  const { client, total: parsedTotal, amt: parsedAmt } = parseNote(notes)
                   return (
                     <tr key={inv.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-                      <td className="p-4 font-mono text-sm font-bold dark:text-white">#{inv.fields?.['Invoice No'] || 'Auto'}</td>
+                      <td className="p-4 font-mono text-sm font-bold dark:text-white">
+                        #{inv.fields?.['Invoice No'] || 'Auto'}
+                      </td>
                       <td className="p-4 font-medium text-sm dark:text-white">{client}</td>
                       <td className="p-4 text-sm text-gray-500">
-                        {amtMatch ? `₹${Number(amtMatch[1]).toLocaleString()}` : '—'}
+                        {parsedAmt ? `₹${parsedAmt.toLocaleString()}` : '—'}
                       </td>
                       <td className="p-4 text-sm text-gray-500">{inv.fields?.['GST %'] || 0}%</td>
                       <td className="p-4 font-bold text-sm dark:text-white">
@@ -284,12 +306,16 @@ export default function Invoices() {
                         <div className="flex gap-1 flex-wrap">
                           {inv.fields?.['Payment Status'] !== 'Paid' && (
                             <button onClick={() => markPaid(inv.id)}
-                              className="text-xs bg-green-600 text-white px-2 py-1 rounded-lg hover:bg-green-700">Mark Paid</button>
+                              className="text-xs bg-green-600 text-white px-2 py-1 rounded-lg hover:bg-green-700 transition-colors">
+                              Mark Paid
+                            </button>
                           )}
                           <button onClick={() => sendWhatsApp(inv)}
-                            className="text-xs bg-green-500 text-white px-2 py-1 rounded-lg hover:bg-green-600">WhatsApp</button>
+                            className="text-xs bg-green-500 text-white px-2 py-1 rounded-lg hover:bg-green-600 transition-colors">
+                            WhatsApp
+                          </button>
                           <button onClick={() => handleDelete(inv.id)}
-                            className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50">
+                            className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -306,23 +332,32 @@ export default function Invoices() {
         {userId && (
           <div className="mt-6 pt-6 border-t-2 border-dashed border-gray-200 dark:border-white/10">
             <div className="mb-3">
-              <h3 className="text-base font-black dark:text-white" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-                📂 Imported Invoice Data
-              </h3>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Import from Tally, QuickBooks, or any billing software — every column preserved
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-base font-black dark:text-white" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                  📂 Imported Invoice Data
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-xs font-bold"
+                  style={{ background: '#FCE7F3', color: '#9D174D' }}>
+                  Zero data loss
+                </span>
+              </div>
+              <p className="text-xs text-gray-400">
+                Imported from Tally, QuickBooks, Busy, Excel, or any billing software — every column preserved
               </p>
             </div>
             <UniversalDataView userId={userId} module="Invoices" color="#F472B6" bg="#FCE7F3" />
           </div>
         )}
 
+        {/* Create Invoice Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
               style={{ border: '2px solid #1E293B', boxShadow: '8px 8px 0px #F472B6' }}>
               <h3 className="font-black text-lg mb-4 dark:text-white" style={{ fontFamily: 'Outfit' }}>Create Invoice</h3>
-              {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-red-600 text-sm">{error}</div>}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-red-600 text-sm">{error}</div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-3">
                 {[
                   { key: 'clientName', label: 'Client Name *', type: 'text', required: true, ph: 'Client or company name' },
@@ -333,7 +368,8 @@ export default function Invoices() {
                   { key: 'extraNotes', label: 'Notes', type: 'text', required: false, ph: 'Additional info' },
                 ].map(f => (
                   <div key={f.key}>
-                    <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300" style={{ fontFamily: 'Outfit' }}>{f.label}</label>
+                    <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300"
+                      style={{ fontFamily: 'Outfit' }}>{f.label}</label>
                     <input type={f.type} required={f.required} placeholder={f.ph}
                       value={form[f.key as keyof typeof form]}
                       onChange={e => setForm({ ...form, [f.key]: e.target.value })}
@@ -341,30 +377,45 @@ export default function Invoices() {
                   </div>
                 ))}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300" style={{ fontFamily: 'Outfit' }}>Tax Country</label>
-                  <select value={taxCountry} onChange={e => { setTaxCountry(e.target.value); setTaxRate(TAX_SYSTEMS[e.target.value].rates.find(r => r > 0) || 0) }}
+                  <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300"
+                    style={{ fontFamily: 'Outfit' }}>Tax Country</label>
+                  <select value={taxCountry}
+                    onChange={e => { setTaxCountry(e.target.value); setTaxRate(TAX_SYSTEMS[e.target.value].rates.find(r => r > 0) || 0) }}
                     className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm outline-none dark:bg-[#1a2740] dark:text-white">
-                    {Object.entries(TAX_SYSTEMS).map(([code, sys]) => <option key={code} value={code}>{sys.name}</option>)}
+                    {Object.entries(TAX_SYSTEMS).map(([code, sys]) => (
+                      <option key={code} value={code}>{sys.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300" style={{ fontFamily: 'Outfit' }}>{taxSystem.label} Rate</label>
+                  <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300"
+                    style={{ fontFamily: 'Outfit' }}>{taxSystem.label} Rate</label>
                   <select value={taxRate} onChange={e => setTaxRate(Number(e.target.value))}
                     className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm outline-none dark:bg-[#1a2740] dark:text-white">
-                    {taxSystem.rates.map(r => <option key={r} value={r}>{r}% {taxSystem.label}</option>)}
+                    {taxSystem.rates.map(r => (
+                      <option key={r} value={r}>{r}% {taxSystem.label}</option>
+                    ))}
                   </select>
                 </div>
                 {amount > 0 && (
                   <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-3 space-y-1">
-                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300"><span>Subtotal</span><span>₹{amount.toLocaleString()}</span></div>
-                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300"><span>{taxSystem.label} ({taxRate}%)</span><span>₹{taxAmount.toLocaleString()}</span></div>
-                    <div className="flex justify-between text-sm font-bold dark:text-white border-t dark:border-white/20 pt-1"><span>Total</span><span style={{ color: '#8B5CF6' }}>₹{total.toLocaleString()}</span></div>
+                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                      <span>Subtotal</span><span>₹{amount.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                      <span>{taxSystem.label} ({taxRate}%)</span><span>₹{taxAmount.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm font-bold dark:text-white border-t dark:border-white/20 pt-1">
+                      <span>Total</span>
+                      <span style={{ color: '#8B5CF6' }}>₹{total.toLocaleString()}</span>
+                    </div>
                   </div>
                 )}
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={() => { setShowModal(false); setError('') }}
                     className="flex-1 border border-gray-300 py-2 rounded-xl text-sm">Cancel</button>
-                  <button type="submit" disabled={saving} className="candy-btn flex-1 py-2 text-sm disabled:opacity-50">
+                  <button type="submit" disabled={saving}
+                    className="candy-btn flex-1 py-2 text-sm disabled:opacity-50">
                     {saving ? 'Creating...' : 'Create Invoice'}
                   </button>
                 </div>
@@ -372,6 +423,7 @@ export default function Invoices() {
             </div>
           </div>
         )}
+
       </div>
     </Layout>
   )
