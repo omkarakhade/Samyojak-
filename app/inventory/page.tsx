@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import LockedModule from '@/components/LockedModule'
 import { supabase } from '@/lib/supabase'
@@ -7,6 +7,7 @@ import { getPlanFromMetadata, canAccessModuleSync } from '@/lib/planAccess'
 import { airtable } from '@/lib/airtable'
 import { Plus, Download, AlertTriangle, Upload, AlertCircle, Trash2 } from 'lucide-react'
 import ImportModal from '@/components/ImportModal'
+import UniversalDataView from '@/components/UniversalDataView'
 
 export default function Inventory() {
   const [plan, setPlan] = useState<string | null>(null)
@@ -17,12 +18,23 @@ export default function Inventory() {
   const [showImport, setShowImport] = useState(false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({ 'Item Name': '', SKU: '', Category: '', 'Current Stock': '', 'Reorder Level': '', 'Unit Price': '' })
+  const [userId, setUserId] = useState('')
+  const [form, setForm] = useState({
+    'Item Name': '',
+    SKU: '',
+    Category: '',
+    'Current Stock': '',
+    'Reorder Level': '',
+    'Unit Price': '',
+  })
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setPlan(getPlanFromMetadata(user))
-      setChecking(false)
+      if (user) {
+        setPlan(getPlanFromMetadata(user))
+        setUserId(user.id)
+        setChecking(false)
+      }
     })
   }, [])
 
@@ -73,7 +85,10 @@ export default function Inventory() {
   const exportCSV = () => {
     const rows = [
       ['Item Name', 'SKU', 'Category', 'Current Stock', 'Reorder Level', 'Unit Price'],
-      ...products.map(p => [p.fields?.['Item Name'] || '', p.fields?.SKU || '', p.fields?.Category || '', p.fields?.['Current Stock'] || '', p.fields?.['Reorder Level'] || '', p.fields?.['Unit Price'] || ''])
+      ...products.map(p => [
+        p.fields?.['Item Name'] || '', p.fields?.SKU || '', p.fields?.Category || '',
+        p.fields?.['Current Stock'] || '', p.fields?.['Reorder Level'] || '', p.fields?.['Unit Price'] || '',
+      ])
     ]
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
     const a = document.createElement('a')
@@ -82,14 +97,22 @@ export default function Inventory() {
     a.click()
   }
 
-  const lowStock = products.filter(p => (p.fields?.['Current Stock'] || 0) <= (p.fields?.['Reorder Level'] || 0) && (p.fields?.['Reorder Level'] || 0) > 0)
+  const lowStock = products.filter(p =>
+    (p.fields?.['Current Stock'] || 0) <= (p.fields?.['Reorder Level'] || 0) &&
+    (p.fields?.['Reorder Level'] || 0) > 0
+  )
 
-  if (checking) return <Layout><div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div></div></Layout>
-  if (!canAccessModuleSync(plan as any, 'inventory')) return <Layout><LockedModule moduleName="Inventory" requiredPlan="ERP Basic" /></Layout>
+  if (checking) return (
+    <Layout><div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div></div></Layout>
+  )
+  if (!canAccessModuleSync(plan as any, 'inventory')) {
+    return <Layout><LockedModule moduleName="Inventory" requiredPlan="ERP Basic" /></Layout>
+  }
 
   return (
     <Layout>
       <div className="space-y-4">
+
         {showImport && <ImportModal module="Products" onClose={() => setShowImport(false)} onSuccess={fetchProducts} />}
 
         {lowStock.length > 0 && (
@@ -156,13 +179,18 @@ export default function Inventory() {
                   const stock = p.fields?.['Current Stock'] || 0
                   const reorder = p.fields?.['Reorder Level'] || 0
                   const sku = p.fields?.SKU || 'SKU'
-                  const qrUrl = p.fields?.['QR Code URL'] || `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(sku)}&size=60x60`
+                  const qrUrl = p.fields?.['QR Code URL'] ||
+                    `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(sku)}&size=60x60`
                   return (
                     <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                       <td className="p-4 font-medium text-sm dark:text-white">{p.fields?.['Item Name']}</td>
                       <td className="p-4 text-gray-500 text-xs font-mono">{sku}</td>
                       <td className="p-4 text-gray-500 text-sm">{p.fields?.Category || '—'}</td>
-                      <td className="p-4"><span className={`font-bold text-sm ${stock <= reorder && reorder > 0 ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>{stock} {stock <= reorder && reorder > 0 ? '⚠️' : ''}</span></td>
+                      <td className="p-4">
+                        <span className={`font-bold text-sm ${stock <= reorder && reorder > 0 ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>
+                          {stock} {stock <= reorder && reorder > 0 ? '⚠️' : ''}
+                        </span>
+                      </td>
                       <td className="p-4 text-gray-500 text-sm">{reorder}</td>
                       <td className="p-4 text-gray-900 dark:text-white text-sm font-medium">₹{(p.fields?.['Unit Price'] || 0).toLocaleString()}</td>
                       <td className="p-4"><img src={qrUrl} alt={`QR ${sku}`} className="w-12 h-12 rounded border" loading="lazy" /></td>
@@ -176,6 +204,21 @@ export default function Inventory() {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* UNIVERSAL IMPORT SECTION */}
+        {userId && (
+          <div className="mt-6 pt-6 border-t-2 border-dashed border-gray-200 dark:border-white/10">
+            <div className="mb-3">
+              <h3 className="text-base font-black dark:text-white" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                📂 Imported Inventory Data
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Import from any inventory or POS system — every column preserved
+              </p>
+            </div>
+            <UniversalDataView userId={userId} module="Inventory" color="#FBBF24" bg="#FEF3C7" />
           </div>
         )}
 
