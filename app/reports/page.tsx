@@ -4,17 +4,17 @@ import Layout from '@/components/Layout'
 import LockedModule from '@/components/LockedModule'
 import { supabase } from '@/lib/supabase'
 import { getPlanFromMetadata, canAccessModuleSync } from '@/lib/planAccess'
-import { airtable } from '@/lib/airtable'
-import { Download, RefreshCw, TrendingUp, FileText, BarChart3 } from 'lucide-react'
-import UniversalDataView from '@/components/UniversalDataView'
+import { Download, RefreshCw, TrendingUp, Users, Package, FileText, UserCheck } from 'lucide-react'
 
 export default function Reports() {
   const [plan, setPlan] = useState<string | null>(null)
   const [checking, setChecking] = useState(true)
-  const [invoices, setInvoices] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'summary' | 'gst' | 'revenue' | 'imported'>('summary')
   const [userId, setUserId] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'invoices' | 'inventory' | 'hr'>('overview')
+  const [data, setData] = useState<{
+    crm: any[]; invoices: any[]; inventory: any[]; hr: any[]; projects: any[]
+  }>({ crm: [], invoices: [], inventory: [], hr: [], projects: [] })
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -26,11 +26,23 @@ export default function Reports() {
     })
   }, [])
 
-  const fetchInvoices = async () => {
+  const loadAllData = async (uid: string) => {
     setLoading(true)
     try {
-      const d = await airtable.get('Invoices')
-      setInvoices(d.records || [])
+      const [crm, invoices, inventory, hr, projects] = await Promise.all([
+        fetch(`/api/universal-data?userId=${uid}&module=CRM`).then(r => r.json()),
+        fetch(`/api/universal-data?userId=${uid}&module=Invoices`).then(r => r.json()),
+        fetch(`/api/universal-data?userId=${uid}&module=Inventory`).then(r => r.json()),
+        fetch(`/api/universal-data?userId=${uid}&module=HR`).then(r => r.json()),
+        fetch(`/api/universal-data?userId=${uid}&module=Projects`).then(r => r.json()),
+      ])
+      setData({
+        crm: crm.records || [],
+        invoices: invoices.records || [],
+        inventory: inventory.records || [],
+        hr: hr.records || [],
+        projects: projects.records || [],
+      })
     } catch (e) {
       console.error('Reports load error:', e)
     }
@@ -38,87 +50,66 @@ export default function Reports() {
   }
 
   useEffect(() => {
-    if (!checking && canAccessModuleSync(plan as any, 'reports')) fetchInvoices()
-  }, [checking, plan])
-
-  const parseNote = (notes: string) => {
-    const client = notes.match(/Client: ([^|]+)/)?.[1]?.trim() || '—'
-    const amt = notes.match(/Amount: ([0-9.]+)/)?.[1] || '0'
-    const taxAmt = notes.match(/[\w]+ \d+(?:\.\d+)?%: ([0-9.]+)/)?.[1] || '0'
-    const tot = notes.match(/Total: ([0-9.]+)/)?.[1] || '0'
-    const taxSys = notes.match(/Tax System: ([^|]+)/)?.[1]?.trim() || ''
-    return {
-      client,
-      amount: Number(amt),
-      taxAmount: Number(taxAmt),
-      total: Number(tot),
-      taxSystem: taxSys,
+    if (!checking && userId && canAccessModuleSync(plan as any, 'reports')) {
+      loadAllData(userId)
     }
-  }
+  }, [checking, userId, plan])
 
-  // Summary stats
-  const totalRevenue = invoices.reduce((s, i) => {
-    const { total } = parseNote(i.fields?.Notes || '')
-    return i.fields?.['Payment Status'] === 'Paid' ? s + total : s
-  }, 0)
-
-  const totalTax = invoices.reduce((s, i) => {
-    const { taxAmount } = parseNote(i.fields?.Notes || '')
-    return i.fields?.['Payment Status'] === 'Paid' ? s + taxAmount : s
-  }, 0)
-
-  const paidCount = invoices.filter(i => i.fields?.['Payment Status'] === 'Paid').length
-  const unpaidCount = invoices.filter(i => i.fields?.['Payment Status'] === 'Unpaid').length
-  const overdueCount = invoices.filter(i => i.fields?.['Payment Status'] === 'Overdue').length
-
-  // GST breakdown by rate
-  const gstBreakdown: Record<string, { count: number; taxable: number; tax: number; total: number }> = {}
-  invoices.forEach(i => {
-    if (i.fields?.['Payment Status'] !== 'Paid') return
-    const rate = `${i.fields?.['GST %'] || 0}%`
-    const { amount, taxAmount, total } = parseNote(i.fields?.Notes || '')
-    if (!gstBreakdown[rate]) gstBreakdown[rate] = { count: 0, taxable: 0, tax: 0, total: 0 }
-    gstBreakdown[rate].count++
-    gstBreakdown[rate].taxable += amount
-    gstBreakdown[rate].tax += taxAmount
-    gstBreakdown[rate].total += total
+  // CRM Analytics
+  const totalLeads = data.crm.length
+  const statusCounts: Record<string, number> = {}
+  data.crm.forEach(r => {
+    const status = r.data?.Status || r.data?.status || r.data?.['Lead Status'] || 'Unknown'
+    statusCounts[status] = (statusCounts[status] || 0) + 1
   })
 
-  // Revenue by month
-  const revenueByMonth: Record<string, { revenue: number; tax: number; count: number }> = {}
-  invoices.forEach(i => {
-    if (i.fields?.['Payment Status'] !== 'Paid') return
-    const date = i.fields?.['Issue Date'] || ''
-    if (!date) return
-    const month = date.substring(0, 7)
-    const { amount, taxAmount } = parseNote(i.fields?.Notes || '')
-    if (!revenueByMonth[month]) revenueByMonth[month] = { revenue: 0, tax: 0, count: 0 }
-    revenueByMonth[month].revenue += amount
-    revenueByMonth[month].tax += taxAmount
-    revenueByMonth[month].count++
+  // Invoice Analytics
+  const totalInvoices = data.invoices.length
+  const paidInvoices = data.invoices.filter(r => {
+    const status = (r.data?.['Payment Status'] || r.data?.Status || r.data?.status || '').toLowerCase()
+    return status === 'paid'
+  })
+  const totalRevenue = paidInvoices.reduce((s, r) => {
+    const total = Number(r.data?.Total || r.data?.total || r.data?.Amount || r.data?.amount || 0)
+    return s + total
+  }, 0)
+  const totalTax = paidInvoices.reduce((s, r) => {
+    const tax = Number(r.data?.['Tax Amount'] || r.data?.['GST Amount'] || r.data?.['tax_amount'] || 0)
+    return s + tax
+  }, 0)
+
+  // Inventory Analytics
+  const totalProducts = data.inventory.length
+  const lowStock = data.inventory.filter(r => {
+    const stock = Number(r.data?.['Current Stock'] || r.data?.stock || r.data?.quantity || 0)
+    const reorder = Number(r.data?.['Reorder Level'] || r.data?.reorder || 0)
+    return reorder > 0 && stock <= reorder
   })
 
-  const exportReport = () => {
-    const rows = [
-      ['Invoice No', 'Client', 'Issue Date', 'Payment Status', 'GST Rate', 'Taxable Amount', 'GST Amount', 'Total'],
-      ...invoices.map(i => {
-        const { client, amount, taxAmount, total } = parseNote(i.fields?.Notes || '')
-        return [
-          i.fields?.['Invoice No'] || '',
-          client,
-          i.fields?.['Issue Date'] || '',
-          i.fields?.['Payment Status'] || '',
-          `${i.fields?.['GST %'] || 0}%`,
-          amount.toFixed(2),
-          taxAmount.toFixed(2),
-          total.toFixed(2),
-        ]
-      })
-    ]
-    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+  // HR Analytics
+  const totalEmployees = data.hr.length
+  const totalPayroll = data.hr.reduce((s, r) => {
+    return s + Number(r.data?.Salary || r.data?.salary || r.data?.pay || 0)
+  }, 0)
+
+  // Dept breakdown
+  const deptCounts: Record<string, number> = {}
+  data.hr.forEach(r => {
+    const dept = r.data?.Department || r.data?.department || r.data?.dept || 'Unknown'
+    deptCounts[dept] = (deptCounts[dept] || 0) + 1
+  })
+
+  const exportReport = (module: string) => {
+    const records = data[module.toLowerCase() as keyof typeof data] || []
+    if (records.length === 0) return
+    const allCols = new Set<string>()
+    records.forEach((r: any) => Object.keys(r.data || {}).forEach(k => allCols.add(k)))
+    const cols = Array.from(allCols)
+    const rows = [cols, ...records.map((r: any) => cols.map(c => r.data?.[c] || ''))]
+    const csv = rows.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
-    a.download = 'gst-report.csv'
+    a.download = `${module.toLowerCase()}-report.csv`
     a.click()
   }
 
@@ -126,14 +117,15 @@ export default function Reports() {
     <Layout><div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div></div></Layout>
   )
   if (!canAccessModuleSync(plan as any, 'reports')) {
-    return <Layout><LockedModule moduleName="GST Reports" requiredPlan="Business" /></Layout>
+    return <Layout><LockedModule moduleName="Reports" requiredPlan="Business" /></Layout>
   }
 
   const tabs = [
-    { id: 'summary', label: '📊 Summary', icon: TrendingUp },
-    { id: 'gst', label: '🧾 GST Breakdown', icon: FileText },
-    { id: 'revenue', label: '📈 Revenue by Month', icon: BarChart3 },
-    { id: 'imported', label: '📂 Imported Data', icon: FileText },
+    { id: 'overview', label: '📊 Overview' },
+    { id: 'leads', label: '👥 Leads' },
+    { id: 'invoices', label: '📄 Invoices' },
+    { id: 'inventory', label: '📦 Inventory' },
+    { id: 'hr', label: '👤 HR' },
   ]
 
   return (
@@ -143,20 +135,16 @@ export default function Reports() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
-              GST Reports & Analytics
+              Reports & Analytics
             </h2>
-            <p className="text-gray-500 text-sm">{invoices.length} invoices · Tax year overview</p>
+            <p className="text-gray-500 text-sm">
+              Business insights across all modules
+            </p>
           </div>
-          <div className="flex gap-2">
-            <button onClick={fetchInvoices}
-              className="p-2 border border-gray-300 dark:border-white/20 rounded-xl hover:bg-gray-50 dark:hover:bg-white/10">
-              <RefreshCw size={16} className="text-gray-500 dark:text-gray-400" />
-            </button>
-            <button onClick={exportReport}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm hover:bg-gray-50 dark:text-white">
-              <Download size={16} /> Export Report
-            </button>
-          </div>
+          <button onClick={() => userId && loadAllData(userId)}
+            className="p-2 border border-gray-300 dark:border-white/20 rounded-xl hover:bg-gray-50 dark:hover:bg-white/10">
+            <RefreshCw size={16} className="text-gray-500 dark:text-gray-400" />
+          </button>
         </div>
 
         {/* Tabs */}
@@ -175,170 +163,274 @@ export default function Reports() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div></div>
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div>
+          </div>
         ) : (
           <>
-            {/* SUMMARY TAB */}
-            {activeTab === 'summary' && (
+            {/* OVERVIEW TAB */}
+            {activeTab === 'overview' && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString()}`, color: '#34D399', bg: '#D1FAE5' },
-                    { label: 'Total Tax Collected', value: `₹${totalTax.toLocaleString()}`, color: '#8B5CF6', bg: '#EDE9FE' },
-                    { label: 'Paid Invoices', value: paidCount, color: '#34D399', bg: '#D1FAE5' },
-                    { label: 'Pending + Overdue', value: unpaidCount + overdueCount, color: '#EF4444', bg: '#FEE2E2' },
+                    { label: 'Total Leads', value: totalLeads, icon: Users, color: '#8B5CF6', bg: '#EDE9FE' },
+                    { label: 'Revenue Collected', value: `₹${totalRevenue.toLocaleString()}`, icon: TrendingUp, color: '#34D399', bg: '#D1FAE5' },
+                    { label: 'Total Products', value: totalProducts, icon: Package, color: '#FBBF24', bg: '#FEF3C7' },
+                    { label: 'Team Members', value: totalEmployees, icon: UserCheck, color: '#F472B6', bg: '#FCE7F3' },
                   ].map(s => (
                     <div key={s.label} className="p-5 rounded-2xl"
                       style={{ background: s.bg, border: `2px solid ${s.color}30` }}>
-                      <p className="text-xs font-semibold uppercase mb-1" style={{ color: s.color }}>{s.label}</p>
+                      <div className="flex items-center gap-2 mb-2">
+                        <s.icon size={18} style={{ color: s.color }} />
+                        <p className="text-xs font-semibold uppercase" style={{ color: s.color }}>{s.label}</p>
+                      </div>
                       <p className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: s.color }}>{s.value}</p>
                     </div>
                   ))}
                 </div>
 
-                <div className="bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10 overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 dark:bg-[#0A1628]">
-                      <tr>
-                        {['Invoice #', 'Client', 'Issue Date', 'Tax Rate', 'Amount', 'Tax', 'Total', 'Status'].map(h => (
-                          <th key={h} className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-white/10">
-                      {invoices.map(i => {
-                        const { client, amount, taxAmount, total } = parseNote(i.fields?.Notes || '')
-                        const isPaid = i.fields?.['Payment Status'] === 'Paid'
-                        return (
-                          <tr key={i.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
-                            <td className="p-4 font-mono text-sm font-bold dark:text-white">
-                              #{i.fields?.['Invoice No'] || 'Auto'}
-                            </td>
-                            <td className="p-4 text-sm dark:text-white">{client}</td>
-                            <td className="p-4 text-xs text-gray-400">{i.fields?.['Issue Date'] || '—'}</td>
-                            <td className="p-4 text-sm text-gray-500">{i.fields?.['GST %'] || 0}%</td>
-                            <td className="p-4 text-sm text-gray-600 dark:text-gray-300">₹{amount.toLocaleString()}</td>
-                            <td className="p-4 text-sm text-gray-600 dark:text-gray-300">₹{taxAmount.toLocaleString()}</td>
-                            <td className="p-4 text-sm font-bold dark:text-white">₹{total.toLocaleString()}</td>
-                            <td className="p-4">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${isPaid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                {i.fields?.['Payment Status'] || 'Unpaid'}
-                              </span>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* GST BREAKDOWN TAB */}
-            {activeTab === 'gst' && (
-              <div className="bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10 overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-[#0A1628]">
-                    <tr>
-                      {['GST Rate', 'Invoices', 'Taxable Amount', 'GST Collected', 'Total Billed'].map(h => (
-                        <th key={h} className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-white/10">
-                    {Object.entries(gstBreakdown).length === 0 ? (
-                      <tr><td colSpan={5} className="p-8 text-center text-gray-400">No paid invoices yet</td></tr>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-5 rounded-2xl bg-white dark:bg-[#1a2740]"
+                    style={{ border: '2px solid #E2E8F0' }}>
+                    <h3 className="font-black text-sm mb-3 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+                      Lead Pipeline
+                    </h3>
+                    {Object.entries(statusCounts).length === 0 ? (
+                      <p className="text-xs text-gray-400">No lead data yet</p>
                     ) : (
-                      Object.entries(gstBreakdown).map(([rate, data]) => (
-                        <tr key={rate} className="hover:bg-gray-50 dark:hover:bg-white/5">
-                          <td className="p-4 font-bold text-sm dark:text-white">{rate}</td>
-                          <td className="p-4 text-sm text-gray-500">{data.count}</td>
-                          <td className="p-4 text-sm dark:text-white">₹{data.taxable.toLocaleString()}</td>
-                          <td className="p-4 text-sm font-bold" style={{ color: '#8B5CF6' }}>₹{data.tax.toLocaleString()}</td>
-                          <td className="p-4 text-sm font-bold dark:text-white">₹{data.total.toLocaleString()}</td>
-                        </tr>
+                      Object.entries(statusCounts).map(([status, count]) => (
+                        <div key={status} className="flex items-center justify-between py-1.5 border-b border-gray-50 dark:border-white/10 last:border-0">
+                          <span className="text-sm text-gray-600 dark:text-gray-300">{status}</span>
+                          <span className="text-sm font-bold dark:text-white">{count}</span>
+                        </div>
                       ))
                     )}
-                    {Object.entries(gstBreakdown).length > 0 && (
-                      <tr className="bg-gray-50 dark:bg-[#0A1628]">
-                        <td className="p-4 font-black text-sm dark:text-white">TOTAL</td>
-                        <td className="p-4 font-bold text-sm dark:text-white">{paidCount}</td>
-                        <td className="p-4 font-bold text-sm dark:text-white">
-                          ₹{Object.values(gstBreakdown).reduce((s, d) => s + d.taxable, 0).toLocaleString()}
-                        </td>
-                        <td className="p-4 font-bold text-sm" style={{ color: '#8B5CF6' }}>
-                          ₹{totalTax.toLocaleString()}
-                        </td>
-                        <td className="p-4 font-bold text-sm dark:text-white">
-                          ₹{totalRevenue.toLocaleString()}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* REVENUE BY MONTH TAB */}
-            {activeTab === 'revenue' && (
-              <div className="bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10 overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-[#0A1628]">
-                    <tr>
-                      {['Month', 'Invoices Paid', 'Revenue (ex-tax)', 'Tax Collected', 'Total'].map(h => (
-                        <th key={h} className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-white/10">
-                    {Object.entries(revenueByMonth).length === 0 ? (
-                      <tr><td colSpan={5} className="p-8 text-center text-gray-400">No paid invoices yet</td></tr>
-                    ) : (
-                      Object.entries(revenueByMonth)
-                        .sort((a, b) => b[0].localeCompare(a[0]))
-                        .map(([month, data]) => (
-                          <tr key={month} className="hover:bg-gray-50 dark:hover:bg-white/5">
-                            <td className="p-4 font-bold text-sm dark:text-white">
-                              {new Date(month + '-01').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
-                            </td>
-                            <td className="p-4 text-sm text-gray-500">{data.count}</td>
-                            <td className="p-4 text-sm dark:text-white">₹{data.revenue.toLocaleString()}</td>
-                            <td className="p-4 text-sm font-bold" style={{ color: '#8B5CF6' }}>₹{data.tax.toLocaleString()}</td>
-                            <td className="p-4 text-sm font-bold dark:text-white">
-                              ₹{(data.revenue + data.tax).toLocaleString()}
-                            </td>
-                          </tr>
-                        ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* IMPORTED DATA TAB */}
-            {activeTab === 'imported' && userId && (
-              <div className="space-y-6">
-                <div className="p-4 rounded-xl" style={{ background: '#EDE9FE', border: '1.5px solid #8B5CF6' }}>
-                  <p className="text-sm font-bold text-violet-800 mb-1">📂 All Imported Data Across Modules</p>
-                  <p className="text-xs text-violet-600">
-                    View and export all data imported from any external software. Every column preserved exactly.
-                  </p>
-                </div>
-
-                {(['CRM', 'Invoices', 'Inventory', 'HR', 'Projects'] as const).map(module => (
-                  <div key={module}>
-                    <h3 className="font-black text-sm mb-3 dark:text-white"
-                      style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-                      {module} Imported Data
-                    </h3>
-                    <UniversalDataView
-                      userId={userId}
-                      module={module}
-                      color="#8B5CF6"
-                      bg="#EDE9FE"
-                    />
                   </div>
-                ))}
+
+                  <div className="p-5 rounded-2xl bg-white dark:bg-[#1a2740]"
+                    style={{ border: '2px solid #E2E8F0' }}>
+                    <h3 className="font-black text-sm mb-3 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+                      Invoice Summary
+                    </h3>
+                    {[
+                      { label: 'Total Invoices', value: totalInvoices },
+                      { label: 'Paid', value: paidInvoices.length },
+                      { label: 'Revenue', value: `₹${totalRevenue.toLocaleString()}` },
+                      { label: 'Tax Collected', value: `₹${totalTax.toLocaleString()}` },
+                    ].map(item => (
+                      <div key={item.label} className="flex justify-between py-1.5 border-b border-gray-50 dark:border-white/10 last:border-0">
+                        <span className="text-sm text-gray-600 dark:text-gray-300">{item.label}</span>
+                        <span className="text-sm font-bold dark:text-white">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-white dark:bg-[#1a2740]"
+                    style={{ border: '2px solid #E2E8F0' }}>
+                    <h3 className="font-black text-sm mb-3 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+                      Team & Inventory
+                    </h3>
+                    {[
+                      { label: 'Employees', value: totalEmployees },
+                      { label: 'Monthly Payroll', value: `₹${totalPayroll.toLocaleString()}` },
+                      { label: 'Products', value: totalProducts },
+                      { label: 'Low Stock Alerts', value: lowStock.length },
+                    ].map(item => (
+                      <div key={item.label} className="flex justify-between py-1.5 border-b border-gray-50 dark:border-white/10 last:border-0">
+                        <span className="text-sm text-gray-600 dark:text-gray-300">{item.label}</span>
+                        <span className="text-sm font-bold dark:text-white">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* LEADS TAB */}
+            {activeTab === 'leads' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-gray-500">{totalLeads} total leads</p>
+                  <button onClick={() => exportReport('crm')}
+                    className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm hover:bg-gray-50 dark:text-white">
+                    <Download size={14} /> Export Leads
+                  </button>
+                </div>
+                {data.crm.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">No lead data. Go to CRM to add or import leads.</div>
+                ) : (
+                  <div className="bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10 overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 dark:bg-[#0A1628]">
+                        <tr>
+                          {['#', ...Object.keys(data.crm[0]?.data || {}).slice(0, 6)].map(h => (
+                            <th key={h} className="p-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50 dark:divide-white/5">
+                        {data.crm.slice(0, 50).map((r, i) => (
+                          <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
+                            <td className="p-3 text-xs text-gray-400">{i + 1}</td>
+                            {Object.keys(data.crm[0]?.data || {}).slice(0, 6).map(col => (
+                              <td key={col} className="p-3 text-sm dark:text-gray-300 max-w-32 truncate">
+                                {r.data?.[col] || '—'}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* INVOICES TAB */}
+            {activeTab === 'invoices' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-gray-500">{totalInvoices} total invoices · ₹{totalRevenue.toLocaleString()} collected</p>
+                  <button onClick={() => exportReport('invoices')}
+                    className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm hover:bg-gray-50 dark:text-white">
+                    <Download size={14} /> Export Invoices
+                  </button>
+                </div>
+                {data.invoices.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">No invoice data. Go to Invoices to add or import.</div>
+                ) : (
+                  <div className="bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10 overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 dark:bg-[#0A1628]">
+                        <tr>
+                          {['#', ...Object.keys(data.invoices[0]?.data || {}).slice(0, 6)].map(h => (
+                            <th key={h} className="p-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50 dark:divide-white/5">
+                        {data.invoices.slice(0, 50).map((r, i) => (
+                          <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
+                            <td className="p-3 text-xs text-gray-400">{i + 1}</td>
+                            {Object.keys(data.invoices[0]?.data || {}).slice(0, 6).map(col => (
+                              <td key={col} className="p-3 text-sm dark:text-gray-300 max-w-32 truncate">
+                                {r.data?.[col] || '—'}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* INVENTORY TAB */}
+            {activeTab === 'inventory' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-gray-500">{totalProducts} products · {lowStock.length} low stock alerts</p>
+                  <button onClick={() => exportReport('inventory')}
+                    className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm hover:bg-gray-50 dark:text-white">
+                    <Download size={14} /> Export Inventory
+                  </button>
+                </div>
+                {lowStock.length > 0 && (
+                  <div className="p-4 rounded-xl"
+                    style={{ background: '#FEF3C7', border: '1.5px solid #FBBF24' }}>
+                    <p className="text-sm font-bold text-yellow-800">
+                      ⚠️ {lowStock.length} product{lowStock.length > 1 ? 's' : ''} at or below reorder level
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {lowStock.slice(0, 5).map(r => (
+                        <li key={r.id} className="text-xs text-yellow-700">
+                          • {r.data?.['Item Name'] || r.data?.name || r.data?.product || 'Unknown'} — Stock: {r.data?.['Current Stock'] || r.data?.stock || '?'}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {data.inventory.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">No inventory data. Go to Inventory to add or import products.</div>
+                ) : (
+                  <div className="bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10 overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 dark:bg-[#0A1628]">
+                        <tr>
+                          {['#', ...Object.keys(data.inventory[0]?.data || {}).slice(0, 6)].map(h => (
+                            <th key={h} className="p-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50 dark:divide-white/5">
+                        {data.inventory.slice(0, 50).map((r, i) => (
+                          <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
+                            <td className="p-3 text-xs text-gray-400">{i + 1}</td>
+                            {Object.keys(data.inventory[0]?.data || {}).slice(0, 6).map(col => (
+                              <td key={col} className="p-3 text-sm dark:text-gray-300 max-w-32 truncate">
+                                {r.data?.[col] || '—'}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* HR TAB */}
+            {activeTab === 'hr' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-gray-500">
+                    {totalEmployees} employees · Monthly payroll ₹{totalPayroll.toLocaleString()}
+                  </p>
+                  <button onClick={() => exportReport('hr')}
+                    className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm hover:bg-gray-50 dark:text-white">
+                    <Download size={14} /> Export HR
+                  </button>
+                </div>
+                {Object.keys(deptCounts).length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {Object.entries(deptCounts).map(([dept, count]) => (
+                      <div key={dept} className="p-3 rounded-xl text-center"
+                        style={{ background: '#D1FAE5', border: '1.5px solid #34D399' }}>
+                        <p className="text-lg font-black text-green-800" style={{ fontFamily: 'Outfit' }}>{count}</p>
+                        <p className="text-xs text-green-700 truncate">{dept}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {data.hr.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">No HR data. Go to HR to add or import employees.</div>
+                ) : (
+                  <div className="bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10 overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 dark:bg-[#0A1628]">
+                        <tr>
+                          {['#', ...Object.keys(data.hr[0]?.data || {}).slice(0, 6)].map(h => (
+                            <th key={h} className="p-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50 dark:divide-white/5">
+                        {data.hr.slice(0, 50).map((r, i) => (
+                          <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
+                            <td className="p-3 text-xs text-gray-400">{i + 1}</td>
+                            {Object.keys(data.hr[0]?.data || {}).slice(0, 6).map(col => (
+                              <td key={col} className="p-3 text-sm dark:text-gray-300 max-w-32 truncate">
+                                {r.data?.[col] || '—'}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </>
