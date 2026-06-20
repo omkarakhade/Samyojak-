@@ -2,120 +2,170 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
 const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
-
-// Updated model — llama3-8b-8192 is decommissioned
 const GROQ_MODEL = 'llama-3.1-8b-instant'
 
-async function fetchTableData(table: string, maxRecords = 50) {
+async function fetchAirtableTable(table: string, max = 50) {
   try {
     const res = await fetch(
-      `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}?maxRecords=${maxRecords}`,
+      `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}?maxRecords=${max}`,
       { headers: { Authorization: `Bearer ${TOKEN}` } }
     )
     if (!res.ok) return []
-    const data = await res.json()
-    return data.records || []
-  } catch {
-    return []
-  }
+    const d = await res.json()
+    return d.records || []
+  } catch { return [] }
 }
 
-async function buildBusinessContext() {
-  const [leads, invoices, products, employees, projects] = await Promise.all([
-    fetchTableData('Leads'),
-    fetchTableData('Invoices'),
-    fetchTableData('Products'),
-    fetchTableData('Employees'),
-    fetchTableData('Projects'),
+async function fetchUserData(userId: string, module: string) {
+  try {
+    const formula = `AND({User ID}="${userId}",{Module}="${module}")`
+    const res = await fetch(
+      `https://api.airtable.com/v0/${BASE}/UserData?filterByFormula=${encodeURIComponent(formula)}&maxRecords=200`,
+      { headers: { Authorization: `Bearer ${TOKEN}` } }
+    )
+    if (!res.ok) return []
+    const d = await res.json()
+    return (d.records || []).map((r: any) => {
+      try {
+        const parsed = JSON.parse(r.fields?.['Record Data'] || '{}')
+        const { _meta, ...data } = parsed
+        return data
+      } catch { return {} }
+    })
+  } catch { return [] }
+}
+
+async function buildContext(userId?: string) {
+  const [
+    airtableLeads,
+    airtableInvoices,
+    airtableProducts,
+    airtableEmployees,
+    airtableProjects,
+  ] = await Promise.all([
+    fetchAirtableTable('Leads'),
+    fetchAirtableTable('Invoices'),
+    fetchAirtableTable('Products'),
+    fetchAirtableTable('Employees'),
+    fetchAirtableTable('Projects'),
   ])
 
-  const newLeads = leads.filter((l: any) => l.fields?.Status === 'New').length
-  const contactedLeads = leads.filter((l: any) => l.fields?.Status === 'Contacted').length
-  const convertedLeads = leads.filter((l: any) => l.fields?.Status === 'Converted').length
-  const lostLeads = leads.filter((l: any) => l.fields?.Status === 'Lost').length
+  // Also fetch from UserData if userId provided
+  let userLeads: any[] = []
+  let userInvoices: any[] = []
+  let userProducts: any[] = []
+  let userEmployees: any[] = []
+  let userProjects: any[] = []
 
-  const paidInvoices = invoices.filter((i: any) => i.fields?.['Payment Status'] === 'Paid').length
-  const unpaidInvoices = invoices.filter((i: any) => i.fields?.['Payment Status'] === 'Unpaid').length
-  const overdueInvoices = invoices.filter((i: any) => i.fields?.['Payment Status'] === 'Overdue').length
+  if (userId) {
+    ;[userLeads, userInvoices, userProducts, userEmployees, userProjects] = await Promise.all([
+      fetchUserData(userId, 'CRM'),
+      fetchUserData(userId, 'Invoices'),
+      fetchUserData(userId, 'Inventory'),
+      fetchUserData(userId, 'HR'),
+      fetchUserData(userId, 'Projects'),
+    ])
+  }
 
-  const lowStock = products.filter((p: any) =>
-    (p.fields?.['Current Stock'] || 0) <= (p.fields?.['Reorder Level'] || 0) &&
-    (p.fields?.['Reorder Level'] || 0) > 0
+  // Merge airtable + userdata
+  const allLeads = [
+    ...airtableLeads.map((r: any) => r.fields || {}),
+    ...userLeads,
+  ]
+  const allInvoices = [
+    ...airtableInvoices.map((r: any) => r.fields || {}),
+    ...userInvoices,
+  ]
+  const allProducts = [
+    ...airtableProducts.map((r: any) => r.fields || {}),
+    ...userProducts,
+  ]
+  const allEmployees = [
+    ...airtableEmployees.map((r: any) => r.fields || {}),
+    ...userEmployees,
+  ]
+  const allProjects = [
+    ...airtableProjects.map((r: any) => r.fields || {}),
+    ...userProjects,
+  ]
+
+  const totalLeads = allLeads.length
+  const converted = allLeads.filter((l: any) =>
+    (l.Status || l.status || '').toLowerCase().includes('convert')
+  ).length
+  const newLeads = allLeads.filter((l: any) =>
+    (l.Status || l.status || '').toLowerCase() === 'new'
   ).length
 
-  const totalPayroll = employees.reduce((s: number, e: any) => s + (e.fields?.Salary || 0), 0)
-  const inProgress = projects.filter((p: any) => p.fields?.Status === 'In Progress').length
-  const overdueProjects = projects.filter((p: any) =>
-    p.fields?.Deadline && new Date(p.fields.Deadline) < new Date()
+  const paidInvoices = allInvoices.filter((i: any) =>
+    (i['Payment Status'] || i.payment_status || i.Status || '').toLowerCase() === 'paid'
   ).length
-  const conversionRate = leads.length > 0
-    ? Math.round((convertedLeads / leads.length) * 100)
-    : 0
+  const overdueInvoices = allInvoices.filter((i: any) =>
+    (i['Payment Status'] || i.payment_status || i.Status || '').toLowerCase().includes('overdue')
+  ).length
 
-  const topLeads = leads
-    .sort((a: any, b: any) => (b.fields?.Score || 0) - (a.fields?.Score || 0))
-    .slice(0, 3)
-    .map((l: any) => `${l.fields?.Name || 'Unknown'} (${l.fields?.Status || 'New'}, score: ${l.fields?.Score || 0})`)
+  const lowStock = allProducts.filter((p: any) => {
+    const stock = Number(p['Current Stock'] || p.stock || p.quantity || 0)
+    const reorder = Number(p['Reorder Level'] || p.reorder || 0)
+    return reorder > 0 && stock <= reorder
+  }).length
+
+  const totalPayroll = allEmployees.reduce((s: number, e: any) =>
+    s + Number(e.Salary || e.salary || e.pay || 0), 0
+  )
+
+  const inProgress = allProjects.filter((p: any) =>
+    (p.Status || p.status || '').toLowerCase().includes('progress')
+  ).length
+
+  const conversionRate = totalLeads > 0 ? Math.round((converted / totalLeads) * 100) : 0
+
+  const topLeadNames = allLeads
+    .slice(0, 5)
+    .map((l: any) => l.Name || l.name || l.CustomerName || l['Customer Name'] || l.ContactName || l['Contact Name'] || '')
+    .filter(Boolean)
 
   return {
-    leads: {
-      total: leads.length,
-      new: newLeads,
-      contacted: contactedLeads,
-      converted: convertedLeads,
-      lost: lostLeads,
-      conversionRate,
-      topLeads,
-      recentNames: leads.slice(0, 5).map((l: any) => l.fields?.Name).filter(Boolean),
-    },
-    invoices: {
-      total: invoices.length,
-      paid: paidInvoices,
-      unpaid: unpaidInvoices,
-      overdue: overdueInvoices,
-    },
-    inventory: {
-      total: products.length,
-      lowStock,
-    },
-    hr: {
-      total: employees.length,
-      totalPayroll,
-    },
-    projects: {
-      total: projects.length,
-      inProgress,
-      overdueProjects,
-      done: projects.filter((p: any) => p.fields?.Status === 'Done').length,
+    leads: { total: totalLeads, new: newLeads, converted, conversionRate, topNames: topLeadNames },
+    invoices: { total: allInvoices.length, paid: paidInvoices, overdue: overdueInvoices },
+    inventory: { total: allProducts.length, lowStock },
+    hr: { total: allEmployees.length, totalPayroll },
+    projects: { total: allProjects.length, inProgress },
+    importedData: {
+      crmRows: userLeads.length,
+      invoiceRows: userInvoices.length,
+      inventoryRows: userProducts.length,
+      hrRows: userEmployees.length,
+      projectRows: userProjects.length,
     },
   }
 }
 
-function getFallback(context: any): string {
-  if (!context || context.leads.total === 0) {
-    return '🌟 Your Samyojak ERP is ready! Start by adding your first lead in CRM. Every great business begins with the first contact.'
+function getFallback(ctx: any): string {
+  if (!ctx || ctx.leads.total === 0) {
+    return '🌟 Your ERP is ready! Import your first CSV or add a lead manually to get started.'
   }
-  if (context.leads.converted > 0) {
-    return `💪 You have converted ${context.leads.converted} of ${context.leads.total} leads — a ${context.leads.conversionRate}% conversion rate! Your top leads are: ${context.leads.topLeads.slice(0, 2).join(', ')}. Keep following up.`
+  if (ctx.leads.converted > 0) {
+    return `💪 ${ctx.leads.converted} leads converted out of ${ctx.leads.total} — a ${ctx.leads.conversionRate}% conversion rate! Keep following up with your ${ctx.leads.new} new leads.`
   }
-  if (context.invoices.overdue > 0) {
-    return `⚠️ You have ${context.invoices.overdue} overdue invoice${context.invoices.overdue > 1 ? 's' : ''} that need attention today. Recover that cash first, then focus on your ${context.leads.new} new leads.`
+  if (ctx.invoices.overdue > 0) {
+    return `⚠️ ${ctx.invoices.overdue} overdue invoice${ctx.invoices.overdue > 1 ? 's' : ''} need attention today. Collect those payments first!`
   }
-  return `🎯 You have ${context.leads.total} leads with a ${context.leads.conversionRate}% conversion rate. ${context.leads.new} new leads waiting to be contacted. Your next sale is one follow-up away!`
+  return `🎯 You have ${ctx.leads.total} leads in your pipeline. Focus on converting your top prospects today!`
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { message, isOnboarding, userName, company, businessType } = body
+    const { message, isOnboarding, userName, company, businessType, userId } = body
 
     const apiKey = process.env.GROQ_API_KEY
 
     let context: any = null
     try {
-      context = await buildBusinessContext()
+      context = await buildContext(userId)
     } catch (e) {
-      console.error('Context fetch error:', e)
+      console.error('Context build error:', e)
     }
 
     if (!apiKey) {
@@ -126,51 +176,56 @@ export async function POST(req: NextRequest) {
 
     if (isOnboarding) {
       systemPrompt = `You are Samyojak AI — a warm, smart business assistant.
-User just signed up.
-Name: ${userName || 'there'}
-Company: ${company || 'their business'}
-Business Type: ${businessType || 'not specified'}
-
-Give a warm personalized 2-3 sentence welcome.
-Tell them the ONE most important first step for their specific business type.
+User just signed up. Name: ${userName || 'there'}. Company: ${company || 'their business'}. Business type: ${businessType || 'not specified'}.
+Give a warm 2-3 sentence personalized welcome and tell them ONE most important first step.
 Be energetic and encouraging. Use 1-2 emojis. Max 60 words.`
     } else {
-      systemPrompt = `You are Samyojak AI — a smart, encouraging business intelligence assistant.
+      systemPrompt = `You are Samyojak AI — a smart business intelligence assistant for an adaptive ERP.
 
-You have access to the user's REAL live business data:
+You have access to the user's real business data (from both Airtable and imported CSVs):
 
-LEADS: ${context?.leads.total || 0} total
-- New: ${context?.leads.new || 0}
-- Contacted: ${context?.leads.contacted || 0}
+LEADS & CRM:
+- Total leads: ${context?.leads.total || 0}
+- New leads: ${context?.leads.new || 0}
 - Converted: ${context?.leads.converted || 0}
-- Lost: ${context?.leads.lost || 0}
 - Conversion rate: ${context?.leads.conversionRate || 0}%
-- Top leads: ${context?.leads.topLeads?.join(', ') || 'none yet'}
-- Recent: ${context?.leads.recentNames?.join(', ') || 'none yet'}
+- Recent names: ${context?.leads.topNames?.join(', ') || 'none yet'}
 
-INVOICES: ${context?.invoices.total || 0} total
+INVOICES:
+- Total: ${context?.invoices.total || 0}
 - Paid: ${context?.invoices.paid || 0}
-- Unpaid: ${context?.invoices.unpaid || 0}
 - Overdue: ${context?.invoices.overdue || 0}
 
-INVENTORY: ${context?.inventory.total || 0} products, ${context?.inventory.lowStock || 0} low stock
+INVENTORY:
+- Products: ${context?.inventory.total || 0}
+- Low stock alerts: ${context?.inventory.lowStock || 0}
 
-HR: ${context?.hr.total || 0} employees, payroll ₹${context?.hr.totalPayroll?.toLocaleString() || 0}/month
+HR:
+- Employees: ${context?.hr.total || 0}
+- Monthly payroll: ₹${context?.hr.totalPayroll?.toLocaleString() || 0}
 
-PROJECTS: ${context?.projects.total || 0} total, ${context?.projects.inProgress || 0} in progress, ${context?.projects.overdueProjects || 0} overdue
+PROJECTS:
+- Total: ${context?.projects.total || 0}
+- In progress: ${context?.projects.inProgress || 0}
 
-STRICT RULES:
-- Use ACTUAL numbers above when answering
+IMPORTED CSV DATA:
+- CRM rows imported: ${context?.importedData?.crmRows || 0}
+- Invoice rows imported: ${context?.importedData?.invoiceRows || 0}
+- Inventory rows imported: ${context?.importedData?.inventoryRows || 0}
+- HR rows imported: ${context?.importedData?.hrRows || 0}
+- Project rows imported: ${context?.importedData?.projectRows || 0}
+
+RULES:
+- Use ACTUAL numbers from data above
 - Reference real lead names when relevant
-- Always find the positive angle first
-- Give specific actionable advice based on their data
-- Be like an encouraging mentor who knows their business
+- Be encouraging like a business mentor
+- Give specific actionable advice
 - Max 4 sentences
 - 1-2 emojis
-- NEVER say you do not have data — you have it above`
+- Never say you do not have data — you have it all above`
     }
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -180,30 +235,25 @@ STRICT RULES:
         model: GROQ_MODEL,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: message || 'Give me a business overview and what to focus on today' },
+          { role: 'user', content: message || 'Give me a business overview and what I should focus on today' },
         ],
         max_tokens: 300,
         temperature: 0.7,
       }),
     })
 
-    if (!response.ok) {
-      const errText = await response.text()
-      console.error('Groq API error:', response.status, errText)
+    if (!res.ok) {
+      const errText = await res.text()
+      console.error('Groq error:', res.status, errText)
       return NextResponse.json({ reply: getFallback(context), context })
     }
 
-    const data = await response.json()
+    const data = await res.json()
     const reply = data.choices?.[0]?.message?.content
 
-    return NextResponse.json({
-      reply: reply || getFallback(context),
-      context,
-    })
+    return NextResponse.json({ reply: reply || getFallback(context), context })
   } catch (error: any) {
     console.error('AI route error:', error.message)
-    return NextResponse.json({
-      reply: '🤖 AI is restarting. Your data is safe. Try again in a moment.',
-    })
+    return NextResponse.json({ reply: '🤖 AI is warming up. Try again in a moment.' })
   }
 }
