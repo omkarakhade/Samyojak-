@@ -7,85 +7,76 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const userId = searchParams.get('userId')
   const module = searchParams.get('module')
-  const importId = searchParams.get('importId') // Optional — filter by batch
+  const importId = searchParams.get('importId')
 
   if (!userId || !module) {
     return NextResponse.json({ error: 'userId and module required' }, { status: 400 })
   }
 
   try {
-    let filterFormula = `AND({User ID}="${userId}",{Module}="${module}")`
-    const url = `https://api.airtable.com/v0/${BASE}/UserData?filterByFormula=${encodeURIComponent(filterFormula)}&maxRecords=500&sort[0][field]=Created At&sort[0][direction]=desc`
+    const filterFormula = `AND({User ID}="${userId}",{Module}="${module}")`
+    const url = `https://api.airtable.com/v0/${BASE}/UserData?filterByFormula=${encodeURIComponent(filterFormula)}&maxRecords=500`
 
     const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${TOKEN}` }
+      headers: { Authorization: `Bearer ${TOKEN}` },
     })
 
     if (!res.ok) {
       const err = await res.text()
-      throw new Error(`Airtable fetch failed: ${res.status} ${err}`)
+      throw new Error(`Airtable error ${res.status}: ${err}`)
     }
 
     const data = await res.json()
-    const records = data.records || []
-
-    // Parse all records — get every column back out
-    const parsed = records.map((r: any) => {
+    const records = (data.records || []).map((r: any) => {
       try {
-        const recordData = JSON.parse(r.fields?.['Record Data'] || '{}')
-        const meta = recordData._meta || {}
-        // Remove meta from display data
-        const { _meta, ...displayData } = recordData
+        const parsed = JSON.parse(r.fields?.['Record Data'] || '{}')
+        const { _meta, ...displayData } = parsed
         return {
           id: r.id,
-          importId: meta.importId || 'unknown',
-          source: r.fields?.Source || meta.source || 'unknown',
-          importedAt: meta.importedAt || r.fields?.['Created At'] || '',
-          originalHeaders: meta.originalHeaders || Object.keys(displayData),
+          importId: _meta?.importId || 'manual',
+          source: r.fields?.Source || _meta?.source || 'unknown',
+          importedAt: _meta?.importedAt || r.fields?.['Created At'] || '',
+          originalHeaders: _meta?.originalHeaders || Object.keys(displayData),
           data: displayData,
         }
       } catch {
         return {
           id: r.id,
-          importId: 'parse_error',
+          importId: 'error',
           source: 'unknown',
           importedAt: '',
           originalHeaders: [],
           data: {},
         }
       }
-    }).filter((r: any) => {
-      if (importId) return r.importId === importId
-      return true
     })
 
-    // Get all unique columns across all records — preserving order
+    const filtered = importId ? records.filter((r: any) => r.importId === importId) : records
+
     const allColumnsSet = new Set<string>()
-    parsed.forEach((r: any) => {
+    filtered.forEach((r: any) => {
       ;(r.originalHeaders || []).forEach((h: string) => allColumnsSet.add(h))
     })
-    const allColumns = Array.from(allColumnsSet)
+    const columns = Array.from(allColumnsSet)
 
-    // Get all unique import batches
-    const importBatches = Array.from(
-      new Map(
-        parsed.map((r: any) => [
-          r.importId,
-          {
-            importId: r.importId,
-            source: r.source,
-            importedAt: r.importedAt,
-            rowCount: parsed.filter((p: any) => p.importId === r.importId).length,
-          }
-        ])
-      ).values()
-    )
+    const batchMap = new Map<string, any>()
+    filtered.forEach((r: any) => {
+      if (!batchMap.has(r.importId)) {
+        batchMap.set(r.importId, {
+          importId: r.importId,
+          source: r.source,
+          importedAt: r.importedAt,
+          rowCount: 0,
+        })
+      }
+      batchMap.get(r.importId).rowCount++
+    })
 
     return NextResponse.json({
-      records: parsed,
-      columns: allColumns,
-      total: parsed.length,
-      importBatches,
+      records: filtered,
+      columns,
+      total: filtered.length,
+      importBatches: Array.from(batchMap.values()),
     })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -99,7 +90,6 @@ export async function DELETE(req: NextRequest) {
   const userId = searchParams.get('userId')
   const module = searchParams.get('module')
 
-  // Delete single record
   if (recordId) {
     try {
       const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData/${recordId}`, {
@@ -112,21 +102,18 @@ export async function DELETE(req: NextRequest) {
     }
   }
 
-  // Delete entire import batch
   if (importId && userId && module) {
     try {
-      let filterFormula = `AND({User ID}="${userId}",{Module}="${module}")`
+      const filterFormula = `AND({User ID}="${userId}",{Module}="${module}")`
       const res = await fetch(
         `https://api.airtable.com/v0/${BASE}/UserData?filterByFormula=${encodeURIComponent(filterFormula)}&maxRecords=500`,
         { headers: { Authorization: `Bearer ${TOKEN}` } }
       )
       const data = await res.json()
-      const records = data.records || []
-
-      const toDelete = records.filter((r: any) => {
+      const toDelete = (data.records || []).filter((r: any) => {
         try {
-          const parsed = JSON.parse(r.fields?.['Record Data'] || '{}')
-          return parsed._meta?.importId === importId
+          const p = JSON.parse(r.fields?.['Record Data'] || '{}')
+          return p._meta?.importId === importId
         } catch { return false }
       })
 
@@ -139,7 +126,6 @@ export async function DELETE(req: NextRequest) {
         deleted++
         await new Promise(resolve => setTimeout(resolve, 210))
       }
-
       return NextResponse.json({ deleted, importId })
     } catch (e: any) {
       return NextResponse.json({ error: e.message }, { status: 500 })
