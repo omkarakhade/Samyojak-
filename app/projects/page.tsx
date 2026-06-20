@@ -1,11 +1,12 @@
 'use client'
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import LockedModule from '@/components/LockedModule'
 import { supabase } from '@/lib/supabase'
 import { getPlanFromMetadata, canAccessModuleSync } from '@/lib/planAccess'
 import { airtable } from '@/lib/airtable'
 import { Plus, AlertCircle, Trash2 } from 'lucide-react'
+import UniversalDataView from '@/components/UniversalDataView'
 
 const COLUMNS = ['Planning', 'In Progress', 'Review', 'Done']
 
@@ -24,12 +25,21 @@ export default function Projects() {
   const [showModal, setShowModal] = useState(false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({ 'Project Name': '', Status: 'Planning', Deadline: '', 'Start Date': '' })
+  const [userId, setUserId] = useState('')
+  const [form, setForm] = useState({
+    'Project Name': '',
+    Status: 'Planning',
+    Deadline: '',
+    'Start Date': '',
+  })
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setPlan(getPlanFromMetadata(user))
-      setChecking(false)
+      if (user) {
+        setPlan(getPlanFromMetadata(user))
+        setUserId(user.id)
+        setChecking(false)
+      }
     })
   }, [])
 
@@ -84,12 +94,17 @@ export default function Projects() {
 
   const isOverdue = (deadline: string) => deadline && new Date(deadline) < new Date()
 
-  if (checking) return <Layout><div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div></div></Layout>
-  if (!canAccessModuleSync(plan as any, 'projects')) return <Layout><LockedModule moduleName="Projects" requiredPlan="Business" /></Layout>
+  if (checking) return (
+    <Layout><div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div></div></Layout>
+  )
+  if (!canAccessModuleSync(plan as any, 'projects')) {
+    return <Layout><LockedModule moduleName="Projects" requiredPlan="Business" /></Layout>
+  }
 
   return (
     <Layout>
       <div className="space-y-4">
+
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm flex items-center gap-2">
             <AlertCircle size={16} className="flex-shrink-0" />
@@ -166,6 +181,21 @@ export default function Projects() {
           </div>
         )}
 
+        {/* UNIVERSAL IMPORT SECTION */}
+        {userId && (
+          <div className="mt-6 pt-6 border-t-2 border-dashed border-gray-200 dark:border-white/10">
+            <div className="mb-3">
+              <h3 className="text-base font-black dark:text-white" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                📂 Imported Project Data
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Import from any project management tool — every column preserved
+              </p>
+            </div>
+            <UniversalDataView userId={userId} module="Projects" color="#8B5CF6" bg="#EDE9FE" />
+          </div>
+        )}
+
         {showModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6 w-full max-w-md"
@@ -175,7 +205,8 @@ export default function Projects() {
               <form onSubmit={handleSubmit} className="space-y-3">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300" style={{ fontFamily: 'Outfit' }}>Project Name *</label>
-                  <input type="text" required value={form['Project Name']} onChange={e => setForm({ ...form, 'Project Name': e.target.value })}
+                  <input type="text" required value={form['Project Name']}
+                    onChange={e => setForm({ ...form, 'Project Name': e.target.value })}
                     placeholder="Project name"
                     className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-violet-500 outline-none dark:bg-white/5 dark:text-white" />
                 </div>
@@ -188,12 +219,14 @@ export default function Projects() {
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300" style={{ fontFamily: 'Outfit' }}>Start Date</label>
-                  <input type="date" value={form['Start Date']} onChange={e => setForm({ ...form, 'Start Date': e.target.value })}
+                  <input type="date" value={form['Start Date']}
+                    onChange={e => setForm({ ...form, 'Start Date': e.target.value })}
                     className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm outline-none dark:bg-white/5 dark:text-white" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300" style={{ fontFamily: 'Outfit' }}>Deadline</label>
-                  <input type="date" value={form.Deadline} onChange={e => setForm({ ...form, Deadline: e.target.value })}
+                  <input type="date" value={form.Deadline}
+                    onChange={e => setForm({ ...form, Deadline: e.target.value })}
                     className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm outline-none dark:bg-white/5 dark:text-white" />
                 </div>
                 <div className="flex gap-3 pt-2">
