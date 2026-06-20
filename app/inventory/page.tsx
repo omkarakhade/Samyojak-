@@ -5,7 +5,7 @@ import LockedModule from '@/components/LockedModule'
 import { supabase } from '@/lib/supabase'
 import { getPlanFromMetadata, canAccessModuleSync } from '@/lib/planAccess'
 import { airtable } from '@/lib/airtable'
-import { Plus, Download, AlertTriangle, Upload, AlertCircle, Trash2 } from 'lucide-react'
+import { Plus, Download, AlertTriangle, Upload, AlertCircle, Trash2, RefreshCw } from 'lucide-react'
 import ImportModal from '@/components/ImportModal'
 import UniversalDataView from '@/components/UniversalDataView'
 
@@ -44,7 +44,9 @@ export default function Inventory() {
     try {
       const d = await airtable.get('Products')
       setProducts(d.records || [])
-    } catch (e: any) { setError('Could not load products: ' + e.message) }
+    } catch (e: any) {
+      setError('Could not load products: ' + e.message)
+    }
     setLoading(false)
   }
 
@@ -70,7 +72,9 @@ export default function Inventory() {
       setShowModal(false)
       setForm({ 'Item Name': '', SKU: '', Category: '', 'Current Stock': '', 'Reorder Level': '', 'Unit Price': '' })
       await fetchProducts()
-    } catch (e: any) { setError('Failed to save: ' + e.message) }
+    } catch (e: any) {
+      setError('Failed to save: ' + e.message)
+    }
     setSaving(false)
   }
 
@@ -86,8 +90,12 @@ export default function Inventory() {
     const rows = [
       ['Item Name', 'SKU', 'Category', 'Current Stock', 'Reorder Level', 'Unit Price'],
       ...products.map(p => [
-        p.fields?.['Item Name'] || '', p.fields?.SKU || '', p.fields?.Category || '',
-        p.fields?.['Current Stock'] || '', p.fields?.['Reorder Level'] || '', p.fields?.['Unit Price'] || '',
+        p.fields?.['Item Name'] || '',
+        p.fields?.SKU || '',
+        p.fields?.Category || '',
+        p.fields?.['Current Stock'] || '',
+        p.fields?.['Reorder Level'] || '',
+        p.fields?.['Unit Price'] || '',
       ])
     ]
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -113,12 +121,16 @@ export default function Inventory() {
     <Layout>
       <div className="space-y-4">
 
-        {showImport && <ImportModal module="Products" onClose={() => setShowImport(false)} onSuccess={fetchProducts} />}
+        {showImport && (
+          <ImportModal module="Inventory" onClose={() => setShowImport(false)} onSuccess={fetchProducts} />
+        )}
 
         {lowStock.length > 0 && (
           <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center gap-3 text-orange-800">
             <AlertTriangle size={18} />
-            <span className="text-sm font-medium">⚠️ {lowStock.length} product{lowStock.length > 1 ? 's' : ''} at or below reorder level</span>
+            <span className="text-sm font-medium">
+              ⚠️ {lowStock.length} product{lowStock.length > 1 ? 's' : ''} at or below reorder level
+            </span>
           </div>
         )}
 
@@ -133,19 +145,24 @@ export default function Inventory() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>Inventory</h2>
-            <p className="text-gray-500 text-sm">{products.length} products · Free QR codes</p>
+            <p className="text-gray-500 text-sm">{products.length} products · Free QR codes included</p>
           </div>
           <div className="flex gap-2 flex-wrap">
             <button onClick={() => setShowImport(true)}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium"
               style={{ background: '#FEF3C7', color: '#92400E', border: '2px solid #FBBF24' }}>
-              <Upload size={16} /> Import
+              <Upload size={16} /> Import CSV
             </button>
             <button onClick={exportCSV}
               className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-white/20 rounded-xl text-sm hover:bg-gray-50 dark:text-white">
               <Download size={16} /> Export
             </button>
-            <button onClick={() => { setShowModal(true); setError('') }} className="candy-btn flex items-center gap-2 px-4 py-2 text-sm">
+            <button onClick={fetchProducts}
+              className="p-2 border border-gray-300 dark:border-white/20 rounded-xl hover:bg-gray-50 dark:hover:bg-white/10">
+              <RefreshCw size={16} className="text-gray-500 dark:text-gray-400" />
+            </button>
+            <button onClick={() => { setShowModal(true); setError('') }}
+              className="candy-btn flex items-center gap-2 px-4 py-2 text-sm">
               <Plus size={16} /> Add Product
             </button>
           </div>
@@ -157,22 +174,27 @@ export default function Inventory() {
           <div className="text-center py-16 bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10">
             <div className="text-5xl mb-4">📦</div>
             <h3 className="font-bold dark:text-white text-lg mb-2" style={{ fontFamily: 'Outfit' }}>No products yet</h3>
-            <div className="flex gap-3 justify-center mt-4">
+            <p className="text-gray-500 text-sm mb-4">Import from any POS, inventory, or accounting software</p>
+            <div className="flex gap-3 justify-center">
               <button onClick={() => setShowImport(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
                 style={{ background: '#FEF3C7', color: '#92400E', border: '2px solid #FBBF24' }}>
                 <Upload size={16} /> Import CSV
               </button>
-              <button onClick={() => setShowModal(true)} className="candy-btn px-6 py-2 text-sm">Add First Product</button>
+              <button onClick={() => setShowModal(true)} className="candy-btn px-6 py-2 text-sm">
+                Add First Product
+              </button>
             </div>
           </div>
         ) : (
           <div className="bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10 overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-[#0A1628]">
-                <tr>{['Product', 'SKU', 'Category', 'Stock', 'Reorder', 'Price', 'QR Code', ''].map(h => (
-                  <th key={h} className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{h}</th>
-                ))}</tr>
+                <tr>
+                  {['Product', 'SKU', 'Category', 'Stock', 'Reorder', 'Price', 'QR Code', ''].map(h => (
+                    <th key={h} className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{h}</th>
+                  ))}
+                </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-white/10">
                 {products.map(p => {
@@ -188,14 +210,19 @@ export default function Inventory() {
                       <td className="p-4 text-gray-500 text-sm">{p.fields?.Category || '—'}</td>
                       <td className="p-4">
                         <span className={`font-bold text-sm ${stock <= reorder && reorder > 0 ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>
-                          {stock} {stock <= reorder && reorder > 0 ? '⚠️' : ''}
+                          {stock}{stock <= reorder && reorder > 0 ? ' ⚠️' : ''}
                         </span>
                       </td>
                       <td className="p-4 text-gray-500 text-sm">{reorder}</td>
-                      <td className="p-4 text-gray-900 dark:text-white text-sm font-medium">₹{(p.fields?.['Unit Price'] || 0).toLocaleString()}</td>
-                      <td className="p-4"><img src={qrUrl} alt={`QR ${sku}`} className="w-12 h-12 rounded border" loading="lazy" /></td>
+                      <td className="p-4 text-gray-900 dark:text-white text-sm font-medium">
+                        ₹{(p.fields?.['Unit Price'] || 0).toLocaleString()}
+                      </td>
                       <td className="p-4">
-                        <button onClick={() => handleDelete(p.id)} className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50">
+                        <img src={qrUrl} alt={`QR ${sku}`} className="w-12 h-12 rounded border" loading="lazy" />
+                      </td>
+                      <td className="p-4">
+                        <button onClick={() => handleDelete(p.id)}
+                          className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors">
                           <Trash2 size={14} />
                         </button>
                       </td>
@@ -211,23 +238,32 @@ export default function Inventory() {
         {userId && (
           <div className="mt-6 pt-6 border-t-2 border-dashed border-gray-200 dark:border-white/10">
             <div className="mb-3">
-              <h3 className="text-base font-black dark:text-white" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-                📂 Imported Inventory Data
-              </h3>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Import from any inventory or POS system — every column preserved
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-base font-black dark:text-white" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                  📂 Imported Inventory Data
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-xs font-bold"
+                  style={{ background: '#FEF3C7', color: '#92400E' }}>
+                  Zero data loss
+                </span>
+              </div>
+              <p className="text-xs text-gray-400">
+                Imported from any inventory, POS, or accounting system — every column preserved
               </p>
             </div>
             <UniversalDataView userId={userId} module="Inventory" color="#FBBF24" bg="#FEF3C7" />
           </div>
         )}
 
+        {/* Add Product Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
               style={{ border: '2px solid #1E293B', boxShadow: '8px 8px 0px #FBBF24' }}>
               <h3 className="font-black text-lg mb-4 dark:text-white" style={{ fontFamily: 'Outfit' }}>Add Product</h3>
-              {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-red-600 text-sm">{error}</div>}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-red-600 text-sm">{error}</div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-3">
                 {[
                   { key: 'Item Name', label: 'Product Name *', type: 'text', required: true, ph: 'Product name' },
@@ -238,7 +274,8 @@ export default function Inventory() {
                   { key: 'Unit Price', label: 'Unit Price (₹)', type: 'number', required: false, ph: '0' },
                 ].map(f => (
                   <div key={f.key}>
-                    <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300" style={{ fontFamily: 'Outfit' }}>{f.label}</label>
+                    <label className="block text-xs font-bold uppercase tracking-wide mb-1 dark:text-gray-300"
+                      style={{ fontFamily: 'Outfit' }}>{f.label}</label>
                     <input type={f.type} required={f.required} placeholder={f.ph}
                       value={form[f.key as keyof typeof form]}
                       onChange={e => setForm({ ...form, [f.key]: e.target.value })}
@@ -248,7 +285,8 @@ export default function Inventory() {
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={() => { setShowModal(false); setError('') }}
                     className="flex-1 border border-gray-300 py-2 rounded-xl text-sm">Cancel</button>
-                  <button type="submit" disabled={saving} className="candy-btn flex-1 py-2 text-sm disabled:opacity-50">
+                  <button type="submit" disabled={saving}
+                    className="candy-btn flex-1 py-2 text-sm disabled:opacity-50">
                     {saving ? 'Saving...' : 'Save Product'}
                   </button>
                 </div>
@@ -256,6 +294,7 @@ export default function Inventory() {
             </div>
           </div>
         )}
+
       </div>
     </Layout>
   )
