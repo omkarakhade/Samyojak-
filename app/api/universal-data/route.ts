@@ -3,6 +3,35 @@ import { NextRequest, NextResponse } from 'next/server'
 const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
 const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
 
+async function fetchAllRecords(userId: string, module: string): Promise<any[]> {
+  const all: any[] = []
+  let offset: string | undefined = undefined
+
+  // Airtable returns max 100 records per page — loop through all pages
+  do {
+    const params = new URLSearchParams()
+    params.set('filterByFormula', `AND({User ID}="${userId}",{Module}="${module}")`)
+    params.set('pageSize', '100')
+    if (offset) params.set('offset', offset)
+
+    const res = await fetch(
+      `https://api.airtable.com/v0/${BASE}/UserData?${params.toString()}`,
+      { headers: { Authorization: `Bearer ${TOKEN}` } }
+    )
+
+    if (!res.ok) {
+      const err = await res.text()
+      throw new Error(`Airtable error ${res.status}: ${err}`)
+    }
+
+    const data = await res.json()
+    all.push(...(data.records || []))
+    offset = data.offset // undefined when no more pages
+  } while (offset)
+
+  return all
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const userId = searchParams.get('userId')
@@ -14,20 +43,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const filterFormula = `AND({User ID}="${userId}",{Module}="${module}")`
-    const url = `https://api.airtable.com/v0/${BASE}/UserData?filterByFormula=${encodeURIComponent(filterFormula)}&maxRecords=500`
+    const rawRecords = await fetchAllRecords(userId, module)
 
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${TOKEN}` },
-    })
-
-    if (!res.ok) {
-      const err = await res.text()
-      throw new Error(`Airtable error ${res.status}: ${err}`)
-    }
-
-    const data = await res.json()
-    const records = (data.records || []).map((r: any) => {
+    const records = rawRecords.map((r: any) => {
       try {
         const parsed = JSON.parse(r.fields?.['Record Data'] || '{}')
         const { _meta, ...displayData } = parsed
@@ -51,14 +69,19 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    const filtered = importId ? records.filter((r: any) => r.importId === importId) : records
+    // Filter by importId if requested
+    const filtered = importId
+      ? records.filter((r: any) => r.importId === importId)
+      : records
 
+    // Build column list preserving order of first appearance
     const allColumnsSet = new Set<string>()
     filtered.forEach((r: any) => {
       ;(r.originalHeaders || []).forEach((h: string) => allColumnsSet.add(h))
     })
-    const columns = Array.from(allColumnsSet)
+    const columns = Array.from(allColumnsSet).filter(c => c !== 'Source' && c !== '_meta')
 
+    // Build import batch summary
     const batchMap = new Map<string, any>()
     filtered.forEach((r: any) => {
       if (!batchMap.has(r.importId)) {
@@ -79,6 +102,7 @@ export async function GET(req: NextRequest) {
       importBatches: Array.from(batchMap.values()),
     })
   } catch (error: any) {
+    console.error('universal-data GET error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -90,6 +114,7 @@ export async function DELETE(req: NextRequest) {
   const userId = searchParams.get('userId')
   const module = searchParams.get('module')
 
+  // Delete single record
   if (recordId) {
     try {
       const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData/${recordId}`, {
@@ -102,15 +127,11 @@ export async function DELETE(req: NextRequest) {
     }
   }
 
+  // Delete entire import batch
   if (importId && userId && module) {
     try {
-      const filterFormula = `AND({User ID}="${userId}",{Module}="${module}")`
-      const res = await fetch(
-        `https://api.airtable.com/v0/${BASE}/UserData?filterByFormula=${encodeURIComponent(filterFormula)}&maxRecords=500`,
-        { headers: { Authorization: `Bearer ${TOKEN}` } }
-      )
-      const data = await res.json()
-      const toDelete = (data.records || []).filter((r: any) => {
+      const all = await fetchAllRecords(userId, module)
+      const toDelete = all.filter((r: any) => {
         try {
           const p = JSON.parse(r.fields?.['Record Data'] || '{}')
           return p._meta?.importId === importId
