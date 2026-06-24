@@ -1,9 +1,9 @@
 import React from 'react'
 import Link from 'next/link'
 import {
-  Users, FileText, Package, UserCheck,
-  FolderOpen, BarChart3, Brain, Globe,
-  Zap, Shield, ArrowRight, Check,
+  Users, FileText, Package, UserCheck, FolderOpen,
+  BarChart3, Brain, Globe, Zap, Shield, ArrowRight,
+  Check, FileCheck, RefreshCw, UserPlus, TrendingUp
 } from 'lucide-react'
 
 const MODULES = [
@@ -12,14 +12,33 @@ const MODULES = [
     title: 'CRM with AI Lead Scoring',
     color: '#8B5CF6',
     bg: '#EDE9FE',
+    badge: null,
     desc: 'Manage your entire sales pipeline with AI-powered lead scoring, follow-up reminders, and status tracking.',
     features: [
       'AI lead scoring 0–100',
       'Pipeline stages — New, Contacted, Converted, Lost',
-      'Follow-up date reminders',
+      'Follow-up date reminders with alerts',
       'Import leads from any CSV format',
       'Export to CSV anytime',
       'Business type categorization',
+      'Search and filter by any field',
+    ],
+  },
+  {
+    icon: FileCheck,
+    title: 'Sales Quotations',
+    color: '#34D399',
+    bg: '#D1FAE5',
+    badge: '🆕 New',
+    desc: 'Build professional sales quotes in seconds. Download as PDF and convert to invoice in one click.',
+    features: [
+      'Professional quote builder',
+      'Line items with quantity and price',
+      'Automatic tax calculation',
+      'PDF download instantly',
+      'Convert quote to invoice in one click',
+      'Quote status tracking — Draft, Sent, Accepted, Rejected',
+      'Client email and phone stored',
     ],
   },
   {
@@ -27,6 +46,7 @@ const MODULES = [
     title: 'Universal Tax Invoicing',
     color: '#F472B6',
     bg: '#FCE7F3',
+    badge: null,
     desc: 'Create professional invoices with automatic tax calculation for any country in one click.',
     features: [
       'GST for India (0%, 5%, 12%, 18%, 28%)',
@@ -34,9 +54,25 @@ const MODULES = [
       'HST/GST for Canada',
       'Sales Tax for USA',
       'GST for Australia, New Zealand, Singapore',
-      'WhatsApp invoice sending',
+      'WhatsApp invoice sending built in',
       'Mark paid / unpaid / overdue',
-      'Export all invoices to CSV',
+    ],
+  },
+  {
+    icon: RefreshCw,
+    title: 'Recurring Invoices',
+    color: '#FBBF24',
+    bg: '#FEF3C7',
+    badge: '🆕 New',
+    desc: 'Set up automatic recurring invoices for your retainer clients. Never miss a billing cycle again.',
+    features: [
+      'Weekly, monthly, and yearly recurring schedules',
+      'Auto-invoice generation on schedule',
+      'Client notification on each invoice',
+      'Pause or cancel recurring at any time',
+      'Full history of all recurring invoices',
+      'Same tax system support as regular invoices',
+      'Dashboard shows upcoming recurring invoices',
     ],
   },
   {
@@ -44,6 +80,7 @@ const MODULES = [
     title: 'Inventory + Free QR Codes',
     color: '#FBBF24',
     bg: '#FEF3C7',
+    badge: null,
     desc: 'Track your stock with automatic QR code generation, low stock alerts, and reorder management.',
     features: [
       'Free auto-generated QR codes for every product',
@@ -51,7 +88,7 @@ const MODULES = [
       'Low stock alerts and reorder levels',
       'Category management',
       'SKU tracking',
-      'Import products from CSV',
+      'Import products from any CSV',
       'Export inventory to CSV',
     ],
   },
@@ -60,6 +97,7 @@ const MODULES = [
     title: 'HR & Payroll',
     color: '#34D399',
     bg: '#D1FAE5',
+    badge: null,
     desc: 'Manage your entire team — salaries, departments, joining dates, leave balance, and more.',
     features: [
       'Employee profiles with roles and departments',
@@ -67,15 +105,33 @@ const MODULES = [
       'Total payroll calculation',
       'Leave balance tracking',
       'Joining date management',
-      'Import team from CSV',
+      'Import team from any CSV',
       'Export HR data anytime',
+    ],
+  },
+  {
+    icon: UserPlus,
+    title: 'Recruiting Tracker',
+    color: '#8B5CF6',
+    bg: '#EDE9FE',
+    badge: '🆕 New',
+    desc: 'Track job candidates through every stage of your hiring pipeline from Applied to Hired.',
+    features: [
+      'Kanban stages — Applied, Screening, Interview, Offer, Hired',
+      'Candidate profile with resume link',
+      'Role and department tracking',
+      'Interview date scheduling',
+      'Move candidates between stages with one click',
+      'Import candidates from any CSV',
+      'Export recruiting data anytime',
     ],
   },
   {
     icon: FolderOpen,
     title: 'Project Management Kanban',
-    color: '#8B5CF6',
-    bg: '#EDE9FE',
+    color: '#F472B6',
+    bg: '#FCE7F3',
+    badge: null,
     desc: 'Track all your client projects on a visual Kanban board with deadlines and progress.',
     features: [
       '4-column Kanban — Planning, In Progress, Review, Done',
@@ -83,14 +139,32 @@ const MODULES = [
       'Progress percentage tracking',
       'One-click status moves between columns',
       'Project start date and deadline',
-      'Create and delete projects instantly',
+      'Client assignment per project',
     ],
   },
   {
     icon: BarChart3,
-    title: 'Tax Reports & Analytics',
-    color: '#F472B6',
-    bg: '#FCE7F3',
+    title: 'BI Dashboard + Charts',
+    color: '#8B5CF6',
+    bg: '#EDE9FE',
+    badge: '🆕 New',
+    desc: 'Live business intelligence charts across all modules. Revenue trends, pipeline health, payroll overview.',
+    features: [
+      'Revenue trend line chart by month',
+      'Lead pipeline bar chart by status',
+      'Invoice status pie chart — Paid vs Unpaid vs Overdue',
+      'Inventory stock level bar chart',
+      'Payroll breakdown by department',
+      'Project completion rate chart',
+      'Reads live data from all modules',
+    ],
+  },
+  {
+    icon: TrendingUp,
+    title: 'GST Reports & Analytics',
+    color: '#34D399',
+    bg: '#D1FAE5',
+    badge: null,
     desc: 'Generate GSTR-1 compatible reports, monthly tax breakdowns, and revenue analytics.',
     features: [
       'GSTR-1 format tax reports',
@@ -106,10 +180,10 @@ const MODULES = [
     title: 'AI Business Intelligence',
     color: '#FBBF24',
     bg: '#FEF3C7',
+    badge: 'Complete plan',
     desc: 'Ask your AI assistant anything about your business. It reads your live data and gives real answers.',
-    badge: 'Complete plan only',
     features: [
-      'Reads your live Airtable data in real-time',
+      'Reads your live data in real-time',
       'Analyzes leads, invoices, inventory, HR, projects',
       'Gives specific answers using your actual numbers',
       'Quick question buttons for common queries',
@@ -120,16 +194,18 @@ const MODULES = [
   {
     icon: Globe,
     title: 'Import Any CSV Format',
-    color: '#34D399',
-    bg: '#D1FAE5',
+    color: '#F472B6',
+    bg: '#FCE7F3',
+    badge: null,
     desc: 'Migrate from any existing ERP or spreadsheet without renaming a single column.',
     features: [
       'Accepts any CSV column naming convention',
-      'Smart AI mapping of your columns to our fields',
-      'Preview before importing',
-      'Batch import hundreds of records',
-      'Source tracking — know where data came from',
+      'Every column preserved exactly as-is',
+      'Every row imported — zero loss',
+      'No field mapping required',
       'Works with exports from any business software',
+      'Source tracking — know where data came from',
+      'Batch import hundreds of records',
     ],
   },
 ]
@@ -151,9 +227,9 @@ export default function Features() {
           </Link>
           <div className="hidden md:flex items-center gap-6">
             <Link href="/features" className="text-sm font-medium" style={{ color: '#8B5CF6' }}>Features</Link>
-            <Link href="/pricing" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Pricing</Link>
-            <Link href="/about" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>About</Link>
-            <Link href="/contact" className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>Contact</Link>
+            {[['Pricing', '/pricing'], ['About', '/about'], ['Contact', '/contact']].map(([l, h]) => (
+              <Link key={h} href={h} className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>{l}</Link>
+            ))}
           </div>
           <Link href="/signup" className="candy-btn px-4 py-2 text-sm">Start Trial</Link>
         </div>
@@ -164,7 +240,7 @@ export default function Features() {
         <div className="max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-semibold"
             style={{ background: '#EDE9FE', border: '2px solid #8B5CF6', color: '#8B5CF6' }}>
-            <Zap size={14} /> 8 powerful modules in one platform
+            <Zap size={14} /> 12 powerful modules — 4 just added
           </div>
           <h1 className="text-5xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
             Everything your business
@@ -172,8 +248,37 @@ export default function Features() {
             <span style={{ color: '#8B5CF6' }}>needs to grow</span>
           </h1>
           <p className="text-lg" style={{ color: '#64748B' }}>
-            Six ERP modules plus AI intelligence and universal data import. All in one workspace. Set up in 5 minutes.
+            CRM, Quotations, Invoicing, Recurring Billing, Inventory, HR, Recruiting, Projects, BI Charts, AI Intelligence, Reports, and Universal Import. All in one adaptive workspace.
           </p>
+        </div>
+      </section>
+
+      {/* NEW FEATURES HIGHLIGHT */}
+      <section className="px-6 pb-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="p-6 rounded-2xl mb-10"
+            style={{ background: '#0F172A', border: '2px solid #334155' }}>
+            <p className="text-sm font-black mb-4" style={{ color: '#8B5CF6' }}>🆕 JUST ADDED</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { icon: FileCheck, title: 'Sales Quotations', desc: 'Quote builder + PDF + convert to invoice', color: '#34D399' },
+                { icon: BarChart3, title: 'BI Dashboard', desc: 'Live charts across all modules', color: '#8B5CF6' },
+                { icon: RefreshCw, title: 'Recurring Invoices', desc: 'Auto-invoice on any schedule', color: '#F472B6' },
+                { icon: UserPlus, title: 'Recruiting Tracker', desc: 'Applied → Hired pipeline', color: '#FBBF24' },
+              ].map(f => (
+                <div key={f.title} className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: `${f.color}20`, border: `1.5px solid ${f.color}` }}>
+                    <f.icon size={16} style={{ color: f.color }} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-white text-sm" style={{ fontFamily: 'Outfit' }}>{f.title}</p>
+                    <p className="text-xs" style={{ color: '#64748B' }}>{f.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -185,8 +290,6 @@ export default function Features() {
               className="rounded-2xl overflow-hidden"
               style={{ border: '2px solid #E2E8F0', background: 'white', boxShadow: '6px 6px 0px #F1F5F9' }}>
               <div className="grid grid-cols-1 md:grid-cols-2">
-
-                {/* Left */}
                 <div className="p-8">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center"
@@ -195,7 +298,10 @@ export default function Features() {
                     </div>
                     {mod.badge && (
                       <span className="px-3 py-1 rounded-full text-xs font-bold"
-                        style={{ background: '#FEF3C7', color: '#92400E' }}>
+                        style={{
+                          background: mod.badge === '🆕 New' ? '#D1FAE5' : '#FEF3C7',
+                          color: mod.badge === '🆕 New' ? '#065F46' : '#92400E',
+                        }}>
                         {mod.badge}
                       </span>
                     )}
@@ -210,8 +316,6 @@ export default function Features() {
                     Try it free <ArrowRight size={16} />
                   </Link>
                 </div>
-
-                {/* Right */}
                 <div className="p-8 border-t md:border-t-0 md:border-l border-gray-100">
                   <p className="text-xs font-bold uppercase tracking-wide mb-4" style={{ color: '#94A3B8' }}>
                     What is included
@@ -235,10 +339,10 @@ export default function Features() {
       <section className="px-6 py-16" style={{ background: '#F8FAFC' }}>
         <div className="max-w-4xl mx-auto text-center">
           <Shield size={40} className="mx-auto mb-4" style={{ color: '#8B5CF6' }} />
-          <h2 className="text-3xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+          <h2 className="text-3xl font-black mb-8" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
             Enterprise-grade security
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { label: 'SSL Encrypted', desc: 'All data in transit' },
               { label: 'Supabase Auth', desc: 'Enterprise authentication' },
@@ -255,19 +359,38 @@ export default function Features() {
         </div>
       </section>
 
-      {/* CTA — Start Trial only, no Live Demo */}
+      {/* CTA */}
       <section className="px-6 py-20 text-center" style={{ background: '#1E293B' }}>
         <h2 className="text-4xl font-black text-white mb-6" style={{ fontFamily: 'Outfit' }}>
           Ready to see it in action?
         </h2>
         <p className="text-lg mb-8" style={{ color: '#94A3B8' }}>
-          Set up your ERP in 5 minutes. No configuration. No consultants.
+          Set up your ERP in 5 minutes. No configuration. No consultants. No field mapping.
         </p>
         <Link href="/signup" className="candy-btn px-10 py-5 text-xl inline-flex items-center gap-2">
           Start Trial <ArrowRight size={20} />
         </Link>
       </section>
 
+      <style jsx global>{`
+        .candy-btn {
+          background: #8B5CF6;
+          color: white;
+          border: 2px solid #1E293B;
+          box-shadow: 4px 4px 0px #1E293B;
+          border-radius: 9999px;
+          font-weight: 800;
+          font-family: 'Outfit', sans-serif;
+          transition: all 0.15s;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .candy-btn:hover {
+          transform: translate(-2px, -2px);
+          box-shadow: 6px 6px 0px #1E293B;
+        }
+      `}</style>
     </div>
   )
 }
