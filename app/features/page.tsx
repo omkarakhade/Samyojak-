@@ -1,3 +1,4 @@
+'use client'
 import React from 'react'
 import Link from 'next/link'
 import {
@@ -37,7 +38,7 @@ const MODULES = [
       'Automatic tax calculation',
       'PDF download instantly',
       'Convert quote to invoice in one click',
-      'Quote status tracking — Draft, Sent, Accepted, Rejected',
+      'Quote status — Draft, Sent, Accepted, Rejected',
       'Client email and phone stored',
     ],
   },
@@ -121,7 +122,7 @@ const MODULES = [
       'Candidate profile with resume link',
       'Role and department tracking',
       'Interview date scheduling',
-      'Move candidates between stages with one click',
+      'Move candidates between stages',
       'Import candidates from any CSV',
       'Export recruiting data anytime',
     ],
@@ -152,7 +153,7 @@ const MODULES = [
     features: [
       'Revenue trend line chart by month',
       'Lead pipeline bar chart by status',
-      'Invoice status pie chart — Paid vs Unpaid vs Overdue',
+      'Invoice status pie chart',
       'Inventory stock level bar chart',
       'Payroll breakdown by department',
       'Project completion rate chart',
@@ -161,18 +162,18 @@ const MODULES = [
   },
   {
     icon: TrendingUp,
-    title: 'GST Reports & Analytics',
+    title: 'Reports & Analytics',
     color: '#34D399',
     bg: '#D1FAE5',
     badge: null,
-    desc: 'Generate GSTR-1 compatible reports, monthly tax breakdowns, and revenue analytics.',
+    desc: 'Generate tax reports, monthly breakdowns, and revenue analytics across all modules.',
     features: [
-      'GSTR-1 format tax reports',
+      'GST / VAT / HST tax reports',
       'Monthly revenue summaries',
-      'Tax collected by rate (5%, 12%, 18%, 28%)',
+      'Tax collected by rate breakdown',
       'Paid vs unpaid vs overdue breakdown',
-      'Collection rate by month',
-      'Export reports to CSV',
+      'HR and payroll reports',
+      'Export all reports to CSV',
     ],
   },
   {
@@ -203,7 +204,7 @@ const MODULES = [
       'Every column preserved exactly as-is',
       'Every row imported — zero loss',
       'No field mapping required',
-      'Works with exports from any business software',
+      'Works with exports from any software',
       'Source tracking — know where data came from',
       'Batch import hundreds of records',
     ],
@@ -228,10 +229,16 @@ export default function Features() {
           <div className="hidden md:flex items-center gap-6">
             <Link href="/features" className="text-sm font-medium" style={{ color: '#8B5CF6' }}>Features</Link>
             {[['Pricing', '/pricing'], ['About', '/about'], ['Contact', '/contact']].map(([l, h]) => (
-              <Link key={h} href={h} className="text-sm font-medium hover:text-violet-600 transition-colors" style={{ color: '#64748B' }}>{l}</Link>
+              <Link key={h} href={h}
+                className="text-sm font-medium hover:text-violet-600 transition-colors"
+                style={{ color: '#64748B' }}>{l}</Link>
             ))}
           </div>
-          <Link href="/signup" className="candy-btn px-4 py-2 text-sm">Start Trial</Link>
+          <Link href="/signup"
+            className="px-5 py-2 rounded-full text-sm font-black text-white transition-all hover:opacity-90"
+            style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+            Start Trial
+          </Link>
         </div>
       </nav>
 
@@ -264,7 +271,7 @@ export default function Features() {
                 { icon: FileCheck, title: 'Sales Quotations', desc: 'Quote builder + PDF + convert to invoice', color: '#34D399' },
                 { icon: BarChart3, title: 'BI Dashboard', desc: 'Live charts across all modules', color: '#8B5CF6' },
                 { icon: RefreshCw, title: 'Recurring Invoices', desc: 'Auto-invoice on any schedule', color: '#F472B6' },
-                { icon: UserPlus, title: 'Recruiting Tracker', desc: 'Applied → Hired pipeline', color: '#FBBF24' },
+                { icon: UserPlus, title: 'Recruiting Tracker', desc: 'Applied to Hired pipeline', color: '#FBBF24' },
               ].map(f => (
                 <div key={f.title} className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -311,7 +318,7 @@ export default function Features() {
                   </h2>
                   <p className="mb-4" style={{ color: '#64748B' }}>{mod.desc}</p>
                   <Link href="/signup"
-                    className="inline-flex items-center gap-2 text-sm font-bold"
+                    className="inline-flex items-center gap-2 text-sm font-bold hover:opacity-80 transition-opacity"
                     style={{ color: mod.color }}>
                     Try it free <ArrowRight size={16} />
                   </Link>
@@ -351,7 +358,9 @@ export default function Features() {
             ].map(s => (
               <div key={s.label} className="p-4 rounded-2xl"
                 style={{ background: 'white', border: '2px solid #E2E8F0' }}>
-                <p className="font-bold text-sm mb-1" style={{ color: '#1E293B', fontFamily: 'Outfit' }}>✅ {s.label}</p>
+                <p className="font-bold text-sm mb-1" style={{ color: '#1E293B', fontFamily: 'Outfit' }}>
+                  ✅ {s.label}
+                </p>
                 <p className="text-xs" style={{ color: '#64748B' }}>{s.desc}</p>
               </div>
             ))}
@@ -367,30 +376,13 @@ export default function Features() {
         <p className="text-lg mb-8" style={{ color: '#94A3B8' }}>
           Set up your ERP in 5 minutes. No configuration. No consultants. No field mapping.
         </p>
-        <Link href="/signup" className="candy-btn px-10 py-5 text-xl inline-flex items-center gap-2">
+        <Link href="/signup"
+          className="px-10 py-5 text-xl rounded-full font-black text-white inline-flex items-center gap-2 hover:opacity-90 transition-opacity"
+          style={{ background: '#8B5CF6', border: '2px solid white', boxShadow: '4px 4px 0px rgba(255,255,255,0.3)' }}>
           Start Trial <ArrowRight size={20} />
         </Link>
       </section>
 
-      <style jsx global>{`
-        .candy-btn {
-          background: #8B5CF6;
-          color: white;
-          border: 2px solid #1E293B;
-          box-shadow: 4px 4px 0px #1E293B;
-          border-radius: 9999px;
-          font-weight: 800;
-          font-family: 'Outfit', sans-serif;
-          transition: all 0.15s;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .candy-btn:hover {
-          transform: translate(-2px, -2px);
-          box-shadow: 6px 6px 0px #1E293B;
-        }
-      `}</style>
     </div>
   )
 }
