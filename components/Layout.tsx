@@ -1,159 +1,277 @@
 'use client'
-import { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { getPlanFromMetadata } from '@/lib/planAccess'
 import {
-  LayoutDashboard, Users, FileText, Package,
-  UserCheck, FolderOpen, Settings, BarChart3,
-  LogOut, Menu, X, Moon, Sun, Bell, Gift, HelpCircle,
+  LayoutDashboard, Users, FileText, Package, UserCheck,
+  FolderOpen, BarChart3, Brain, Settings, LogOut,
+  ChevronLeft, ChevronRight, Menu, X, FileCheck,
+  RefreshCw, UserPlus, TrendingUp, Ticket, Bug
 } from 'lucide-react'
-import GlobalSearch from './GlobalSearch'
-import QuickAdd from './QuickAdd'
-import AIAssistant from './AIAssistant'
 
-const nav = [
-  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/crm', icon: Users, label: 'CRM' },
-  { path: '/invoices', icon: FileText, label: 'Invoices' },
-  { path: '/inventory', icon: Package, label: 'Inventory' },
-  { path: '/hr', icon: UserCheck, label: 'HR' },
-  { path: '/projects', icon: FolderOpen, label: 'Projects' },
-  { path: '/reports', icon: BarChart3, label: 'GST Reports' },
-  { path: '/referral', icon: Gift, label: 'Earn Commission' },
-  { path: '/support', icon: HelpCircle, label: 'Support' },
-  { path: '/settings', icon: Settings, label: 'Settings' },
+const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
+
+const NAV_SECTIONS = [
+  {
+    label: 'Main',
+    items: [
+      { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+      { href: '/bi', icon: BarChart3, label: 'BI Dashboard', badge: '🆕' },
+    ],
+  },
+  {
+    label: 'Sales',
+    items: [
+      { href: '/crm', icon: Users, label: 'Leads & CRM' },
+      { href: '/quotations', icon: FileCheck, label: 'Quotations', badge: '🆕' },
+      { href: '/invoices', icon: FileText, label: 'Invoices' },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { href: '/inventory', icon: Package, label: 'Inventory' },
+      { href: '/projects', icon: FolderOpen, label: 'Projects' },
+    ],
+  },
+  {
+    label: 'People',
+    items: [
+      { href: '/hr', icon: UserCheck, label: 'HR & Payroll' },
+      { href: '/recruiting', icon: UserPlus, label: 'Recruiting', badge: '🆕' },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
+      { href: '/reports', icon: TrendingUp, label: 'Reports' },
+      { href: '/ai', icon: Brain, label: 'AI Assistant', planRequired: 'Complete' },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { href: '/support', icon: Ticket, label: 'Support' },
+      { href: '/settings', icon: Settings, label: 'Settings' },
+      { href: '/debug', icon: Bug, label: 'Debug', adminOnly: true },
+    ],
+  },
 ]
 
+const PLAN_COLORS: Record<string, string> = {
+  'No Plan': '#94A3B8',
+  'CRM Starter': '#8B5CF6',
+  'ERP Basic': '#F472B6',
+  'Business': '#34D399',
+  'Complete': '#FBBF24',
+}
+
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(true)
-  const [dark, setDark] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [plan, setPlan] = useState('No Plan')
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
 
-  const toggleDark = () => {
-    setDark(!dark)
-    document.documentElement.classList.toggle('dark')
-    localStorage.setItem('darkMode', String(!dark))
-  }
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { router.push('/login'); return }
+      setUser(user)
+      setPlan(getPlanFromMetadata(user) || 'No Plan')
+      setIsAdmin(user.email === ADMIN_EMAIL)
+    })
+  }, [router])
 
-  const logout = async () => {
+  const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push('/')
   }
 
+  const canAccess = (item: any) => {
+    if (item.adminOnly) return isAdmin
+    return true
+  }
+
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-4 py-5 border-b dark:border-white/10 border-gray-100">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-base flex-shrink-0"
+          style={{ background: '#8B5CF6', border: '2px solid rgba(139,92,246,0.3)', boxShadow: '2px 2px 0px rgba(0,0,0,0.3)' }}>
+          S
+        </div>
+        {!collapsed && (
+          <div>
+            <span className="font-black text-base text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+              Samyojak
+            </span>
+            <div className="flex items-center gap-1 mt-0.5">
+              <span className="text-xs font-bold px-1.5 py-0.5 rounded-full"
+                style={{
+                  background: `${PLAN_COLORS[plan]}20`,
+                  color: PLAN_COLORS[plan],
+                  border: `1px solid ${PLAN_COLORS[plan]}40`,
+                }}>
+                {plan}
+              </span>
+              {isAdmin && (
+                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full"
+                  style={{ background: '#FEE2E2', color: '#DC2626' }}>
+                  Admin
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Nav sections */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+        {NAV_SECTIONS.map(section => {
+          const visibleItems = section.items.filter(item => canAccess(item))
+          if (visibleItems.length === 0) return null
+          return (
+            <div key={section.label}>
+              {!collapsed && (
+                <p className="text-xs font-bold uppercase tracking-widest mb-2 px-2"
+                  style={{ color: '#94A3B8' }}>
+                  {section.label}
+                </p>
+              )}
+              <div className="space-y-0.5">
+                {visibleItems.map(item => {
+                  const active = pathname === item.href
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative"
+                      style={{
+                        background: active ? '#8B5CF6' : 'transparent',
+                        color: active ? 'white' : '#64748B',
+                      }}
+                      title={collapsed ? item.label : ''}>
+                      <item.icon
+                        size={18}
+                        className="flex-shrink-0 transition-colors"
+                        style={{ color: active ? 'white' : '#94A3B8' }} />
+                      {!collapsed && (
+                        <>
+                          <span className="text-sm font-semibold flex-1"
+                            style={{ color: active ? 'white' : '#374151', fontFamily: 'Plus Jakarta Sans' }}>
+                            {item.label}
+                          </span>
+                          {item.badge && (
+                            <span className="text-xs font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
+                              style={{ background: '#D1FAE5', color: '#065F46', fontSize: '10px' }}>
+                              {item.badge}
+                            </span>
+                          )}
+                        </>
+                      )}
+                      {/* Tooltip when collapsed */}
+                      {collapsed && (
+                        <div className="absolute left-full ml-2 px-2 py-1 rounded-lg text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50"
+                          style={{ background: '#1E293B', color: 'white' }}>
+                          {item.label}
+                        </div>
+                      )}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </nav>
+
+      {/* User + signout */}
+      <div className="border-t dark:border-white/10 border-gray-100 px-3 py-4 space-y-1">
+        {!collapsed && user && (
+          <div className="px-3 py-2 mb-2">
+            <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{user.user_metadata?.full_name || user.email}</p>
+            <p className="text-xs text-gray-400 truncate">{user.email}</p>
+          </div>
+        )}
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full transition-all hover:bg-red-50 dark:hover:bg-red-900/20 group">
+          <LogOut size={18} className="text-gray-400 group-hover:text-red-500 flex-shrink-0" />
+          {!collapsed && (
+            <span className="text-sm font-semibold text-gray-500 group-hover:text-red-500">
+              Sign Out
+            </span>
+          )}
+        </button>
+      </div>
+    </div>
+  )
+
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-[#0A1628] overflow-hidden">
 
-      {/* Sidebar */}
-      <aside className={`${open ? 'w-64' : 'w-16'} transition-all duration-300 bg-[#0A1628] flex-col hidden md:flex flex-shrink-0`}>
-        <div className="p-4 flex items-center justify-between border-b border-white/10">
-          {open && (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#8B5CF6' }}>
-                <span className="text-white font-black text-sm">S</span>
-              </div>
-              <span className="text-white font-black text-lg" style={{ fontFamily: 'Outfit' }}>Samyojak</span>
-            </div>
-          )}
-          <button onClick={() => setOpen(!open)} className="text-white/60 hover:text-white transition-colors">
-            {open ? <X size={20} /> : <Menu size={20} />}
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setMobileOpen(false)} />
+      )}
+
+      {/* Mobile sidebar */}
+      <div className={`fixed inset-y-0 left-0 z-40 w-64 md:hidden transition-transform duration-300 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        style={{ background: 'white' }}>
+        <SidebarContent />
+      </div>
+
+      {/* Desktop sidebar */}
+      <div
+        className={`hidden md:flex flex-col border-r border-gray-100 dark:border-white/10 transition-all duration-300 flex-shrink-0 relative`}
+        style={{
+          width: collapsed ? '64px' : '220px',
+          background: 'white',
+        }}>
+        <SidebarContent />
+        {/* Collapse toggle */}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="absolute -right-3 top-20 w-6 h-6 rounded-full flex items-center justify-center border-2 z-10"
+          style={{ background: 'white', borderColor: '#E2E8F0' }}>
+          {collapsed
+            ? <ChevronRight size={12} className="text-gray-400" />
+            : <ChevronLeft size={12} className="text-gray-400" />}
+        </button>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-[#1a2740] flex-shrink-0">
+          <button onClick={() => setMobileOpen(true)}
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+            <Menu size={20} className="text-gray-600 dark:text-gray-300" />
           </button>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-sm"
+              style={{ background: '#8B5CF6' }}>S</div>
+            <span className="font-black text-base text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+              Samyojak
+            </span>
+          </div>
+          <span className="ml-auto text-xs font-bold px-2 py-1 rounded-full"
+            style={{ background: `${PLAN_COLORS[plan]}20`, color: PLAN_COLORS[plan] }}>
+            {plan}
+          </span>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {nav.map(({ path, icon: Icon, label }) => (
-            <Link
-              key={path}
-              href={path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                pathname === path
-                  ? 'bg-violet-600 text-white'
-                  : 'text-white/60 hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              <Icon size={20} className="flex-shrink-0" />
-              {open && (
-                <span className="text-sm font-medium flex items-center gap-2 truncate">
-                  {label}
-                  {label === 'Earn Commission' && (
-                    <span className="text-xs px-1.5 py-0.5 rounded-full font-black flex-shrink-0"
-                      style={{ background: '#FBBF24', color: '#1E293B' }}>
-                      30%
-                    </span>
-                  )}
-                </span>
-              )}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-white/10 space-y-2">
-          {open && (
-            <div className="px-3 py-2 rounded-xl mb-1"
-              style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)' }}>
-              <p className="text-xs text-violet-300 font-medium">Powered by</p>
-              <p className="text-xs font-black text-white">▲ Vercel</p>
-            </div>
-          )}
-          <button
-            onClick={logout}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/60 hover:bg-white/10 hover:text-white transition-colors w-full"
-          >
-            <LogOut size={20} className="flex-shrink-0" />
-            {open && <span className="text-sm">Logout</span>}
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {/* Header */}
-        <header className="bg-white dark:bg-[#1a2740] border-b border-gray-200 dark:border-white/10 px-4 py-3 flex items-center justify-between gap-3">
-          <h1 className="text-base font-semibold text-gray-800 dark:text-white hidden sm:block whitespace-nowrap"
-            style={{ fontFamily: 'Outfit' }}>
-            {nav.find(n => n.path === pathname)?.label || 'Samyojak'}
-          </h1>
-          <div className="flex-1">
-            <GlobalSearch />
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Link href="/support" className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10">
-              <Bell size={20} className="text-gray-600 dark:text-white/60" />
-            </Link>
-            <button onClick={toggleDark} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10">
-              {dark
-                ? <Sun size={20} className="text-white/60" />
-                : <Moon size={20} className="text-gray-600" />}
-            </button>
-          </div>
-        </header>
-
-        <main className="flex-1 overflow-auto p-4 md:p-6 pb-24 md:pb-6">
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {children}
         </main>
       </div>
-
-      {/* Mobile Bottom Nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#0A1628] md:hidden flex justify-around py-2 z-30 border-t border-white/10">
-        {nav.slice(0, 5).map(({ path, icon: Icon, label }) => (
-          <Link
-            key={path}
-            href={path}
-            className={`flex flex-col items-center gap-1 p-2 transition-colors ${
-              pathname === path ? 'text-violet-400' : 'text-white/40'
-            }`}
-          >
-            <Icon size={20} />
-            <span className="text-xs">{label.split(' ')[0]}</span>
-          </Link>
-        ))}
-      </div>
-
-      {/* AI Assistant — floating on all pages */}
-      <AIAssistant />
-
-      <QuickAdd />
     </div>
   )
 }
