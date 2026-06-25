@@ -2,10 +2,10 @@
 import React, { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import { supabase } from '@/lib/supabase'
-import { airtable } from '@/lib/airtable'
 import { useRouter } from 'next/navigation'
-import { Users, FileText, Package, UserCheck, FolderOpen, Brain, Send, Star, TrendingUp, Lock } from 'lucide-react'
+import { Users, FileText, Package, UserCheck, FolderOpen, Brain, Send, Star, TrendingUp, Lock, FileCheck, BarChart3, UserPlus } from 'lucide-react'
 import { getPlanFromMetadata } from '@/lib/planAccess'
+import OnboardingTour from '@/components/OnboardingTour'
 
 const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
 const AI_PLANS = ['Complete']
@@ -16,9 +16,10 @@ export default function Dashboard() {
   const [plan, setPlan] = useState<string>('No Plan')
   const [isAdmin, setIsAdmin] = useState(false)
   const [userId, setUserId] = useState('')
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const [stats, setStats] = useState({
     leads: 0, invoices: 0, products: 0,
-    employees: 0, projects: 0,
+    employees: 0, projects: 0, quotations: 0,
     convertedLeads: 0, paidInvoices: 0, overdueInvoices: 0,
     importedLeads: 0, importedInvoices: 0, importedProducts: 0,
   })
@@ -45,46 +46,59 @@ export default function Dashboard() {
     })
   }, [router])
 
+  // Check onboarding after user loads
+  useEffect(() => {
+    if (!user) return
+    const seen = localStorage.getItem('samyojak_onboarding_done')
+    if (!seen) setShowOnboarding(true)
+  }, [user])
+
   const loadStats = async (uid: string) => {
     try {
-      // Load from Airtable
-      const [l, i, p, e, pr] = await Promise.allSettled([
-        airtable.get('Leads'),
-        airtable.get('Invoices'),
-        airtable.get('Products'),
-        airtable.get('Employees'),
-        airtable.get('Projects'),
-      ])
-
-      const leads = l.status === 'fulfilled' ? l.value.records || [] : []
-      const invoices = i.status === 'fulfilled' ? i.value.records || [] : []
-      const products = p.status === 'fulfilled' ? p.value.records || [] : []
-      const employees = e.status === 'fulfilled' ? e.value.records || [] : []
-      const projects = pr.status === 'fulfilled' ? pr.value.records || [] : []
-
-      // Load from UserData (imported CSVs)
-      const [uCRM, uInv, uProd] = await Promise.allSettled([
+      const [crm, invoices, inventory, hr, projects, quotations] = await Promise.allSettled([
         fetch(`/api/universal-data?userId=${uid}&module=CRM`).then(r => r.json()),
         fetch(`/api/universal-data?userId=${uid}&module=Invoices`).then(r => r.json()),
         fetch(`/api/universal-data?userId=${uid}&module=Inventory`).then(r => r.json()),
+        fetch(`/api/universal-data?userId=${uid}&module=HR`).then(r => r.json()),
+        fetch(`/api/universal-data?userId=${uid}&module=Projects`).then(r => r.json()),
+        fetch(`/api/universal-data?userId=${uid}&module=Quotations`).then(r => r.json()),
       ])
 
-      const importedLeads = uCRM.status === 'fulfilled' ? (uCRM.value.total || 0) : 0
-      const importedInvoices = uInv.status === 'fulfilled' ? (uInv.value.total || 0) : 0
-      const importedProducts = uProd.status === 'fulfilled' ? (uProd.value.total || 0) : 0
+      const crmData = crm.status === 'fulfilled' ? crm.value : { records: [], total: 0 }
+      const invData = invoices.status === 'fulfilled' ? invoices.value : { records: [], total: 0 }
+      const prodData = inventory.status === 'fulfilled' ? inventory.value : { records: [], total: 0 }
+      const hrData = hr.status === 'fulfilled' ? hr.value : { records: [], total: 0 }
+      const projData = projects.status === 'fulfilled' ? projects.value : { records: [], total: 0 }
+      const quoteData = quotations.status === 'fulfilled' ? quotations.value : { records: [], total: 0 }
+
+      const allLeads = crmData.records || []
+      const allInvoices = invData.records || []
+
+      const converted = allLeads.filter((r: any) =>
+        (r.data?.Status || r.data?.status || '').toLowerCase().includes('convert')
+      ).length
+
+      const paid = allInvoices.filter((r: any) =>
+        (r.data?.['Payment Status'] || r.data?.status || '').toLowerCase() === 'paid'
+      ).length
+
+      const overdue = allInvoices.filter((r: any) =>
+        (r.data?.['Payment Status'] || r.data?.status || '').toLowerCase().includes('overdue')
+      ).length
 
       setStats({
-        leads: leads.length + importedLeads,
-        invoices: invoices.length + importedInvoices,
-        products: products.length + importedProducts,
-        employees: employees.length,
-        projects: projects.length,
-        convertedLeads: leads.filter((r: any) => r.fields?.Status === 'Converted').length,
-        paidInvoices: invoices.filter((r: any) => r.fields?.['Payment Status'] === 'Paid').length,
-        overdueInvoices: invoices.filter((r: any) => r.fields?.['Payment Status'] === 'Overdue').length,
-        importedLeads,
-        importedInvoices,
-        importedProducts,
+        leads: crmData.total || 0,
+        invoices: invData.total || 0,
+        products: prodData.total || 0,
+        employees: hrData.total || 0,
+        projects: projData.total || 0,
+        quotations: quoteData.total || 0,
+        convertedLeads: converted,
+        paidInvoices: paid,
+        overdueInvoices: overdue,
+        importedLeads: crmData.total || 0,
+        importedInvoices: invData.total || 0,
+        importedProducts: prodData.total || 0,
       })
     } catch (e) {
       console.error('Stats error:', e)
@@ -142,23 +156,34 @@ export default function Dashboard() {
   const planIndex = planOrder.indexOf(plan)
 
   const modules = [
-    { label: 'Leads', value: stats.leads, sub: `${stats.importedLeads} imported`, icon: Users, color: '#8B5CF6', bg: '#EDE9FE', path: '/crm' },
+    { label: 'Leads', value: stats.leads, sub: `${stats.convertedLeads} converted`, icon: Users, color: '#8B5CF6', bg: '#EDE9FE', path: '/crm' },
+    { label: 'Quotations', value: stats.quotations, sub: 'sales quotes', icon: FileCheck, color: '#34D399', bg: '#D1FAE5', path: '/quotations' },
     { label: 'Invoices', value: stats.invoices, sub: `${stats.paidInvoices} paid`, icon: FileText, color: '#F472B6', bg: '#FCE7F3', path: '/invoices' },
-    { label: 'Products', value: stats.products, sub: `${stats.importedProducts} imported`, icon: Package, color: '#FBBF24', bg: '#FEF3C7', path: '/inventory' },
+    { label: 'Products', value: stats.products, sub: 'in inventory', icon: Package, color: '#FBBF24', bg: '#FEF3C7', path: '/inventory' },
     { label: 'Employees', value: stats.employees, sub: 'team members', icon: UserCheck, color: '#34D399', bg: '#D1FAE5', path: '/hr' },
     { label: 'Projects', value: stats.projects, sub: 'being tracked', icon: FolderOpen, color: '#8B5CF6', bg: '#EDE9FE', path: '/projects' },
   ]
 
   const quickActions = [
     { label: 'Add Lead', path: '/crm', color: '#8B5CF6', bg: '#EDE9FE', emoji: '👥' },
+    { label: 'New Quote', path: '/quotations', color: '#34D399', bg: '#D1FAE5', emoji: '📋' },
     { label: 'Create Invoice', path: '/invoices', color: '#F472B6', bg: '#FCE7F3', emoji: '📄' },
     { label: 'Add Product', path: '/inventory', color: '#FBBF24', bg: '#FEF3C7', emoji: '📦' },
-    { label: 'New Project', path: '/projects', color: '#34D399', bg: '#D1FAE5', emoji: '🎯' },
+    { label: 'New Project', path: '/projects', color: '#8B5CF6', bg: '#EDE9FE', emoji: '🎯' },
+    { label: 'BI Dashboard', path: '/bi', color: '#F472B6', bg: '#FCE7F3', emoji: '📊' },
   ]
 
   return (
     <Layout>
       <div className="space-y-6">
+
+        {/* ONBOARDING TOUR — shows only on first visit */}
+        {showOnboarding && (
+          <OnboardingTour onDismiss={() => {
+            setShowOnboarding(false)
+            localStorage.setItem('samyojak_onboarding_done', '1')
+          }} />
+        )}
 
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -170,7 +195,7 @@ export default function Dashboard() {
               {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {isAdmin && (
               <span className="px-3 py-1.5 rounded-full text-xs font-black"
                 style={{ background: '#EF4444', color: 'white' }}>
@@ -185,6 +210,16 @@ export default function Dashboard() {
               'bg-gray-100 text-gray-600'}`}>
               {plan}
             </span>
+            {/* Restart onboarding button */}
+            <button
+              onClick={() => {
+                localStorage.removeItem('samyojak_onboarding_done')
+                setShowOnboarding(true)
+              }}
+              className="px-3 py-1.5 rounded-full text-xs font-bold hover:opacity-80 transition-opacity"
+              style={{ background: '#EDE9FE', color: '#8B5CF6' }}>
+              📖 Tour
+            </button>
           </div>
         </div>
 
@@ -199,8 +234,10 @@ export default function Dashboard() {
                   <Brain size={20} className="text-white" />
                 </div>
                 <div>
-                  <p className="font-black text-white" style={{ fontFamily: 'Outfit' }}>AI Business Intelligence</p>
-                  <p className="text-xs text-green-400">Reading your live data + imported CSV data</p>
+                  <p className="font-black text-white" style={{ fontFamily: 'Outfit' }}>
+                    AI Business Intelligence
+                  </p>
+                  <p className="text-xs text-green-400">Reading your live data in real-time</p>
                 </div>
                 <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
                   <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
@@ -217,7 +254,8 @@ export default function Dashboard() {
                   <span className="text-xs text-gray-500">Analyzing your data...</span>
                 </div>
               ) : aiGreeting ? (
-                <p className="text-sm leading-relaxed mb-4" style={{ color: '#C4B5FD', fontFamily: 'Plus Jakarta Sans' }}>
+                <p className="text-sm leading-relaxed mb-4"
+                  style={{ color: '#C4B5FD', fontFamily: 'Plus Jakarta Sans' }}>
                   {aiGreeting}
                 </p>
               ) : null}
@@ -243,9 +281,15 @@ export default function Dashboard() {
                   onKeyDown={e => e.key === 'Enter' && !e.shiftKey && askAI()}
                   placeholder="Ask AI about your business..."
                   className="flex-1 px-3 py-2 rounded-xl text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'white' }}
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: 'white',
+                  }}
                 />
-                <button onClick={askAI} disabled={aiChatLoading || !aiInput.trim()}
+                <button
+                  onClick={askAI}
+                  disabled={aiChatLoading || !aiInput.trim()}
                   className="px-4 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-40 flex-shrink-0"
                   style={{ background: '#8B5CF6' }}>
                   <Send size={16} />
@@ -253,11 +297,20 @@ export default function Dashboard() {
               </div>
 
               <div className="flex gap-2 flex-wrap">
-                {['How are my leads?', 'Any overdue invoices?', 'Low stock alerts?', 'What should I focus on?'].map(q => (
+                {[
+                  'How are my leads?',
+                  'Any overdue invoices?',
+                  'Low stock alerts?',
+                  'What should I focus on?',
+                ].map(q => (
                   <button key={q}
                     onClick={() => { setAiInput(q); setTimeout(askAI, 50) }}
                     className="px-2 py-1 rounded-full text-xs font-medium hover:opacity-80 transition-opacity"
-                    style={{ background: 'rgba(139,92,246,0.2)', color: '#C4B5FD', border: '1px solid rgba(139,92,246,0.3)' }}>
+                    style={{
+                      background: 'rgba(139,92,246,0.2)',
+                      color: '#C4B5FD',
+                      border: '1px solid rgba(139,92,246,0.3)',
+                    }}>
                     {q}
                   </button>
                 ))}
@@ -273,10 +326,14 @@ export default function Dashboard() {
                 <Lock size={22} style={{ color: '#8B5CF6' }} />
               </div>
               <div className="flex-1">
-                <p className="font-black text-white" style={{ fontFamily: 'Outfit' }}>AI Business Intelligence</p>
-                <p className="text-sm text-gray-500">Upgrade to Complete plan to unlock AI that reads your live data</p>
+                <p className="font-black text-white" style={{ fontFamily: 'Outfit' }}>
+                  AI Business Intelligence
+                </p>
+                <p className="text-sm text-gray-500">
+                  Upgrade to Complete plan to unlock AI that reads your live data
+                </p>
               </div>
-              <a href="/choose-plan"
+              <a href="/pricing"
                 className="px-4 py-2 rounded-xl text-sm font-bold flex-shrink-0 hover:opacity-90 transition-opacity"
                 style={{ background: '#8B5CF6', color: 'white' }}>
                 Upgrade
@@ -291,18 +348,20 @@ export default function Dashboard() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {modules.map(m => (
               <a key={m.label} href={m.path}
-                className="block bg-white dark:bg-[#1a2740] rounded-2xl p-5 hover:shadow-lg transition-all hover:-translate-y-0.5"
+                className="block bg-white dark:bg-[#1a2740] rounded-2xl p-4 hover:shadow-lg transition-all hover:-translate-y-0.5"
                 style={{ border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #E2E8F0' }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
                   style={{ background: m.bg, border: `2px solid ${m.color}` }}>
-                  <m.icon size={20} style={{ color: m.color }} />
+                  <m.icon size={18} style={{ color: m.color }} />
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold mb-1">{m.label}</p>
-                <p className="text-3xl font-black text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>{m.value}</p>
-                <p className="text-xs mt-1" style={{ color: m.color }}>{m.sub}</p>
+                <p className="text-2xl font-black text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+                  {m.value}
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: m.color }}>{m.sub}</p>
               </a>
             ))}
           </div>
@@ -319,23 +378,9 @@ export default function Dashboard() {
               </p>
               <p className="text-xs text-red-600">Follow up on payments to maintain cash flow</p>
             </div>
-            <a href="/invoices" className="ml-auto text-xs font-bold text-red-700 hover:underline">View →</a>
-          </div>
-        )}
-
-        {/* Import stats banner */}
-        {(stats.importedLeads > 0 || stats.importedInvoices > 0 || stats.importedProducts > 0) && (
-          <div className="p-4 rounded-xl flex items-center gap-3"
-            style={{ background: '#EDE9FE', border: '1.5px solid #8B5CF6' }}>
-            <span className="text-lg">📂</span>
-            <div>
-              <p className="text-sm font-bold text-violet-800">Imported data synced to dashboard</p>
-              <p className="text-xs text-violet-600">
-                {stats.importedLeads > 0 && `${stats.importedLeads} CRM rows · `}
-                {stats.importedInvoices > 0 && `${stats.importedInvoices} invoice rows · `}
-                {stats.importedProducts > 0 && `${stats.importedProducts} inventory rows`}
-              </p>
-            </div>
+            <a href="/invoices" className="ml-auto text-xs font-bold text-red-700 hover:underline">
+              View →
+            </a>
           </div>
         )}
 
@@ -352,7 +397,11 @@ export default function Dashboard() {
             <div className="flex items-center gap-1 mb-3 flex-wrap">
               {planOrder.map((p, i) => (
                 <div key={p} className="flex items-center gap-1">
-                  <div className={`px-2 py-1 rounded-full text-xs font-bold ${i <= planIndex ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
+                  <div className={`px-2 py-1 rounded-full text-xs font-bold ${
+                    i <= planIndex
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-gray-100 dark:bg-white/10 text-gray-400'
+                  }`}>
                     {p}
                   </div>
                   {i < planOrder.length - 1 && (
@@ -362,44 +411,66 @@ export default function Dashboard() {
               ))}
             </div>
             <p className="text-xs text-gray-400">
-              Upgrade to <strong style={{ color: '#8B5CF6' }}>{planOrder[planIndex + 1] || 'Complete'}</strong> to unlock AI assistant and more modules
+              Upgrade to{' '}
+              <strong style={{ color: '#8B5CF6' }}>
+                {planOrder[planIndex + 1] || 'Complete'}
+              </strong>{' '}
+              to unlock AI assistant and more modules
             </p>
           </div>
         )}
-
-        {/* Quick Actions */}
-        <div>
-          <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Quick Actions</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {quickActions.map(a => (
-              <a key={a.label} href={a.path}
-                className="block p-4 rounded-2xl text-center hover:shadow-md transition-all hover:-translate-y-0.5"
-                style={{ background: a.bg, border: `2px solid ${a.color}` }}>
-                <span className="text-2xl block mb-1">{a.emoji}</span>
-                <span className="text-sm font-bold" style={{ color: a.color, fontFamily: 'Outfit' }}>{a.label}</span>
-              </a>
-            ))}
-          </div>
-        </div>
 
         {/* Business Snapshot */}
         <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-5"
           style={{ border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #E2E8F0' }}>
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp size={18} style={{ color: '#34D399' }} />
-            <h3 className="font-bold text-gray-900 dark:text-white text-sm" style={{ fontFamily: 'Outfit' }}>Business Snapshot</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white text-sm" style={{ fontFamily: 'Outfit' }}>
+              Business Snapshot
+            </h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Conversion Rate', value: stats.leads > 0 ? `${Math.round((stats.convertedLeads / stats.leads) * 100)}%` : '0%', color: '#8B5CF6' },
+              {
+                label: 'Conversion Rate',
+                value: stats.leads > 0
+                  ? `${Math.round((stats.convertedLeads / stats.leads) * 100)}%`
+                  : '0%',
+                color: '#8B5CF6',
+              },
               { label: 'Paid Invoices', value: `${stats.paidInvoices}/${stats.invoices}`, color: '#34D399' },
-              { label: 'Overdue', value: stats.overdueInvoices, color: stats.overdueInvoices > 0 ? '#EF4444' : '#34D399' },
+              {
+                label: 'Overdue',
+                value: stats.overdueInvoices,
+                color: stats.overdueInvoices > 0 ? '#EF4444' : '#34D399',
+              },
               { label: 'Team Size', value: stats.employees, color: '#FBBF24' },
             ].map(s => (
               <div key={s.label} className="text-center">
-                <p className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: s.color }}>{s.value}</p>
+                <p className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: s.color }}>
+                  {s.value}
+                </p>
                 <p className="text-xs text-gray-500 mt-1">{s.label}</p>
               </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div>
+          <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+            Quick Actions
+          </h3>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            {quickActions.map(a => (
+              <a key={a.label} href={a.path}
+                className="block p-3 rounded-2xl text-center hover:shadow-md transition-all hover:-translate-y-0.5"
+                style={{ background: a.bg, border: `2px solid ${a.color}` }}>
+                <span className="text-xl block mb-1">{a.emoji}</span>
+                <span className="text-xs font-bold" style={{ color: a.color, fontFamily: 'Outfit' }}>
+                  {a.label}
+                </span>
+              </a>
             ))}
           </div>
         </div>
