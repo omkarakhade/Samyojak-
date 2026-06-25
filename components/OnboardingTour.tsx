@@ -1,120 +1,226 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
-import { useRouter } from 'next/navigation'
+import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
+import {
+  Users, FileText, Package, UserCheck, FolderOpen,
+  BarChart3, Brain, FileCheck, RefreshCw, UserPlus,
+  ArrowRight, X, Check
+} from 'lucide-react'
 
-const steps = [
-  { title: 'Welcome to Samyojak! 🎉', desc: 'Your all-in-one business coordinator. Let us show you around in 60 seconds.' },
-  { title: 'Your Command Center 📊', desc: 'The dashboard shows all key business metrics live — leads, revenue, invoices, and projects at a glance.' },
-  { title: 'Revenue Matrix 📈', desc: 'See your revenue growth month by month. Watch your business scale efficiently.' },
-  { title: 'Lead Velocity 🚀', desc: 'Track how fast your leads are growing week over week.' },
-  { title: 'CRM — Your Sales Engine 👥', desc: 'Capture leads, track your sales pipeline, and never miss a follow-up again.' },
-  { title: 'AI Lead Scoring 🤖', desc: 'Every lead gets an AI score 0-100 based on source, status, deal value, and follow-up date. Focus on the best leads first.' },
-  { title: 'Invoicing with GST 📄', desc: 'Create GST-compliant invoices in seconds. Choose 5%, 12%, 18%, or 28% GST rate automatically.' },
-  { title: 'WhatsApp Integration 💬', desc: 'Send invoices directly to clients via WhatsApp with one click. No app switching needed.' },
-  { title: 'Inventory with QR Codes 📦', desc: 'Every product gets a free auto-generated QR code. Scan with any phone camera — no hardware needed.' },
-  { title: 'Low Stock Alerts ⚠️', desc: 'Get automatic alerts when products fall below reorder level. Never run out of stock again.' },
-  { title: 'HR Management 👔', desc: 'Manage employees, track attendance, and process payroll all in one place.' },
-  { title: 'Projects Kanban 🎯', desc: 'Track all projects from Planning to Done with a beautiful Kanban board.' },
-  { title: 'GST Reports 📊', desc: 'Automatic GSTR-1 format reports with full tax breakdown by rate. Export to CSV anytime.' },
-  { title: 'Global Search ⌘K', desc: 'Press Ctrl+K or Cmd+K from anywhere to instantly search across all leads, invoices, and products.' },
-  { title: 'Quick Add Button ⚡', desc: 'The floating + button lets you add leads, invoices, products, employees, or projects from any page instantly.' },
-  { title: 'Dark Mode 🌙', desc: 'Toggle dark mode from the header. Your preference is saved automatically across sessions.' },
-  { title: 'Export Your Data 📥', desc: 'Every module has CSV export. Your data always belongs to you — download anytime.' },
-  { title: "You're All Set! 🚀", desc: 'Samyojak is ready to help coordinate everything and run anything. Start by adding your first lead!' },
+const STEPS = [
+  {
+    step: 1,
+    icon: Users,
+    color: '#8B5CF6',
+    bg: '#EDE9FE',
+    title: 'Start with Leads',
+    desc: 'Add your first lead manually or import your entire CRM from Zoho, Salesforce, or any CSV. Every column preserved.',
+    action: 'Go to Leads',
+    href: '/crm',
+  },
+  {
+    step: 2,
+    icon: FileCheck,
+    color: '#34D399',
+    bg: '#D1FAE5',
+    title: 'Create a Quotation',
+    desc: 'Build a professional sales quote with line items and tax. Download PDF or convert to invoice in one click.',
+    action: 'Create Quote',
+    href: '/quotations',
+    badge: '🆕',
+  },
+  {
+    step: 3,
+    icon: FileText,
+    color: '#F472B6',
+    bg: '#FCE7F3',
+    title: 'Send an Invoice',
+    desc: 'Create an invoice with automatic GST, VAT, or HST calculation. Send via WhatsApp. Mark paid when collected.',
+    action: 'Create Invoice',
+    href: '/invoices',
+  },
+  {
+    step: 4,
+    icon: Package,
+    color: '#FBBF24',
+    bg: '#FEF3C7',
+    title: 'Add Your Products',
+    desc: 'Track inventory with auto QR codes, low stock alerts, and reorder levels. Import from any POS or Excel.',
+    action: 'Add Product',
+    href: '/inventory',
+  },
+  {
+    step: 5,
+    icon: UserCheck,
+    color: '#34D399',
+    bg: '#D1FAE5',
+    title: 'Set Up Your Team',
+    desc: 'Add employees, salaries, departments. Total payroll calculated automatically. Import from any HR software.',
+    action: 'Add Employee',
+    href: '/hr',
+  },
+  {
+    step: 6,
+    icon: UserPlus,
+    color: '#8B5CF6',
+    bg: '#EDE9FE',
+    title: 'Track Hiring',
+    desc: 'Manage candidates from Applied to Hired with a visual Kanban pipeline. Never lose track of a great candidate.',
+    action: 'Open Recruiting',
+    href: '/recruiting',
+    badge: '🆕',
+  },
+  {
+    step: 7,
+    icon: FolderOpen,
+    color: '#F472B6',
+    bg: '#FCE7F3',
+    title: 'Manage Projects',
+    desc: 'Track client projects with deadlines and status columns — Planning, In Progress, Review, Done.',
+    action: 'Open Projects',
+    href: '/projects',
+  },
+  {
+    step: 8,
+    icon: BarChart3,
+    color: '#8B5CF6',
+    bg: '#EDE9FE',
+    title: 'View BI Dashboard',
+    desc: 'Live charts across all modules — revenue trends, pipeline, payroll, inventory stock levels.',
+    action: 'View Charts',
+    href: '/bi',
+    badge: '🆕',
+  },
+  {
+    step: 9,
+    icon: Brain,
+    color: '#FBBF24',
+    bg: '#FEF3C7',
+    title: 'Ask AI About Your Business',
+    desc: 'AI reads your live data and answers specific questions. "Which leads need follow-up?" "Any overdue invoices?"',
+    action: 'Open Dashboard',
+    href: '/dashboard',
+    planRequired: 'Complete',
+  },
 ]
 
-export default function OnboardingTour() {
-  const [step, setStep] = useState(0)
-  const [show, setShow] = useState(false)
-  const pathname = usePathname()
-  const router = useRouter()
+interface Props {
+  onDismiss: () => void
+}
 
-  useEffect(() => {
-    if (pathname === '/dashboard') {
-      const done = localStorage.getItem('samyojak-tour-done')
-      if (!done) {
-        setTimeout(() => setShow(true), 1500)
-      }
+export default function OnboardingTour({ onDismiss }: Props) {
+  const [currentStep, setCurrentStep] = useState(0)
+  const [completed, setCompleted] = useState<number[]>([])
+
+  const step = STEPS[currentStep]
+  const isLast = currentStep === STEPS.length - 1
+
+  const markComplete = () => {
+    if (!completed.includes(currentStep)) {
+      setCompleted(prev => [...prev, currentStep])
     }
-  }, [pathname])
-
-  const next = () => {
-    if (step < steps.length - 1) setStep(s => s + 1)
-    else finish()
+    if (!isLast) setCurrentStep(prev => prev + 1)
+    else onDismiss()
   }
-
-  const back = () => {
-    if (step > 0) setStep(s => s - 1)
-  }
-
-  const finish = () => {
-    localStorage.setItem('samyojak-tour-done', 'true')
-    setShow(false)
-  }
-
-  if (!show) return null
-
-  const current = steps[step]
-  const isLast = step === steps.length - 1
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-8 max-w-md w-full shadow-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex gap-1 flex-wrap flex-1 mr-4">
-            {steps.map((_, i) => (
-              <div
-                key={i}
-                className={`h-1 rounded-full transition-all ${
-                  i === step ? 'bg-blue-600 w-6' :
-                  i < step ? 'bg-blue-300 w-2' : 'bg-gray-200 dark:bg-white/20 w-2'
-                }`}
-              />
-            ))}
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-[#1a2740] rounded-2xl w-full max-w-lg"
+        style={{ border: '2px solid #1E293B', boxShadow: '8px 8px 0px #8B5CF6' }}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-white/10">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
+              Getting Started — {currentStep + 1} of {STEPS.length}
+            </p>
+            <h3 className="font-black text-lg dark:text-white" style={{ fontFamily: 'Outfit' }}>
+              Welcome to Samyojak
+            </h3>
           </div>
-          <span className="text-xs text-gray-400 whitespace-nowrap">{step + 1} of {steps.length}</span>
+          <button onClick={onDismiss}
+            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+            <X size={18} className="text-gray-400" />
+          </button>
         </div>
 
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{current.title}</h3>
-        <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-8">{current.desc}</p>
+        {/* Step dots */}
+        <div className="flex gap-1.5 px-5 pt-4">
+          {STEPS.map((_, i) => (
+            <div key={i}
+              onClick={() => setCurrentStep(i)}
+              className="flex-1 h-1.5 rounded-full cursor-pointer transition-all"
+              style={{
+                background: completed.includes(i) ? '#34D399' : i === currentStep ? '#8B5CF6' : '#E2E8F0',
+              }} />
+          ))}
+        </div>
 
-        <div className="flex items-center gap-3">
-          <button onClick={finish} className="text-sm text-gray-400 hover:text-gray-600 px-2 py-2">
-            Skip
-          </button>
-          {step > 0 && (
-            <button
-              onClick={back}
-              className="flex-1 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-white py-2 rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-white/10"
-            >
-              Back
-            </button>
+        {/* Step content */}
+        <div className="p-6">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ background: step.bg, border: `2px solid ${step.color}` }}>
+              <step.icon size={26} style={{ color: step.color }} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h4 className="font-black text-xl dark:text-white" style={{ fontFamily: 'Outfit' }}>
+                  {step.title}
+                </h4>
+                {step.badge && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-black"
+                    style={{ background: '#D1FAE5', color: '#065F46' }}>
+                    {step.badge}
+                  </span>
+                )}
+                {step.planRequired && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-black"
+                    style={{ background: '#FEF3C7', color: '#92400E' }}>
+                    Complete plan
+                  </span>
+                )}
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: '#64748B' }}>
+                {step.desc}
+              </p>
+            </div>
+          </div>
+
+          {/* Completed steps */}
+          {completed.length > 0 && (
+            <div className="mb-4 p-3 rounded-xl"
+              style={{ background: '#F0FDF4', border: '1.5px solid #34D399' }}>
+              <p className="text-xs font-bold text-green-700 mb-1">✅ Completed so far:</p>
+              <div className="flex flex-wrap gap-1">
+                {completed.map(i => (
+                  <span key={i} className="text-xs text-green-600 flex items-center gap-0.5">
+                    <Check size={10} /> {STEPS[i].title}
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
-          <button
-            onClick={next}
-            className="flex-1 bg-blue-600 text-white py-2 rounded-xl text-sm font-semibold hover:bg-blue-700"
-          >
-            {isLast ? "Let's Go! 🚀" : 'Next →'}
-          </button>
-        </div>
 
-        {isLast && (
-          <div className="mt-3 flex gap-3">
-            <button
-              onClick={() => { finish(); router.push('/crm') }}
-              className="flex-1 bg-green-600 text-white py-2 rounded-xl text-sm font-semibold hover:bg-green-700"
-            >
-              Add First Lead
-            </button>
-            <button
-              onClick={() => { finish(); router.push('/invoices') }}
-              className="flex-1 bg-purple-600 text-white py-2 rounded-xl text-sm font-semibold hover:bg-purple-700"
-            >
-              Create Invoice
+          <div className="flex gap-3">
+            {currentStep > 0 && (
+              <button onClick={() => setCurrentStep(prev => prev - 1)}
+                className="px-4 py-2.5 border border-gray-300 dark:border-white/20 rounded-xl text-sm font-medium hover:bg-gray-50 dark:hover:bg-white/10 transition-colors dark:text-white">
+                ← Back
+              </button>
+            )}
+            <Link href={step.href}
+              onClick={markComplete}
+              className="flex-1 py-2.5 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+              style={{ background: step.color }}>
+              {step.action} <ArrowRight size={16} />
+            </Link>
+            <button onClick={markComplete}
+              className="px-4 py-2.5 border border-gray-300 dark:border-white/20 rounded-xl text-sm font-medium hover:bg-gray-50 dark:hover:bg-white/10 transition-colors dark:text-white">
+              {isLast ? 'Finish' : 'Skip →'}
             </button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
