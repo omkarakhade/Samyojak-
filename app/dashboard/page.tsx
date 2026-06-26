@@ -3,7 +3,11 @@ import React, { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Users, FileText, Package, UserCheck, FolderOpen, Brain, Send, Star, TrendingUp, Lock, FileCheck, BarChart3, UserPlus } from 'lucide-react'
+import {
+  Users, FileText, Package, UserCheck, FolderOpen,
+  Brain, Send, Star, TrendingUp, Lock,
+  FileCheck, BarChart3, UserPlus, RefreshCw, BookOpen
+} from 'lucide-react'
 import { getPlanFromMetadata } from '@/lib/planAccess'
 import OnboardingTour from '@/components/OnboardingTour'
 
@@ -19,9 +23,8 @@ export default function Dashboard() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [stats, setStats] = useState({
     leads: 0, invoices: 0, products: 0,
-    employees: 0, projects: 0, quotations: 0,
+    employees: 0, projects: 0, quotations: 0, recruiting: 0,
     convertedLeads: 0, paidInvoices: 0, overdueInvoices: 0,
-    importedLeads: 0, importedInvoices: 0, importedProducts: 0,
   })
   const [loading, setLoading] = useState(true)
   const [aiGreeting, setAiGreeting] = useState('')
@@ -46,7 +49,6 @@ export default function Dashboard() {
     })
   }, [router])
 
-  // Check onboarding after user loads
   useEffect(() => {
     if (!user) return
     const seen = localStorage.getItem('samyojak_onboarding_done')
@@ -55,50 +57,41 @@ export default function Dashboard() {
 
   const loadStats = async (uid: string) => {
     try {
-      const [crm, invoices, inventory, hr, projects, quotations] = await Promise.allSettled([
-        fetch(`/api/universal-data?userId=${uid}&module=CRM`).then(r => r.json()),
-        fetch(`/api/universal-data?userId=${uid}&module=Invoices`).then(r => r.json()),
-        fetch(`/api/universal-data?userId=${uid}&module=Inventory`).then(r => r.json()),
-        fetch(`/api/universal-data?userId=${uid}&module=HR`).then(r => r.json()),
-        fetch(`/api/universal-data?userId=${uid}&module=Projects`).then(r => r.json()),
-        fetch(`/api/universal-data?userId=${uid}&module=Quotations`).then(r => r.json()),
-      ])
+      const modules = ['CRM', 'Invoices', 'Inventory', 'HR', 'Projects', 'Quotations', 'Recruiting']
+      const results = await Promise.allSettled(
+        modules.map(m => fetch(`/api/universal-data?userId=${uid}&module=${m}`).then(r => r.json()))
+      )
 
-      const crmData = crm.status === 'fulfilled' ? crm.value : { records: [], total: 0 }
-      const invData = invoices.status === 'fulfilled' ? invoices.value : { records: [], total: 0 }
-      const prodData = inventory.status === 'fulfilled' ? inventory.value : { records: [], total: 0 }
-      const hrData = hr.status === 'fulfilled' ? hr.value : { records: [], total: 0 }
-      const projData = projects.status === 'fulfilled' ? projects.value : { records: [], total: 0 }
-      const quoteData = quotations.status === 'fulfilled' ? quotations.value : { records: [], total: 0 }
+      const [crm, inv, prod, hr, proj, quot, rec] = results.map(r =>
+        r.status === 'fulfilled' ? r.value : { records: [], total: 0 }
+      )
 
-      const allLeads = crmData.records || []
-      const allInvoices = invData.records || []
+      const crmRecords = crm.records || []
+      const invRecords = inv.records || []
 
-      const converted = allLeads.filter((r: any) =>
+      const converted = crmRecords.filter((r: any) =>
         (r.data?.Status || r.data?.status || '').toLowerCase().includes('convert')
       ).length
 
-      const paid = allInvoices.filter((r: any) =>
+      const paid = invRecords.filter((r: any) =>
         (r.data?.['Payment Status'] || r.data?.status || '').toLowerCase() === 'paid'
       ).length
 
-      const overdue = allInvoices.filter((r: any) =>
+      const overdue = invRecords.filter((r: any) =>
         (r.data?.['Payment Status'] || r.data?.status || '').toLowerCase().includes('overdue')
       ).length
 
       setStats({
-        leads: crmData.total || 0,
-        invoices: invData.total || 0,
-        products: prodData.total || 0,
-        employees: hrData.total || 0,
-        projects: projData.total || 0,
-        quotations: quoteData.total || 0,
+        leads: crm.total || 0,
+        invoices: inv.total || 0,
+        products: prod.total || 0,
+        employees: hr.total || 0,
+        projects: proj.total || 0,
+        quotations: quot.total || 0,
+        recruiting: rec.total || 0,
         convertedLeads: converted,
         paidInvoices: paid,
         overdueInvoices: overdue,
-        importedLeads: crmData.total || 0,
-        importedInvoices: invData.total || 0,
-        importedProducts: prodData.total || 0,
       })
     } catch (e) {
       console.error('Stats error:', e)
@@ -113,14 +106,14 @@ export default function Dashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: 'Give me an encouraging business overview and the single most important thing I should focus on today',
+          message: 'Give me a 2-sentence encouraging business overview and the single most important thing I should focus on today',
           userId: uid,
         }),
       })
       const data = await res.json()
       setAiGreeting(data.reply || '')
     } catch {
-      setAiGreeting('🚀 Your ERP is ready! Focus on following up with your top leads today.')
+      setAiGreeting('🚀 Your ERP is ready! Import your data or add your first record to get started.')
     }
     setAiLoading(false)
   }
@@ -155,29 +148,32 @@ export default function Dashboard() {
 
   const planIndex = planOrder.indexOf(plan)
 
-  const modules = [
+  // ALL modules including new ones
+  const moduleCards = [
     { label: 'Leads', value: stats.leads, sub: `${stats.convertedLeads} converted`, icon: Users, color: '#8B5CF6', bg: '#EDE9FE', path: '/crm' },
-    { label: 'Quotations', value: stats.quotations, sub: 'sales quotes', icon: FileCheck, color: '#34D399', bg: '#D1FAE5', path: '/quotations' },
+    { label: 'Quotations', value: stats.quotations, sub: 'sales quotes', icon: FileCheck, color: '#34D399', bg: '#D1FAE5', path: '/quotations', badge: '🆕' },
     { label: 'Invoices', value: stats.invoices, sub: `${stats.paidInvoices} paid`, icon: FileText, color: '#F472B6', bg: '#FCE7F3', path: '/invoices' },
     { label: 'Products', value: stats.products, sub: 'in inventory', icon: Package, color: '#FBBF24', bg: '#FEF3C7', path: '/inventory' },
     { label: 'Employees', value: stats.employees, sub: 'team members', icon: UserCheck, color: '#34D399', bg: '#D1FAE5', path: '/hr' },
-    { label: 'Projects', value: stats.projects, sub: 'being tracked', icon: FolderOpen, color: '#8B5CF6', bg: '#EDE9FE', path: '/projects' },
+    { label: 'Candidates', value: stats.recruiting, sub: 'in pipeline', icon: UserPlus, color: '#8B5CF6', bg: '#EDE9FE', path: '/recruiting', badge: '🆕' },
+    { label: 'Projects', value: stats.projects, sub: 'being tracked', icon: FolderOpen, color: '#F472B6', bg: '#FCE7F3', path: '/projects' },
+    { label: 'BI Charts', value: '↗', sub: 'live analytics', icon: BarChart3, color: '#FBBF24', bg: '#FEF3C7', path: '/bi', badge: '🆕' },
   ]
 
   const quickActions = [
     { label: 'Add Lead', path: '/crm', color: '#8B5CF6', bg: '#EDE9FE', emoji: '👥' },
     { label: 'New Quote', path: '/quotations', color: '#34D399', bg: '#D1FAE5', emoji: '📋' },
-    { label: 'Create Invoice', path: '/invoices', color: '#F472B6', bg: '#FCE7F3', emoji: '📄' },
-    { label: 'Add Product', path: '/inventory', color: '#FBBF24', bg: '#FEF3C7', emoji: '📦' },
-    { label: 'New Project', path: '/projects', color: '#8B5CF6', bg: '#EDE9FE', emoji: '🎯' },
-    { label: 'BI Dashboard', path: '/bi', color: '#F472B6', bg: '#FCE7F3', emoji: '📊' },
+    { label: 'Invoice', path: '/invoices', color: '#F472B6', bg: '#FCE7F3', emoji: '📄' },
+    { label: 'Inventory', path: '/inventory', color: '#FBBF24', bg: '#FEF3C7', emoji: '📦' },
+    { label: 'Hiring', path: '/recruiting', color: '#8B5CF6', bg: '#EDE9FE', emoji: '🧑‍💼' },
+    { label: 'BI Charts', path: '/bi', color: '#F472B6', bg: '#FCE7F3', emoji: '📊' },
   ]
 
   return (
     <Layout>
       <div className="space-y-6">
 
-        {/* ONBOARDING TOUR — shows only on first visit */}
+        {/* ONBOARDING TOUR */}
         {showOnboarding && (
           <OnboardingTour onDismiss={() => {
             setShowOnboarding(false)
@@ -197,29 +193,54 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {isAdmin && (
-              <span className="px-3 py-1.5 rounded-full text-xs font-black"
+              <a href="/admin"
+                className="px-3 py-1.5 rounded-full text-xs font-black hover:opacity-80 transition-opacity"
                 style={{ background: '#EF4444', color: 'white' }}>
-                🛡️ Admin
-              </span>
+                🛡️ Admin Panel
+              </a>
             )}
             <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${
               plan === 'Complete' ? 'bg-purple-100 text-purple-700' :
               plan === 'Business' ? 'bg-blue-100 text-blue-700' :
               plan === 'ERP Basic' ? 'bg-green-100 text-green-700' :
               plan === 'CRM Starter' ? 'bg-yellow-100 text-yellow-700' :
-              'bg-gray-100 text-gray-600'}`}>
+              'bg-gray-100 text-gray-600'
+            }`}>
               {plan}
             </span>
-            {/* Restart onboarding button */}
             <button
               onClick={() => {
                 localStorage.removeItem('samyojak_onboarding_done')
                 setShowOnboarding(true)
               }}
-              className="px-3 py-1.5 rounded-full text-xs font-bold hover:opacity-80 transition-opacity"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold hover:opacity-80 transition-opacity"
               style={{ background: '#EDE9FE', color: '#8B5CF6' }}>
-              📖 Tour
+              <BookOpen size={12} /> Tour
             </button>
+          </div>
+        </div>
+
+        {/* NEW FEATURES BANNER */}
+        <div className="p-4 rounded-2xl"
+          style={{ background: '#0F172A', border: '2px solid #334155' }}>
+          <p className="text-xs font-black mb-3" style={{ color: '#8B5CF6' }}>🆕 NEW FEATURES ADDED</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { emoji: '📋', title: 'Sales Quotations', desc: 'Build quotes, PDF download', path: '/quotations', color: '#34D399' },
+              { emoji: '📊', title: 'BI Dashboard', desc: 'Live charts all modules', path: '/bi', color: '#8B5CF6' },
+              { emoji: '🔄', title: 'Recurring Invoices', desc: 'Auto-billing on schedule', path: '/invoices', color: '#F472B6' },
+              { emoji: '🧑‍💼', title: 'Recruiting', desc: 'Applied → Hired pipeline', path: '/recruiting', color: '#FBBF24' },
+            ].map(f => (
+              <a key={f.title} href={f.path}
+                className="flex items-start gap-2 p-3 rounded-xl hover:opacity-80 transition-opacity cursor-pointer"
+                style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${f.color}30` }}>
+                <span className="text-lg flex-shrink-0">{f.emoji}</span>
+                <div>
+                  <p className="text-xs font-bold text-white" style={{ fontFamily: 'Outfit' }}>{f.title}</p>
+                  <p className="text-xs" style={{ color: '#64748B' }}>{f.desc}</p>
+                </div>
+              </a>
+            ))}
           </div>
         </div>
 
@@ -249,7 +270,7 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2 py-2 mb-4">
                   {[0, 150, 300].map(d => (
                     <div key={d} className="w-2 h-2 rounded-full bg-violet-400 animate-bounce"
-                      style={{ animationDelay: `${d}ms` }}></div>
+                      style={{ animationDelay: `${d}ms` }} />
                   ))}
                   <span className="text-xs text-gray-500">Analyzing your data...</span>
                 </div>
@@ -267,7 +288,7 @@ export default function Dashboard() {
                     <div className="flex items-center gap-2">
                       {[0, 150, 300].map(d => (
                         <div key={d} className="w-2 h-2 rounded-full bg-violet-400 animate-bounce"
-                          style={{ animationDelay: `${d}ms` }}></div>
+                          style={{ animationDelay: `${d}ms` }} />
                       ))}
                     </div>
                   ) : aiReply}
@@ -297,14 +318,9 @@ export default function Dashboard() {
               </div>
 
               <div className="flex gap-2 flex-wrap">
-                {[
-                  'How are my leads?',
-                  'Any overdue invoices?',
-                  'Low stock alerts?',
-                  'What should I focus on?',
-                ].map(q => (
+                {['How are my leads?', 'Any overdue invoices?', 'Low stock alerts?', 'What to focus on today?'].map(q => (
                   <button key={q}
-                    onClick={() => { setAiInput(q); setTimeout(askAI, 50) }}
+                    onClick={() => { setAiInput(q); setTimeout(() => askAI(), 50) }}
                     className="px-2 py-1 rounded-full text-xs font-medium hover:opacity-80 transition-opacity"
                     style={{
                       background: 'rgba(139,92,246,0.2)',
@@ -342,22 +358,30 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Stats */}
+        {/* ALL MODULE STATS including new ones */}
         {loading ? (
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {modules.map(m => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {moduleCards.map(m => (
               <a key={m.label} href={m.path}
-                className="block bg-white dark:bg-[#1a2740] rounded-2xl p-4 hover:shadow-lg transition-all hover:-translate-y-0.5"
+                className="block bg-white dark:bg-[#1a2740] rounded-2xl p-4 hover:shadow-lg transition-all hover:-translate-y-0.5 relative"
                 style={{ border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #E2E8F0' }}>
+                {m.badge && (
+                  <span className="absolute top-2 right-2 text-xs font-black px-1.5 py-0.5 rounded-full"
+                    style={{ background: '#D1FAE5', color: '#065F46', fontSize: '9px' }}>
+                    {m.badge}
+                  </span>
+                )}
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
                   style={{ background: m.bg, border: `2px solid ${m.color}` }}>
                   <m.icon size={18} style={{ color: m.color }} />
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold mb-1">{m.label}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold mb-1">
+                  {m.label}
+                </p>
                 <p className="text-2xl font-black text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
                   {m.value}
                 </p>
@@ -367,7 +391,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Alerts */}
+        {/* Overdue alert */}
         {stats.overdueInvoices > 0 && (
           <div className="p-4 rounded-xl flex items-center gap-3"
             style={{ background: '#FEF2F2', border: '1.5px solid #FCA5A5' }}>
@@ -383,6 +407,40 @@ export default function Dashboard() {
             </a>
           </div>
         )}
+
+        {/* Business Snapshot */}
+        <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-5"
+          style={{ border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #E2E8F0' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp size={18} style={{ color: '#34D399' }} />
+            <h3 className="font-bold text-gray-900 dark:text-white text-sm" style={{ fontFamily: 'Outfit' }}>
+              Business Snapshot
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              {
+                label: 'Conversion Rate',
+                value: stats.leads > 0 ? `${Math.round((stats.convertedLeads / stats.leads) * 100)}%` : '0%',
+                color: '#8B5CF6',
+              },
+              { label: 'Paid Invoices', value: `${stats.paidInvoices}/${stats.invoices}`, color: '#34D399' },
+              {
+                label: 'Overdue',
+                value: stats.overdueInvoices,
+                color: stats.overdueInvoices > 0 ? '#EF4444' : '#34D399',
+              },
+              { label: 'Team Size', value: stats.employees, color: '#FBBF24' },
+            ].map(s => (
+              <div key={s.label} className="text-center">
+                <p className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: s.color }}>
+                  {s.value}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Plan Progress */}
         {plan !== 'Complete' && !isAdmin && (
@@ -412,49 +470,11 @@ export default function Dashboard() {
             </div>
             <p className="text-xs text-gray-400">
               Upgrade to{' '}
-              <strong style={{ color: '#8B5CF6' }}>
-                {planOrder[planIndex + 1] || 'Complete'}
-              </strong>{' '}
-              to unlock AI assistant and more modules
+              <strong style={{ color: '#8B5CF6' }}>{planOrder[planIndex + 1] || 'Complete'}</strong>
+              {' '}to unlock AI assistant and more modules
             </p>
           </div>
         )}
-
-        {/* Business Snapshot */}
-        <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-5"
-          style={{ border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #E2E8F0' }}>
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp size={18} style={{ color: '#34D399' }} />
-            <h3 className="font-bold text-gray-900 dark:text-white text-sm" style={{ fontFamily: 'Outfit' }}>
-              Business Snapshot
-            </h3>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              {
-                label: 'Conversion Rate',
-                value: stats.leads > 0
-                  ? `${Math.round((stats.convertedLeads / stats.leads) * 100)}%`
-                  : '0%',
-                color: '#8B5CF6',
-              },
-              { label: 'Paid Invoices', value: `${stats.paidInvoices}/${stats.invoices}`, color: '#34D399' },
-              {
-                label: 'Overdue',
-                value: stats.overdueInvoices,
-                color: stats.overdueInvoices > 0 ? '#EF4444' : '#34D399',
-              },
-              { label: 'Team Size', value: stats.employees, color: '#FBBF24' },
-            ].map(s => (
-              <div key={s.label} className="text-center">
-                <p className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: s.color }}>
-                  {s.value}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Quick Actions */}
         <div>
