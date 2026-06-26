@@ -13,7 +13,21 @@ import {
 
 const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
 
-const NAV_SECTIONS = [
+interface NavItem {
+  href: string
+  icon: any
+  label: string
+  badge?: string
+  adminOnly?: boolean
+  planRequired?: string
+}
+
+interface NavSection {
+  label: string
+  items: NavItem[]
+}
+
+const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Main',
     items: [
@@ -56,6 +70,7 @@ const NAV_SECTIONS = [
       { href: '/support', icon: Ticket, label: 'Support' },
       { href: '/settings', icon: Settings, label: 'Settings' },
       { href: '/debug', icon: Bug, label: 'Debug', adminOnly: true },
+      { href: '/admin', icon: Settings, label: 'Admin Panel', adminOnly: true },
     ],
   },
 ]
@@ -91,7 +106,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     router.push('/')
   }
 
-  const canAccess = (item: any) => {
+  const canAccess = (item: NavItem): boolean => {
     if (item.adminOnly) return isAdmin
     return true
   }
@@ -100,26 +115,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b dark:border-white/10 border-gray-100">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-base flex-shrink-0"
-          style={{ background: '#8B5CF6', border: '2px solid rgba(139,92,246,0.3)', boxShadow: '2px 2px 0px rgba(0,0,0,0.3)' }}>
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-base flex-shrink-0"
+          style={{
+            background: '#8B5CF6',
+            border: '2px solid rgba(139,92,246,0.3)',
+            boxShadow: '2px 2px 0px rgba(0,0,0,0.3)',
+          }}>
           S
         </div>
         {!collapsed && (
           <div>
-            <span className="font-black text-base text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+            <span
+              className="font-black text-base text-gray-900 dark:text-white"
+              style={{ fontFamily: 'Outfit' }}>
               Samyojak
             </span>
             <div className="flex items-center gap-1 mt-0.5">
-              <span className="text-xs font-bold px-1.5 py-0.5 rounded-full"
+              <span
+                className="text-xs font-bold px-1.5 py-0.5 rounded-full"
                 style={{
-                  background: `${PLAN_COLORS[plan]}20`,
-                  color: PLAN_COLORS[plan],
-                  border: `1px solid ${PLAN_COLORS[plan]}40`,
+                  background: `${PLAN_COLORS[plan] || '#94A3B8'}20`,
+                  color: PLAN_COLORS[plan] || '#94A3B8',
+                  border: `1px solid ${PLAN_COLORS[plan] || '#94A3B8'}40`,
                 }}>
                 {plan}
               </span>
               {isAdmin && (
-                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full"
+                <span
+                  className="text-xs font-bold px-1.5 py-0.5 rounded-full"
                   style={{ background: '#FEE2E2', color: '#DC2626' }}>
                   Admin
                 </span>
@@ -137,7 +161,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           return (
             <div key={section.label}>
               {!collapsed && (
-                <p className="text-xs font-bold uppercase tracking-widest mb-2 px-2"
+                <p
+                  className="text-xs font-bold uppercase tracking-widest mb-2 px-2"
                   style={{ color: '#94A3B8' }}>
                   {section.label}
                 </p>
@@ -159,16 +184,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       <item.icon
                         size={18}
                         className="flex-shrink-0 transition-colors"
-                        style={{ color: active ? 'white' : '#94A3B8' }} />
+                        style={{ color: active ? 'white' : '#94A3B8' }}
+                      />
                       {!collapsed && (
                         <>
-                          <span className="text-sm font-semibold flex-1"
-                            style={{ color: active ? 'white' : '#374151', fontFamily: 'Plus Jakarta Sans' }}>
+                          <span
+                            className="text-sm font-semibold flex-1"
+                            style={{
+                              color: active ? 'white' : '#374151',
+                              fontFamily: 'Plus Jakarta Sans',
+                            }}>
                             {item.label}
                           </span>
                           {item.badge && (
-                            <span className="text-xs font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
-                              style={{ background: '#D1FAE5', color: '#065F46', fontSize: '10px' }}>
+                            <span
+                              className="text-xs font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
+                              style={{
+                                background: '#D1FAE5',
+                                color: '#065F46',
+                                fontSize: '10px',
+                              }}>
                               {item.badge}
                             </span>
                           )}
@@ -176,7 +211,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       )}
                       {/* Tooltip when collapsed */}
                       {collapsed && (
-                        <div className="absolute left-full ml-2 px-2 py-1 rounded-lg text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50"
+                        <div
+                          className="absolute left-full ml-2 px-2 py-1 rounded-lg text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50"
                           style={{ background: '#1E293B', color: 'white' }}>
                           {item.label}
                         </div>
@@ -194,7 +230,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className="border-t dark:border-white/10 border-gray-100 px-3 py-4 space-y-1">
         {!collapsed && user && (
           <div className="px-3 py-2 mb-2">
-            <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{user.user_metadata?.full_name || user.email}</p>
+            <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
+              {user.user_metadata?.full_name || user.email}
+            </p>
             <p className="text-xs text-gray-400 truncate">{user.email}</p>
           </div>
         )}
@@ -217,23 +255,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 bg-black/50 z-30 md:hidden"
-          onClick={() => setMobileOpen(false)} />
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
       )}
 
       {/* Mobile sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-40 w-64 md:hidden transition-transform duration-300 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      <div
+        className={`fixed inset-y-0 left-0 z-40 w-64 md:hidden transition-transform duration-300 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
         style={{ background: 'white' }}>
         <SidebarContent />
       </div>
 
       {/* Desktop sidebar */}
       <div
-        className={`hidden md:flex flex-col border-r border-gray-100 dark:border-white/10 transition-all duration-300 flex-shrink-0 relative`}
-        style={{
-          width: collapsed ? '64px' : '220px',
-          background: 'white',
-        }}>
+        className="hidden md:flex flex-col border-r border-gray-100 dark:border-white/10 transition-all duration-300 flex-shrink-0 relative"
+        style={{ width: collapsed ? '64px' : '220px', background: 'white' }}>
         <SidebarContent />
         {/* Collapse toggle */}
         <button
@@ -250,19 +290,29 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
         <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-[#1a2740] flex-shrink-0">
-          <button onClick={() => setMobileOpen(true)}
+          <button
+            onClick={() => setMobileOpen(true)}
             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
             <Menu size={20} className="text-gray-600 dark:text-gray-300" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-sm"
-              style={{ background: '#8B5CF6' }}>S</div>
-            <span className="font-black text-base text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-sm"
+              style={{ background: '#8B5CF6' }}>
+              S
+            </div>
+            <span
+              className="font-black text-base text-gray-900 dark:text-white"
+              style={{ fontFamily: 'Outfit' }}>
               Samyojak
             </span>
           </div>
-          <span className="ml-auto text-xs font-bold px-2 py-1 rounded-full"
-            style={{ background: `${PLAN_COLORS[plan]}20`, color: PLAN_COLORS[plan] }}>
+          <span
+            className="ml-auto text-xs font-bold px-2 py-1 rounded-full"
+            style={{
+              background: `${PLAN_COLORS[plan] || '#94A3B8'}20`,
+              color: PLAN_COLORS[plan] || '#94A3B8',
+            }}>
             {plan}
           </span>
         </div>
