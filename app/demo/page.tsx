@@ -1,270 +1,332 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { Brain, Users, FileText, Package, UserCheck, FolderOpen, BarChart3, ArrowRight, Star } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { Brain, Users, FileText, Package, UserCheck, FolderOpen, BarChart3, FileCheck, UserPlus, Send, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
-const DEMO_DATA = {
-  leads: [
-    { Name: 'Rahul Sharma', Company: 'TechVista Pvt Ltd', Email: 'rahul@techvista.in', Phone: '+91 9876543210', 'Lead Source': 'Referral', Status: 'Contacted', 'Deal Value': 85000, Notes: 'Interested in Business plan. Has 15 employees.' },
-    { Name: 'Priya Mehta', Company: 'Mehta Traders', Email: 'priya@mehtatraders.com', Phone: '+91 9123456789', 'Lead Source': 'Website', Status: 'New', 'Deal Value': 45000, Notes: 'Retail chain needs inventory management.' },
-    { Name: 'Amit Patel', Company: 'Patel Enterprises', Email: 'amit@patelent.in', Phone: '+91 9988776655', 'Lead Source': 'LinkedIn', Status: 'Converted', 'Deal Value': 120000, Notes: 'Signed up for Complete plan.' },
-    { Name: 'Sneha Reddy', Company: 'CloudSoft Solutions', Email: 'sneha@cloudsoft.io', Phone: '+91 8877665544', 'Lead Source': 'LinkedIn', Status: 'Contacted', 'Deal Value': 95000, Notes: 'SaaS startup needs CRM and project tracking.' },
-    { Name: 'Vikram Singh', Company: 'Singh Manufacturing', Email: 'vikram@singhmnfg.com', Phone: '+91 7766554433', 'Lead Source': 'Trade Show', Status: 'New', 'Deal Value': 200000, Notes: 'Large manufacturer needs full ERP.' },
-    { Name: 'James Wilson', Company: 'BizFlow UK', Email: 'james@bizflow.co.uk', Phone: '+44 7911123456', 'Lead Source': 'Website', Status: 'New', 'Deal Value': 180000, Notes: 'UK software company wants white label.' },
-    { Name: 'Sarah Johnson', Company: 'Johnson Retail USA', Email: 'sarah@johnsonretail.com', Phone: '+1 4155552671', 'Lead Source': 'LinkedIn', Status: 'Contacted', 'Deal Value': 220000, Notes: 'US retail chain. Needs inventory module.' },
-    { Name: 'Ananya Joshi', Company: 'Joshi Pharmacy', Email: 'ananya@joshipharma.in', Phone: '+91 9900112233', 'Lead Source': 'Website', Status: 'Contacted', 'Deal Value': 75000, Notes: 'Pharmacy chain. Needs invoicing.' },
-    { Name: 'Mohammed Al-Rashid', Company: 'Al-Rashid Trading', Email: 'm.rashid@alrashid.ae', Phone: '+971 501234567', 'Lead Source': 'Referral', Status: 'New', 'Deal Value': 300000, Notes: 'Dubai trading company. Full ERP needed.' },
-    { Name: 'Deepa Nair', Company: 'Nair Consultants', Email: 'deepa@nairconsult.in', Phone: '+91 6655443322', 'Lead Source': 'Referral', Status: 'Converted', 'Deal Value': 60000, Notes: 'CRM Starter plan signed up.' },
-  ],
-  invoices: [
-    { 'Client Name': 'TechVista Pvt Ltd', 'Invoice No': 'INV-001', Amount: 85000, 'Tax Label': 'GST', 'Tax Rate': 18, 'Tax Amount': 15300, Total: 100300, Status: 'Paid', 'Issue Date': '2026-05-01' },
-    { 'Client Name': 'Mehta Traders', 'Invoice No': 'INV-002', Amount: 45000, 'Tax Label': 'GST', 'Tax Rate': 12, 'Tax Amount': 5400, Total: 50400, Status: 'Unpaid', 'Issue Date': '2026-05-05' },
-    { 'Client Name': 'Patel Enterprises', 'Invoice No': 'INV-003', Amount: 120000, 'Tax Label': 'GST', 'Tax Rate': 18, 'Tax Amount': 21600, Total: 141600, Status: 'Paid', 'Issue Date': '2026-05-10' },
-    { 'Client Name': 'CloudSoft Solutions', 'Invoice No': 'INV-004', Amount: 95000, 'Tax Label': 'GST', 'Tax Rate': 18, 'Tax Amount': 17100, Total: 112100, Status: 'Unpaid', 'Issue Date': '2026-05-12' },
-    { 'Client Name': 'Singh Manufacturing', 'Invoice No': 'INV-005', Amount: 200000, 'Tax Label': 'GST', 'Tax Rate': 18, 'Tax Amount': 36000, Total: 236000, Status: 'Paid', 'Issue Date': '2026-04-15' },
-    { 'Client Name': 'BizFlow UK', 'Invoice No': 'INV-006', Amount: 1200, 'Tax Label': 'VAT', 'Tax Rate': 20, 'Tax Amount': 240, Total: 1440, Status: 'Paid', 'Issue Date': '2026-05-15' },
-    { 'Client Name': 'Johnson Retail', 'Invoice No': 'INV-007', Amount: 1800, 'Tax Label': 'Tax', 'Tax Rate': 8, 'Tax Amount': 144, Total: 1944, Status: 'Paid', 'Issue Date': '2026-05-18' },
-    { 'Client Name': 'Joshi Pharmacy', 'Invoice No': 'INV-008', Amount: 75000, 'Tax Label': 'GST', 'Tax Rate': 18, 'Tax Amount': 13500, Total: 88500, Status: 'Overdue', 'Issue Date': '2026-04-25' },
-    { 'Client Name': 'Al-Rashid Trading', 'Invoice No': 'INV-009', Amount: 5000, 'Tax Label': 'VAT', 'Tax Rate': 5, 'Tax Amount': 250, Total: 5250, Status: 'Unpaid', 'Issue Date': '2026-05-20' },
-    { 'Client Name': 'Nair Consultants', 'Invoice No': 'INV-010', Amount: 60000, 'Tax Label': 'GST', 'Tax Rate': 12, 'Tax Amount': 7200, Total: 67200, Status: 'Paid', 'Issue Date': '2026-05-20' },
-  ],
-}
+// All valid demo tokens — add new ones here without touching any other file
+const VALID_TOKENS = [
+  'samyojak2025',
+  'demo-investor',
+  'demo-client',
+  'demo-press',
+  'demo-trial',
+  'product-hunt',
+  'linkedin-demo',
+  'reddit-demo',
+]
+
+const DEMO_STATS = [
+  { label: 'Leads', value: '248', sub: '12 converted', icon: Users, color: '#8B5CF6', bg: '#EDE9FE' },
+  { label: 'Quotations', value: '34', sub: '₹8.2L quoted', icon: FileCheck, color: '#34D399', bg: '#D1FAE5' },
+  { label: 'Invoices', value: '189', sub: '₹4.6L paid', icon: FileText, color: '#F472B6', bg: '#FCE7F3' },
+  { label: 'Products', value: '91', sub: '6 low stock', icon: Package, color: '#FBBF24', bg: '#FEF3C7' },
+  { label: 'Employees', value: '14', sub: '₹2.1L/month', icon: UserCheck, color: '#34D399', bg: '#D1FAE5' },
+  { label: 'Candidates', value: '23', sub: '4 in interview', icon: UserPlus, color: '#8B5CF6', bg: '#EDE9FE' },
+  { label: 'Projects', value: '17', sub: '3 overdue', icon: FolderOpen, color: '#F472B6', bg: '#FCE7F3' },
+  { label: 'BI Charts', value: '↗', sub: 'live analytics', icon: BarChart3, color: '#FBBF24', bg: '#FEF3C7' },
+]
+
+const DEMO_MODULES = [
+  { name: 'Leads & CRM', emoji: '👥', desc: 'AI lead scoring, follow-ups, pipeline' },
+  { name: 'Sales Quotations', emoji: '📋', desc: 'Build quotes, PDF download, convert to invoice' },
+  { name: 'Invoices', emoji: '📄', desc: 'GST/VAT/HST for 15+ countries, WhatsApp send' },
+  { name: 'Inventory + QR', emoji: '📦', desc: 'Free QR codes, low stock alerts' },
+  { name: 'HR & Payroll', emoji: '👤', desc: 'Team, salaries, total payroll' },
+  { name: 'Recruiting', emoji: '🧑‍💼', desc: 'Applied → Hired candidate pipeline' },
+  { name: 'Projects', emoji: '🎯', desc: 'Kanban — Planning to Done' },
+  { name: 'BI Dashboard', emoji: '📊', desc: 'Live charts across all modules' },
+  { name: 'AI Intelligence', emoji: '🤖', desc: 'AI that reads your live business data' },
+  { name: 'Universal Import', emoji: '📥', desc: 'Any CSV from any software, zero field mapping' },
+]
 
 export default function Demo() {
+  const searchParams = useSearchParams()
   const router = useRouter()
-  const [step, setStep] = useState<'loading' | 'preview' | 'entering'>('loading')
+  const token = searchParams.get('token')
+  const [valid, setValid] = useState(false)
+  const [checking, setChecking] = useState(true)
   const [aiMessage, setAiMessage] = useState('')
+  const [aiInput, setAiInput] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
 
-  const totalRevenue = DEMO_DATA.invoices
-    .filter(i => i.Status === 'Paid')
-    .reduce((s, i) => s + i.Total, 0)
-
-  const pipelineValue = DEMO_DATA.leads
-    .reduce((s, l) => s + l['Deal Value'], 0)
-
-  const convertedLeads = DEMO_DATA.leads.filter(l => l.Status === 'Converted').length
-
   useEffect(() => {
-    const check = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
-        return
-      }
-      // Give Complete plan for demo
-      await supabase.auth.updateUser({
-        data: { plan: 'Complete', is_demo: true }
-      })
-      setStep('preview')
-
-      // Get AI welcome
-      setAiLoading(true)
-      try {
-        const res = await fetch('/api/ai', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: 'Give me a quick exciting summary of this demo business data and what opportunities I should focus on',
-            context: {
-              totalLeads: DEMO_DATA.leads.length,
-              convertedLeads,
-              totalRevenue,
-              pipelineValue,
-              overdueInvoices: DEMO_DATA.invoices.filter(i => i.Status === 'Overdue').length,
-              topLead: 'Al-Rashid Trading — ₹3,00,000 deal',
-            },
-            isOnboarding: false,
-          }),
-        })
-        const data = await res.json()
-        setAiMessage(data.reply || '')
-      } catch (e) {
-        setAiMessage('🚀 Your demo data shows strong pipeline value of ₹13.8 lakhs with 2 converted clients already! Focus on Al-Rashid Trading and Johnson Retail — they are your biggest opportunities.')
-      }
-      setAiLoading(false)
+    if (!token || !VALID_TOKENS.includes(token)) {
+      setChecking(false)
+      setValid(false)
+    } else {
+      setChecking(false)
+      setValid(true)
+      // Set demo AI greeting
+      setAiMessage('👋 Welcome to Samyojak demo! You have 248 leads in your pipeline, 12 converted this month. Revenue collected is ₹4.6L. 3 projects are overdue and need attention today. Your team payroll is ₹2.1L/month.')
     }
-    check()
-  }, [router])
+  }, [token])
 
-  const enterDemo = async () => {
-    setStep('entering')
-    router.push('/dashboard')
+  const askDemoAI = async () => {
+    if (!aiInput.trim()) return
+    const q = aiInput.toLowerCase()
+    setAiInput('')
+    setAiLoading(true)
+    await new Promise(r => setTimeout(r, 800))
+
+    let reply = ''
+    if (q.includes('lead') || q.includes('crm')) {
+      reply = '📊 You have 248 leads total. 12 converted this month — a 4.8% conversion rate. 34 leads have follow-ups due this week. Top source is LinkedIn with 89 leads.'
+    } else if (q.includes('invoice') || q.includes('payment')) {
+      reply = '💰 189 invoices total. ₹4.6L collected. 23 invoices overdue worth ₹1.2L — follow up on these immediately. GST collected this quarter: ₹82,000.'
+    } else if (q.includes('stock') || q.includes('inventory')) {
+      reply = '📦 91 products tracked. 6 items are at or below reorder level. Fastest moving product: Blue Widget Pro — 43 units sold this month.'
+    } else if (q.includes('team') || q.includes('employee') || q.includes('hr')) {
+      reply = '👥 14 employees. Monthly payroll ₹2.1L. Engineering has 5 people, Sales has 4, Operations has 3, Management has 2. 3 candidates in final interview stage.'
+    } else if (q.includes('project')) {
+      reply = '🎯 17 projects tracked. 5 in Planning, 7 In Progress, 2 in Review, 3 Done. 3 projects are overdue — Website Redesign, Mobile App v2, and Q3 Campaign.'
+    } else {
+      reply = '🤖 This is a demo of Samyojak AI. In your real account, AI reads your live CRM, invoices, inventory, HR, and project data and gives specific answers about your actual business numbers.'
+    }
+
+    setAiMessage(reply)
+    setAiLoading(false)
   }
 
-  if (step === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FFFDF5' }}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-violet-500 border-t-transparent mx-auto mb-4"></div>
-          <p className="font-black text-xl" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Setting up demo...</p>
+  if (checking) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0F172A' }}>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div>
+    </div>
+  )
+
+  if (!valid) return (
+    <div className="min-h-screen flex items-center justify-center px-6" style={{ background: '#FFFDF5' }}>
+      <div className="text-center max-w-md">
+        <div className="text-6xl mb-4">🔒</div>
+        <h1 className="text-2xl font-black mb-3" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+          Demo link invalid
+        </h1>
+        <p className="text-gray-500 mb-6">
+          This demo link is not valid or has expired. Request a new link from the Samyojak team.
+        </p>
+        <div className="flex gap-3 justify-center">
+          <Link href="/"
+            className="px-6 py-3 rounded-xl text-sm font-bold hover:opacity-80 transition-opacity"
+            style={{ background: '#EDE9FE', color: '#8B5CF6' }}>
+            Visit Website
+          </Link>
+          <Link href="/signup"
+            className="candy-btn px-6 py-3 text-sm">
+            Start Free Trial
+          </Link>
         </div>
       </div>
-    )
-  }
-
-  if (step === 'entering') {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FFFDF5' }}>
-        <div className="text-center">
-          <div className="text-6xl mb-4 float">🚀</div>
-          <p className="font-black text-xl" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Launching dashboard...</p>
-        </div>
-      </div>
-    )
-  }
+    </div>
+  )
 
   return (
-    <div className="min-h-screen py-8 px-4" style={{ background: '#FFFDF5' }}>
-      <div className="max-w-4xl mx-auto">
+    <div style={{ background: '#FFFDF5', fontFamily: 'Plus Jakarta Sans', minHeight: '100vh' }}>
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 text-sm font-semibold"
-            style={{ background: '#EDE9FE', border: '2px solid #8B5CF6', color: '#8B5CF6' }}>
-            <Star size={14} fill="#8B5CF6" /> Samyojak Live Demo
-          </div>
-          <h1 className="text-4xl font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-            See Samyojak in action
-          </h1>
-          <p style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
-            Complete plan unlocked · All modules active · Real AI insights
-          </p>
+      {/* Demo banner */}
+      <div className="sticky top-0 z-50 px-4 py-2.5 flex items-center justify-between"
+        style={{ background: '#8B5CF6' }}>
+        <div className="flex items-center gap-2">
+          <span className="text-white text-xs font-black">👀 DEMO MODE</span>
+          <span className="text-white/70 text-xs">— This is a demonstration of Samyojak ERP</span>
         </div>
+        <Link href="/signup"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all hover:opacity-90"
+          style={{ background: 'white', color: '#8B5CF6' }}>
+          Start Trial <ArrowRight size={12} />
+        </Link>
+      </div>
 
-        {/* AI Insight Card */}
-        <div className="p-6 rounded-2xl mb-6"
-          style={{ background: '#0F172A', border: '2px solid #334155', boxShadow: '8px 8px 0px #8B5CF6' }}>
+      {/* Header */}
+      <div className="px-6 py-8" style={{ background: '#0F172A' }}>
+        <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#8B5CF6' }}>
-              <Brain size={20} className="text-white" />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black"
+              style={{ background: '#8B5CF6', border: '2px solid rgba(139,92,246,0.5)' }}>
+              S
             </div>
-            <div>
-              <p className="font-black text-white" style={{ fontFamily: 'Outfit' }}>Samyojak AI Analysis</p>
-              <p className="text-xs" style={{ color: '#64748B' }}>Powered by Groq · Real insights from demo data</p>
-            </div>
-            <div className="ml-auto flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-green-400"></div>
-              <span className="text-xs text-green-400">Live</span>
-            </div>
+            <span className="font-black text-xl text-white" style={{ fontFamily: 'Outfit' }}>Samyojak</span>
           </div>
-          {aiLoading ? (
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-violet-400 animate-bounce"></div>
-              <div className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-              <div className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              <span className="text-xs" style={{ color: '#64748B' }}>AI analyzing your data...</span>
-            </div>
-          ) : (
-            <p className="text-sm leading-relaxed" style={{ color: '#C4B5FD', fontFamily: 'Plus Jakarta Sans' }}>
-              {aiMessage}
-            </p>
-          )}
-        </div>
-
-        {/* Demo Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {[
-            { label: 'Total Leads', value: DEMO_DATA.leads.length, icon: Users, color: '#8B5CF6', bg: '#EDE9FE', note: `${convertedLeads} converted` },
-            { label: 'Revenue', value: `₹${(totalRevenue / 100000).toFixed(1)}L`, icon: FileText, color: '#34D399', bg: '#D1FAE5', note: 'paid invoices' },
-            { label: 'Pipeline', value: `₹${(pipelineValue / 100000).toFixed(1)}L`, icon: BarChart3, color: '#FBBF24', bg: '#FEF3C7', note: 'total value' },
-            { label: 'Invoices', value: DEMO_DATA.invoices.length, icon: Package, color: '#F472B6', bg: '#FCE7F3', note: '7 paid' },
-          ].map(m => (
-            <div key={m.label} className="p-4 rounded-2xl"
-              style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '4px 4px 0px #E2E8F0' }}>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
-                style={{ background: m.bg, border: `2px solid ${m.color}` }}>
-                <m.icon size={18} style={{ color: m.color }} />
-              </div>
-              <p className="text-xs text-gray-500 mb-1">{m.label}</p>
-              <p className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>{m.value}</p>
-              <p className="text-xs mt-1" style={{ color: m.color }}>{m.note}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* What You Will See */}
-        <div className="p-6 rounded-2xl mb-6"
-          style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '6px 6px 0px #E2E8F0' }}>
-          <h3 className="font-black text-lg mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-            What is included in this demo
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[
-              { icon: Users, label: 'CRM with 10 sample leads', desc: 'AI scored, pipeline tracked', color: '#8B5CF6' },
-              { icon: FileText, label: 'Invoices with universal tax', desc: 'GST, VAT, Sales Tax examples', color: '#F472B6' },
-              { icon: Package, label: 'Inventory with QR codes', desc: '10 products, low stock alerts', color: '#FBBF24' },
-              { icon: UserCheck, label: 'HR with team members', desc: '10 employees, departments', color: '#34D399' },
-              { icon: FolderOpen, label: 'Projects on Kanban board', desc: '10 projects in progress', color: '#8B5CF6' },
-              { icon: Brain, label: 'AI Business Assistant', desc: 'Ask anything about your data', color: '#F472B6' },
-            ].map(item => (
-              <div key={item.label} className="flex items-center gap-3 p-3 rounded-xl"
-                style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0' }}>
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: item.color + '20', border: `1.5px solid ${item.color}` }}>
-                  <item.icon size={16} style={{ color: item.color }} />
-                </div>
-                <div>
-                  <p className="text-sm font-bold" style={{ color: '#1E293B', fontFamily: 'Outfit' }}>{item.label}</p>
-                  <p className="text-xs" style={{ color: '#64748B' }}>{item.desc}</p>
-                </div>
-                <div className="ml-auto text-xs font-bold px-2 py-1 rounded-full"
-                  style={{ background: '#D1FAE5', color: '#065F46' }}>
-                  ✓ Live
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Leads Preview */}
-        <div className="p-6 rounded-2xl mb-6"
-          style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '6px 6px 0px #F472B6' }}>
-          <h3 className="font-black text-lg mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-            👥 Sample CRM Leads
-          </h3>
-          <div className="space-y-2 overflow-hidden max-h-64 overflow-y-auto">
-            {DEMO_DATA.leads.map((lead, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-xl"
-                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                  style={{ background: ['#8B5CF6', '#F472B6', '#34D399', '#FBBF24'][i % 4] }}>
-                  {lead.Name[0]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold truncate" style={{ color: '#1E293B' }}>{lead.Name}</p>
-                  <p className="text-xs truncate" style={{ color: '#64748B' }}>{lead.Company}</p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-xs font-bold" style={{ color: '#1E293B' }}>₹{lead['Deal Value'].toLocaleString()}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    lead.Status === 'Converted' ? 'bg-green-100 text-green-700' :
-                    lead.Status === 'Contacted' ? 'bg-blue-100 text-blue-700' :
-                    'bg-gray-100 text-gray-600'
-                  }`}>
-                    {lead.Status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Enter Demo Button */}
-        <div className="text-center">
-          <button
-            onClick={enterDemo}
-            className="candy-btn px-12 py-5 text-xl inline-flex items-center gap-3"
-          >
-            Enter Full Demo Dashboard
-            <ArrowRight size={24} />
-          </button>
-          <p className="mt-4 text-sm" style={{ color: '#94A3B8' }}>
-            Complete plan active · All modules unlocked · AI assistant ready
+          <h1 className="text-3xl font-black text-white mb-2" style={{ fontFamily: 'Outfit' }}>
+            Welcome to Samyojak ERP Demo
+          </h1>
+          <p className="text-gray-400">
+            The ERP that adapts to you — not the other way around. Explore all features below.
           </p>
         </div>
       </div>
+
+      <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+
+        {/* Stats grid */}
+        <div>
+          <h2 className="text-lg font-black mb-4 text-gray-900" style={{ fontFamily: 'Outfit' }}>
+            📊 Dashboard Overview (Demo Data)
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {DEMO_STATS.map(s => (
+              <div key={s.label}
+                className="bg-white rounded-2xl p-4"
+                style={{ border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #F1F5F9' }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
+                  style={{ background: s.bg, border: `2px solid ${s.color}` }}>
+                  <s.icon size={18} style={{ color: s.color }} />
+                </div>
+                <p className="text-gray-500 text-xs uppercase font-semibold mb-1">{s.label}</p>
+                <p className="text-2xl font-black text-gray-900" style={{ fontFamily: 'Outfit' }}>{s.value}</p>
+                <p className="text-xs mt-0.5" style={{ color: s.color }}>{s.sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* AI Demo */}
+        <div className="rounded-2xl overflow-hidden"
+          style={{ background: '#0F172A', border: '2px solid #334155', boxShadow: '6px 6px 0px #8B5CF6' }}>
+          <div className="p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: '#8B5CF6' }}>
+                <Brain size={20} className="text-white" />
+              </div>
+              <div>
+                <p className="font-black text-white" style={{ fontFamily: 'Outfit' }}>
+                  AI Business Intelligence — Demo
+                </p>
+                <p className="text-xs text-green-400">Ask anything about the demo business data</p>
+              </div>
+            </div>
+
+            {aiMessage && (
+              <div className="mb-4 p-3 rounded-xl text-sm leading-relaxed"
+                style={{ background: 'rgba(139,92,246,0.15)', color: '#E9D5FF', border: '1px solid rgba(139,92,246,0.3)' }}>
+                {aiLoading ? (
+                  <div className="flex items-center gap-2">
+                    {[0, 150, 300].map(d => (
+                      <div key={d} className="w-2 h-2 rounded-full bg-violet-400 animate-bounce"
+                        style={{ animationDelay: `${d}ms` }} />
+                    ))}
+                  </div>
+                ) : aiMessage}
+              </div>
+            )}
+
+            <div className="flex gap-2 mb-3">
+              <input
+                value={aiInput}
+                onChange={e => setAiInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && askDemoAI()}
+                placeholder="Ask about leads, invoices, stock, team..."
+                className="flex-1 px-3 py-2 rounded-xl text-sm outline-none"
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'white' }}
+              />
+              <button onClick={askDemoAI} disabled={!aiInput.trim()}
+                className="px-4 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-40"
+                style={{ background: '#8B5CF6' }}>
+                <Send size={16} />
+              </button>
+            </div>
+
+            <div className="flex gap-2 flex-wrap">
+              {['How are my leads?', 'Overdue invoices?', 'Low stock?', 'Team overview?'].map(q => (
+                <button key={q}
+                  onClick={() => { setAiInput(q); setTimeout(() => askDemoAI(), 50) }}
+                  className="px-2 py-1 rounded-full text-xs font-medium hover:opacity-80"
+                  style={{ background: 'rgba(139,92,246,0.2)', color: '#C4B5FD', border: '1px solid rgba(139,92,246,0.3)' }}>
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* All modules */}
+        <div>
+          <h2 className="text-lg font-black mb-4 text-gray-900" style={{ fontFamily: 'Outfit' }}>
+            🚀 All 10 Modules Included
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {DEMO_MODULES.map(m => (
+              <div key={m.name}
+                className="flex items-start gap-3 p-4 rounded-2xl bg-white"
+                style={{ border: '2px solid #E2E8F0' }}>
+                <span className="text-2xl flex-shrink-0">{m.emoji}</span>
+                <div>
+                  <p className="font-bold text-sm text-gray-900" style={{ fontFamily: 'Outfit' }}>{m.name}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{m.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Key differentiators */}
+        <div className="p-6 rounded-2xl"
+          style={{ background: '#1E293B', border: '2px solid #334155' }}>
+          <h2 className="text-lg font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>
+            Why businesses choose Samyojak
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { icon: '📥', title: 'Import any CSV', desc: 'From Zoho, Salesforce, Tally, Excel — zero field mapping, zero data loss' },
+              { icon: '⚡', title: '5-minute setup', desc: 'No configuration, no consultants, no training required' },
+              { icon: '🌍', title: '15+ tax systems', desc: 'GST India, VAT UK, HST Canada, Sales Tax USA and more' },
+              { icon: '💳', title: 'Weekly plans from $4.99', desc: 'No annual lock-in. Cancel anytime. Pay only for what you use' },
+            ].map(d => (
+              <div key={d.title} className="flex items-start gap-3">
+                <span className="text-xl flex-shrink-0">{d.icon}</span>
+                <div>
+                  <p className="font-bold text-white text-sm" style={{ fontFamily: 'Outfit' }}>{d.title}</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{d.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="text-center py-8 px-6 rounded-2xl"
+          style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '6px 6px 0px #1E293B' }}>
+          <h2 className="text-2xl font-black text-white mb-2" style={{ fontFamily: 'Outfit' }}>
+            Ready to start?
+          </h2>
+          <p className="text-white/70 mb-6 text-sm">
+            Set up your ERP in 5 minutes. Import your data. No credit card required.
+          </p>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Link href="/signup"
+              className="px-8 py-3 rounded-full text-sm font-black inline-flex items-center gap-2 hover:opacity-90 transition-opacity"
+              style={{ background: 'white', color: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+              Start Free Trial <ArrowRight size={16} />
+            </Link>
+            <Link href="/pricing"
+              className="px-8 py-3 rounded-full text-sm font-bold inline-flex items-center gap-2 hover:opacity-80 transition-opacity"
+              style={{ background: 'transparent', color: 'white', border: '2px solid rgba(255,255,255,0.4)' }}>
+              See Pricing
+            </Link>
+          </div>
+        </div>
+
+      </div>
+
+      <style jsx global>{`
+        .candy-btn {
+          background: #8B5CF6;
+          color: white;
+          border: 2px solid #1E293B;
+          box-shadow: 4px 4px 0px #1E293B;
+          border-radius: 9999px;
+          font-weight: 800;
+          font-family: 'Outfit', sans-serif;
+          transition: all 0.15s;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .candy-btn:hover {
+          transform: translate(-2px, -2px);
+          box-shadow: 6px 6px 0px #1E293B;
+        }
+      `}</style>
     </div>
   )
 }
