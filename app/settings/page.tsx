@@ -1,260 +1,333 @@
 'use client'
-import { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import { supabase } from '@/lib/supabase'
-import { User, Bell, Shield, CreditCard, Globe, CheckCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { User, Bell, Shield, Trash2, BookOpen, RefreshCw, Check, AlertCircle } from 'lucide-react'
+import OnboardingTour from '@/components/OnboardingTour'
 
 export default function Settings() {
   const [user, setUser] = useState<any>(null)
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security' | 'account'>('profile')
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [activeTab, setActiveTab] = useState<'profile' | 'billing' | 'notifications' | 'security'>('profile')
-  const [profile, setProfile] = useState({ full_name: '', company: '', timezone: '' })
-  const [billing, setBilling] = useState({ autopay: true })
-
-  const TIMEZONES = [
-    'Asia/Kolkata', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Tokyo',
-    'Europe/London', 'Europe/Paris', 'Europe/Berlin',
-    'America/New_York', 'America/Chicago', 'America/Los_Angeles',
-    'Australia/Sydney', 'Pacific/Auckland',
-  ]
+  const [success, setSuccess] = useState('')
+  const [error, setError] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [company, setCompany] = useState('')
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const router = useRouter()
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUser(user)
-        setProfile({
-          full_name: user.user_metadata?.full_name || '',
-          company: user.user_metadata?.company || '',
-          timezone: user.user_metadata?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata',
-        })
-        setBilling({
-          autopay: user.user_metadata?.autopay !== false,
-        })
-      }
+      if (!user) { router.push('/login'); return }
+      setUser(user)
+      setFullName(user.user_metadata?.full_name || '')
+      setCompany(user.user_metadata?.company || '')
     })
-  }, [])
+  }, [router])
 
   const saveProfile = async () => {
     setSaving(true)
+    setSuccess('')
+    setError('')
     try {
-      await supabase.auth.updateUser({ data: { ...profile } })
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
-    } catch (e) { console.error(e) }
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: fullName, company },
+      })
+      if (error) throw error
+      setSuccess('Profile updated successfully')
+    } catch (e: any) {
+      setError(e.message)
+    }
     setSaving(false)
   }
 
-  const saveBilling = async () => {
-    setSaving(true)
+  const changePassword = async () => {
+    setSuccess('')
+    setError('')
+    if (!user?.email) return
     try {
-      await supabase.auth.updateUser({ data: { autopay: billing.autopay } })
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
-    } catch (e) { console.error(e) }
-    setSaving(false)
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+      if (error) throw error
+      setSuccess('Password reset email sent. Check your inbox.')
+    } catch (e: any) {
+      setError(e.message)
+    }
+  }
+
+  const deleteAccount = async () => {
+    if (deleteConfirm !== 'DELETE') {
+      setError('Type DELETE to confirm account deletion')
+      return
+    }
+    setError('To delete your account, please contact hello.samyojak@gmail.com')
+  }
+
+  const resetOnboarding = () => {
+    localStorage.removeItem('samyojak_onboarding_done')
+    setShowOnboarding(true)
+    setSuccess('Onboarding tour restarted!')
+    setTimeout(() => setSuccess(''), 3000)
   }
 
   const tabs = [
-    { key: 'profile', icon: User, label: 'Profile' },
-    { key: 'billing', icon: CreditCard, label: 'Billing & Auto-Pay' },
-    { key: 'notifications', icon: Bell, label: 'Notifications' },
-    { key: 'security', icon: Shield, label: 'Security' },
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'security', label: 'Security', icon: Shield },
+    { id: 'account', label: 'Account', icon: Trash2 },
   ]
 
   return (
     <Layout>
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-4 max-w-2xl">
+
+        {showOnboarding && (
+          <OnboardingTour onDismiss={() => {
+            setShowOnboarding(false)
+            localStorage.setItem('samyojak_onboarding_done', '1')
+          }} />
+        )}
+
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>Settings</h2>
-          <p className="text-gray-500 text-sm mt-1">Manage your account and preferences</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+            Settings
+          </h2>
+          <p className="text-gray-500 text-sm">Manage your account and preferences</p>
         </div>
 
-        {saved && (
-          <div className="flex items-center gap-3 p-4 rounded-xl" style={{ background: '#D1FAE5', border: '2px solid #34D399' }}>
-            <CheckCircle size={18} style={{ color: '#059669' }} />
-            <span className="text-sm font-medium text-green-800">Settings saved successfully!</span>
+        {success && (
+          <div className="p-3 rounded-xl flex items-center gap-2 text-sm"
+            style={{ background: '#D1FAE5', border: '1.5px solid #34D399', color: '#065F46' }}>
+            <Check size={16} /> {success}
           </div>
         )}
 
+        {error && (
+          <div className="p-3 rounded-xl flex items-center gap-2 text-sm"
+            style={{ background: '#FEE2E2', border: '1.5px solid #FCA5A5', color: '#DC2626' }}>
+            <AlertCircle size={16} /> {error}
+            <button onClick={() => setError('')} className="ml-auto">✕</button>
+          </div>
+        )}
+
+        {/* Tabs */}
         <div className="flex gap-1 border-b border-gray-200 dark:border-white/10 overflow-x-auto">
           {tabs.map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key as any)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-bold border-b-2 transition-colors whitespace-nowrap"
-              style={{ borderColor: activeTab === tab.key ? '#8B5CF6' : 'transparent', color: activeTab === tab.key ? '#8B5CF6' : '#64748B' }}>
-              <tab.icon size={16} />
+            <button key={tab.id}
+              onClick={() => { setActiveTab(tab.id as any); setSuccess(''); setError('') }}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 transition-colors whitespace-nowrap"
+              style={{
+                borderColor: activeTab === tab.id ? '#8B5CF6' : 'transparent',
+                color: activeTab === tab.id ? '#8B5CF6' : '#64748B',
+              }}>
+              <tab.icon size={15} />
               {tab.label}
             </button>
           ))}
         </div>
 
+        {/* PROFILE TAB */}
         {activeTab === 'profile' && (
-          <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6" style={{ border: '2px solid #E2E8F0' }}>
-            <h3 className="font-black text-lg mb-6 dark:text-white" style={{ fontFamily: 'Outfit' }}>Profile Information</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wide mb-2 dark:text-gray-300">Full Name</label>
-                <input type="text" value={profile.full_name} onChange={e => setProfile({ ...profile, full_name: e.target.value })}
-                  className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-violet-500 dark:bg-white/5 dark:text-white" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wide mb-2 dark:text-gray-300">Company Name</label>
-                <input type="text" value={profile.company} onChange={e => setProfile({ ...profile, company: e.target.value })}
-                  className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-violet-500 dark:bg-white/5 dark:text-white" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wide mb-2 dark:text-gray-300">
-                  <Globe size={12} className="inline mr-1" /> Timezone
-                </label>
-                <select value={profile.timezone} onChange={e => setProfile({ ...profile, timezone: e.target.value })}
-                  className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-3 text-sm outline-none dark:bg-[#1a2740] dark:text-white">
-                  {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
-                </select>
-                <p className="text-xs text-gray-400 mt-1">
-                  Current: {Intl.DateTimeFormat().resolvedOptions().timeZone} · Used for geo-based pricing and date display
-                </p>
-              </div>
-              <div className="pt-2">
-                <label className="block text-xs font-bold uppercase tracking-wide mb-2 dark:text-gray-300">Email</label>
-                <div className="w-full border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400">
-                  {user?.email}
-                </div>
-              </div>
-              <button onClick={saveProfile} disabled={saving}
-                className="candy-btn w-full py-3 text-sm disabled:opacity-50">
-                {saving ? 'Saving...' : 'Save Profile'}
-              </button>
+          <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6 space-y-4"
+            style={{ border: '2px solid #E2E8F0' }}>
+            <h3 className="font-black text-base dark:text-white" style={{ fontFamily: 'Outfit' }}>
+              Profile Information
+            </h3>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wide mb-1.5 dark:text-gray-300"
+                style={{ fontFamily: 'Outfit' }}>
+                Email
+              </label>
+              <input
+                type="email"
+                value={user?.email || ''}
+                disabled
+                className="w-full border border-gray-200 dark:border-white/20 rounded-xl px-4 py-2.5 text-sm bg-gray-50 dark:bg-white/5 text-gray-400 cursor-not-allowed"
+              />
+              <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
             </div>
-          </div>
-        )}
 
-        {activeTab === 'billing' && (
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6" style={{ border: '2px solid #E2E8F0' }}>
-              <h3 className="font-black text-lg mb-2 dark:text-white" style={{ fontFamily: 'Outfit' }}>Auto-Pay Settings</h3>
-              <p className="text-sm text-gray-500 mb-6">
-                Control whether your subscription renews automatically each period.
-              </p>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wide mb-1.5 dark:text-gray-300"
+                style={{ fontFamily: 'Outfit' }}>
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+                placeholder="Your full name"
+                className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500 outline-none dark:bg-white/5 dark:text-white"
+              />
+            </div>
 
-              <div className="flex items-center justify-between p-4 rounded-xl mb-4"
-                style={{ background: billing.autopay ? '#D1FAE5' : '#FEF3C7', border: `2px solid ${billing.autopay ? '#34D399' : '#FBBF24'}` }}>
-                <div>
-                  <p className="font-bold text-sm" style={{ color: billing.autopay ? '#065F46' : '#92400E' }}>
-                    Auto-Pay is {billing.autopay ? 'ON' : 'OFF'}
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: billing.autopay ? '#047857' : '#B45309' }}>
-                    {billing.autopay
-                      ? 'Your subscription renews automatically. No action needed.'
-                      : 'You will need to manually renew when your plan expires.'}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setBilling({ autopay: !billing.autopay })}
-                  className="w-14 h-7 rounded-full transition-all duration-300 relative flex-shrink-0"
-                  style={{ background: billing.autopay ? '#34D399' : '#CBD5E1' }}
-                >
-                  <div className="w-5 h-5 rounded-full bg-white absolute top-1 transition-all duration-300"
-                    style={{ left: billing.autopay ? '34px' : '4px', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }} />
-                </button>
-              </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wide mb-1.5 dark:text-gray-300"
+                style={{ fontFamily: 'Outfit' }}>
+                Company / Business Name
+              </label>
+              <input
+                type="text"
+                value={company}
+                onChange={e => setCompany(e.target.value)}
+                placeholder="Your business name"
+                className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500 outline-none dark:bg-white/5 dark:text-white"
+              />
+            </div>
 
-              <div className="space-y-3 mb-6">
-                <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0' }}>
-                  <span className="text-lg">📅</span>
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">Weekly Plans</p>
-                    <p className="text-xs text-gray-500">You are charged once per week. You can turn off auto-pay anytime to stop at the end of your current week.</p>
+            <button onClick={saveProfile} disabled={saving}
+              className="candy-btn px-6 py-2.5 text-sm disabled:opacity-50">
+              {saving ? 'Saving...' : 'Save Profile'}
+            </button>
+
+            {/* ONBOARDING RESET — prominent card */}
+            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/10">
+              <div className="p-4 rounded-2xl"
+                style={{ background: '#EDE9FE', border: '2px solid #8B5CF6' }}>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: '#8B5CF6' }}>
+                    <BookOpen size={20} className="text-white" />
                   </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0' }}>
-                  <span className="text-lg">💳</span>
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">Cancel Anytime</p>
-                    <p className="text-xs text-gray-500">Turn off auto-pay below and your plan simply expires at the end of the current period. No charges after that.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0' }}>
-                  <span className="text-lg">🌍</span>
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">Your Pricing Region</p>
-                    <p className="text-xs text-gray-500">
-                      Pricing is detected from your timezone: <strong>{profile.timezone}</strong>.
-                      India timezone = India pricing. Western timezone = Western pricing.
+                  <div className="flex-1">
+                    <h4 className="font-black text-sm mb-1" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                      Onboarding Tutorial
+                    </h4>
+                    <p className="text-xs mb-3" style={{ color: '#64748B' }}>
+                      Restart the step-by-step tour to learn all features including new Quotations, BI Dashboard, Recurring Invoices, and Recruiting modules.
                     </p>
+                    <button onClick={resetOnboarding}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold text-white hover:opacity-90 transition-opacity"
+                      style={{ background: '#8B5CF6' }}>
+                      <RefreshCw size={15} /> Restart Onboarding Tour
+                    </button>
                   </div>
                 </div>
               </div>
-
-              <button onClick={saveBilling} disabled={saving}
-                className="candy-btn w-full py-3 text-sm disabled:opacity-50">
-                {saving ? 'Saving...' : 'Save Billing Preferences'}
-              </button>
-            </div>
-
-            <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6" style={{ border: '2px solid #E2E8F0' }}>
-              <h3 className="font-black text-lg mb-4 dark:text-white" style={{ fontFamily: 'Outfit' }}>Current Plan</h3>
-              <div className="p-4 rounded-xl" style={{ background: '#EDE9FE', border: '2px solid #8B5CF6' }}>
-                <p className="font-bold text-violet-800">{user?.user_metadata?.plan || 'No active plan'}</p>
-                <p className="text-xs text-violet-600 mt-1">
-                  Powered by Dodo Payments · Secure · Cancel anytime
-                </p>
-              </div>
-              <a href="/choose-plan" className="block mt-4 text-center text-sm font-bold py-2 rounded-xl"
-                style={{ color: '#8B5CF6', border: '2px solid #8B5CF6' }}>
-                Change Plan →
-              </a>
             </div>
           </div>
         )}
 
+        {/* NOTIFICATIONS TAB */}
         {activeTab === 'notifications' && (
-          <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6" style={{ border: '2px solid #E2E8F0' }}>
-            <h3 className="font-black text-lg mb-6 dark:text-white" style={{ fontFamily: 'Outfit' }}>Notification Preferences</h3>
-            <div className="space-y-4">
-              {[
-                { key: 'email_invoices', label: 'Invoice payment reminders', desc: 'Get emailed when invoices are overdue' },
-                { key: 'email_leads', label: 'Follow-up reminders', desc: 'Get emailed when leads need follow-up' },
-                { key: 'email_tickets', label: 'Support ticket updates', desc: 'Get notified on ticket status changes' },
-                { key: 'email_billing', label: 'Billing notifications', desc: 'Renewal confirmations and receipts' },
-              ].map(item => (
-                <div key={item.key} className="flex items-center justify-between p-3 rounded-xl"
-                  style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0' }}>
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{item.label}</p>
-                    <p className="text-xs text-gray-400">{item.desc}</p>
-                  </div>
-                  <div className="w-10 h-6 rounded-full bg-violet-500 relative flex-shrink-0">
-                    <div className="w-4 h-4 rounded-full bg-white absolute top-1 right-1" />
-                  </div>
+          <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6 space-y-4"
+            style={{ border: '2px solid #E2E8F0' }}>
+            <h3 className="font-black text-base dark:text-white" style={{ fontFamily: 'Outfit' }}>
+              Notification Preferences
+            </h3>
+            {[
+              { label: 'Follow-up reminders', desc: 'Get alerted when a lead follow-up is due today' },
+              { label: 'Overdue invoice alerts', desc: 'Notify when invoices pass their due date' },
+              { label: 'Low stock alerts', desc: 'Alert when product stock hits reorder level' },
+              { label: 'New candidate applications', desc: 'Notify when a new candidate is added to recruiting' },
+              { label: 'Project deadline reminders', desc: 'Alert 2 days before project deadline' },
+            ].map(n => (
+              <div key={n.label} className="flex items-start justify-between gap-4 py-3 border-b border-gray-50 dark:border-white/10 last:border-0">
+                <div>
+                  <p className="text-sm font-semibold dark:text-white">{n.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{n.desc}</p>
                 </div>
+                <div className="w-10 h-6 rounded-full flex-shrink-0 cursor-pointer transition-colors"
+                  style={{ background: '#8B5CF6' }}>
+                  <div className="w-4 h-4 bg-white rounded-full mt-1 ml-5 transition-all" />
+                </div>
+              </div>
+            ))}
+            <p className="text-xs text-gray-400">
+              Email notifications sent to {user?.email}
+            </p>
+          </div>
+        )}
+
+        {/* SECURITY TAB */}
+        {activeTab === 'security' && (
+          <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6 space-y-5"
+            style={{ border: '2px solid #E2E8F0' }}>
+            <h3 className="font-black text-base dark:text-white" style={{ fontFamily: 'Outfit' }}>
+              Security Settings
+            </h3>
+
+            <div className="p-4 rounded-xl" style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0' }}>
+              <p className="text-sm font-bold dark:text-white mb-1">Change Password</p>
+              <p className="text-xs text-gray-400 mb-3">
+                We will send a password reset link to {user?.email}
+              </p>
+              <button onClick={changePassword}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold hover:opacity-80 transition-opacity"
+                style={{ background: '#1E293B', color: 'white' }}>
+                <Shield size={15} /> Send Reset Link
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm font-bold dark:text-white">Security Features Active</p>
+              {[
+                '✅ SSL encrypted connection',
+                '✅ Supabase enterprise authentication',
+                '✅ Rate limiting — max 5 login attempts',
+                '✅ Session timeout — 30 min auto logout',
+                '✅ Email verification required',
+              ].map(s => (
+                <p key={s} className="text-xs" style={{ color: '#64748B' }}>{s}</p>
               ))}
-              <p className="text-xs text-gray-400">Full notification management coming soon. Currently all notifications are sent to your account email.</p>
             </div>
           </div>
         )}
 
-        {activeTab === 'security' && (
-          <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6" style={{ border: '2px solid #E2E8F0' }}>
-            <h3 className="font-black text-lg mb-6 dark:text-white" style={{ fontFamily: 'Outfit' }}>Security</h3>
-            <div className="space-y-4">
-              <div className="p-4 rounded-xl" style={{ background: '#D1FAE5', border: '1.5px solid #34D399' }}>
-                <p className="text-sm font-bold text-green-800">✅ Your account is secure</p>
-                <ul className="text-xs text-green-700 mt-2 space-y-1">
-                  <li>• Login rate limited — 5 attempts max then 15 min lockout</li>
-                  <li>• Session auto-expires after 30 minutes of inactivity</li>
-                  <li>• All data encrypted in transit via HTTPS/SSL</li>
-                  <li>• Powered by Supabase Auth — enterprise grade security</li>
-                </ul>
+        {/* ACCOUNT TAB */}
+        {activeTab === 'account' && (
+          <div className="space-y-4">
+
+            {/* Plan info */}
+            <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6"
+              style={{ border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black text-base dark:text-white mb-3" style={{ fontFamily: 'Outfit' }}>
+                Current Plan
+              </h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-bold dark:text-white">{user?.user_metadata?.plan || 'No Plan'}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Manage billing and upgrade at Pricing page
+                  </p>
+                </div>
+                <a href="/pricing"
+                  className="px-4 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
+                  style={{ background: '#8B5CF6', color: 'white' }}>
+                  Manage Plan
+                </a>
               </div>
-              <button
-                onClick={async () => { await supabase.auth.signOut(); window.location.href = '/' }}
-                className="w-full py-3 rounded-xl text-sm font-bold"
-                style={{ background: '#FEE2E2', color: '#DC2626', border: '2px solid #FCA5A5' }}>
-                🚪 Sign Out of All Devices
+            </div>
+
+            {/* Delete account */}
+            <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6"
+              style={{ border: '2px solid #FEE2E2' }}>
+              <h3 className="font-black text-base text-red-600 mb-2" style={{ fontFamily: 'Outfit' }}>
+                Delete Account
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                This permanently deletes your account and all data. This cannot be undone.
+              </p>
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={e => setDeleteConfirm(e.target.value)}
+                placeholder='Type "DELETE" to confirm'
+                className="w-full border border-red-200 rounded-xl px-4 py-2 text-sm mb-3 focus:ring-2 focus:ring-red-300 outline-none dark:bg-white/5 dark:text-white"
+              />
+              <button onClick={deleteAccount}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold hover:opacity-80 transition-opacity"
+                style={{ background: '#EF4444', color: 'white' }}>
+                <Trash2 size={15} /> Delete Account
               </button>
             </div>
           </div>
         )}
+
       </div>
     </Layout>
   )
