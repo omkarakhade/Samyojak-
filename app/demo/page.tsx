@@ -1,10 +1,12 @@
 'use client'
-import React, { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { Brain, Users, FileText, Package, UserCheck, FolderOpen, BarChart3, FileCheck, UserPlus, Send, ArrowRight } from 'lucide-react'
+import React, { useEffect, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import {
+  Brain, Users, FileText, Package, UserCheck,
+  FolderOpen, BarChart3, FileCheck, UserPlus, Send, ArrowRight
+} from 'lucide-react'
 import Link from 'next/link'
 
-// All valid demo tokens — add new ones here without touching any other file
 const VALID_TOKENS = [
   'samyojak2025',
   'demo-investor',
@@ -40,9 +42,9 @@ const DEMO_MODULES = [
   { name: 'Universal Import', emoji: '📥', desc: 'Any CSV from any software, zero field mapping' },
 ]
 
-export default function Demo() {
+// ─── Inner component that uses useSearchParams ───────────────────────────────
+function DemoContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const token = searchParams.get('token')
   const [valid, setValid] = useState(false)
   const [checking, setChecking] = useState(true)
@@ -52,14 +54,16 @@ export default function Demo() {
 
   useEffect(() => {
     if (!token || !VALID_TOKENS.includes(token)) {
-      setChecking(false)
       setValid(false)
     } else {
-      setChecking(false)
       setValid(true)
-      // Set demo AI greeting
-      setAiMessage('👋 Welcome to Samyojak demo! You have 248 leads in your pipeline, 12 converted this month. Revenue collected is ₹4.6L. 3 projects are overdue and need attention today. Your team payroll is ₹2.1L/month.')
+      setAiMessage(
+        '👋 Welcome to Samyojak demo! You have 248 leads in your pipeline, 12 converted this month. ' +
+        'Revenue collected is ₹4.6L. 3 projects are overdue and need attention today. ' +
+        'Your team payroll is ₹2.1L/month.'
+      )
     }
+    setChecking(false)
   }, [token])
 
   const askDemoAI = async () => {
@@ -75,11 +79,11 @@ export default function Demo() {
     } else if (q.includes('invoice') || q.includes('payment')) {
       reply = '💰 189 invoices total. ₹4.6L collected. 23 invoices overdue worth ₹1.2L — follow up on these immediately. GST collected this quarter: ₹82,000.'
     } else if (q.includes('stock') || q.includes('inventory')) {
-      reply = '📦 91 products tracked. 6 items are at or below reorder level. Fastest moving product: Blue Widget Pro — 43 units sold this month.'
+      reply = '📦 91 products tracked. 6 items are at or below reorder level. Fastest moving: Blue Widget Pro — 43 units sold this month.'
     } else if (q.includes('team') || q.includes('employee') || q.includes('hr')) {
-      reply = '👥 14 employees. Monthly payroll ₹2.1L. Engineering has 5 people, Sales has 4, Operations has 3, Management has 2. 3 candidates in final interview stage.'
+      reply = '👥 14 employees. Monthly payroll ₹2.1L. Engineering has 5, Sales has 4, Operations has 3, Management has 2. 3 candidates in final interview stage.'
     } else if (q.includes('project')) {
-      reply = '🎯 17 projects tracked. 5 in Planning, 7 In Progress, 2 in Review, 3 Done. 3 projects are overdue — Website Redesign, Mobile App v2, and Q3 Campaign.'
+      reply = '🎯 17 projects tracked. 5 Planning, 7 In Progress, 2 Review, 3 Done. 3 overdue — Website Redesign, Mobile App v2, Q3 Campaign.'
     } else {
       reply = '🤖 This is a demo of Samyojak AI. In your real account, AI reads your live CRM, invoices, inventory, HR, and project data and gives specific answers about your actual business numbers.'
     }
@@ -104,14 +108,15 @@ export default function Demo() {
         <p className="text-gray-500 mb-6">
           This demo link is not valid or has expired. Request a new link from the Samyojak team.
         </p>
-        <div className="flex gap-3 justify-center">
+        <div className="flex gap-3 justify-center flex-wrap">
           <Link href="/"
             className="px-6 py-3 rounded-xl text-sm font-bold hover:opacity-80 transition-opacity"
             style={{ background: '#EDE9FE', color: '#8B5CF6' }}>
             Visit Website
           </Link>
           <Link href="/signup"
-            className="candy-btn px-6 py-3 text-sm">
+            className="px-6 py-3 rounded-full text-sm font-black text-white hover:opacity-90 transition-opacity"
+            style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
             Start Free Trial
           </Link>
         </div>
@@ -127,7 +132,9 @@ export default function Demo() {
         style={{ background: '#8B5CF6' }}>
         <div className="flex items-center gap-2">
           <span className="text-white text-xs font-black">👀 DEMO MODE</span>
-          <span className="text-white/70 text-xs">— This is a demonstration of Samyojak ERP</span>
+          <span className="text-white/70 text-xs hidden md:inline">
+            — This is a demonstration of Samyojak ERP
+          </span>
         </div>
         <Link href="/signup"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all hover:opacity-90"
@@ -136,7 +143,7 @@ export default function Demo() {
         </Link>
       </div>
 
-      {/* Header */}
+      {/* Hero */}
       <div className="px-6 py-8" style={{ background: '#0F172A' }}>
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
@@ -172,7 +179,9 @@ export default function Demo() {
                   <s.icon size={18} style={{ color: s.color }} />
                 </div>
                 <p className="text-gray-500 text-xs uppercase font-semibold mb-1">{s.label}</p>
-                <p className="text-2xl font-black text-gray-900" style={{ fontFamily: 'Outfit' }}>{s.value}</p>
+                <p className="text-2xl font-black text-gray-900" style={{ fontFamily: 'Outfit' }}>
+                  {s.value}
+                </p>
                 <p className="text-xs mt-0.5" style={{ color: s.color }}>{s.sub}</p>
               </div>
             ))}
@@ -196,7 +205,7 @@ export default function Demo() {
               </div>
             </div>
 
-            {aiMessage && (
+            {(aiMessage || aiLoading) && (
               <div className="mb-4 p-3 rounded-xl text-sm leading-relaxed"
                 style={{ background: 'rgba(139,92,246,0.15)', color: '#E9D5FF', border: '1px solid rgba(139,92,246,0.3)' }}>
                 {aiLoading ? (
@@ -217,10 +226,16 @@ export default function Demo() {
                 onKeyDown={e => e.key === 'Enter' && askDemoAI()}
                 placeholder="Ask about leads, invoices, stock, team..."
                 className="flex-1 px-3 py-2 rounded-xl text-sm outline-none"
-                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'white' }}
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  color: 'white',
+                }}
               />
-              <button onClick={askDemoAI} disabled={!aiInput.trim()}
-                className="px-4 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-40"
+              <button
+                onClick={askDemoAI}
+                disabled={!aiInput.trim() || aiLoading}
+                className="px-4 py-2 rounded-xl text-white font-bold text-sm disabled:opacity-40 transition-opacity"
                 style={{ background: '#8B5CF6' }}>
                 <Send size={16} />
               </button>
@@ -230,8 +245,12 @@ export default function Demo() {
               {['How are my leads?', 'Overdue invoices?', 'Low stock?', 'Team overview?'].map(q => (
                 <button key={q}
                   onClick={() => { setAiInput(q); setTimeout(() => askDemoAI(), 50) }}
-                  className="px-2 py-1 rounded-full text-xs font-medium hover:opacity-80"
-                  style={{ background: 'rgba(139,92,246,0.2)', color: '#C4B5FD', border: '1px solid rgba(139,92,246,0.3)' }}>
+                  className="px-2 py-1 rounded-full text-xs font-medium hover:opacity-80 transition-opacity"
+                  style={{
+                    background: 'rgba(139,92,246,0.2)',
+                    color: '#C4B5FD',
+                    border: '1px solid rgba(139,92,246,0.3)',
+                  }}>
                   {q}
                 </button>
               ))}
@@ -259,7 +278,7 @@ export default function Demo() {
           </div>
         </div>
 
-        {/* Key differentiators */}
+        {/* Why Samyojak */}
         <div className="p-6 rounded-2xl"
           style={{ background: '#1E293B', border: '2px solid #334155' }}>
           <h2 className="text-lg font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>
@@ -287,7 +306,7 @@ export default function Demo() {
         <div className="text-center py-8 px-6 rounded-2xl"
           style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '6px 6px 0px #1E293B' }}>
           <h2 className="text-2xl font-black text-white mb-2" style={{ fontFamily: 'Outfit' }}>
-            Ready to start?
+            Ready to start with your own data?
           </h2>
           <p className="text-white/70 mb-6 text-sm">
             Set up your ERP in 5 minutes. Import your data. No credit card required.
@@ -295,7 +314,12 @@ export default function Demo() {
           <div className="flex gap-3 justify-center flex-wrap">
             <Link href="/signup"
               className="px-8 py-3 rounded-full text-sm font-black inline-flex items-center gap-2 hover:opacity-90 transition-opacity"
-              style={{ background: 'white', color: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+              style={{
+                background: 'white',
+                color: '#8B5CF6',
+                border: '2px solid #1E293B',
+                boxShadow: '3px 3px 0px #1E293B',
+              }}>
               Start Free Trial <ArrowRight size={16} />
             </Link>
             <Link href="/pricing"
@@ -328,5 +352,26 @@ export default function Demo() {
         }
       `}</style>
     </div>
+  )
+}
+
+// ─── Loading fallback ─────────────────────────────────────────────────────────
+function DemoLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0F172A' }}>
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-violet-500 mx-auto mb-4"></div>
+        <p className="text-gray-400 text-sm">Loading demo...</p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Default export wraps DemoContent in Suspense ────────────────────────────
+export default function Demo() {
+  return (
+    <Suspense fallback={<DemoLoading />}>
+      <DemoContent />
+    </Suspense>
   )
 }
