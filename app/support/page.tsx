@@ -1,265 +1,398 @@
 'use client'
-import { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import { supabase } from '@/lib/supabase'
-import { Send, CheckCircle, AlertCircle, Clock, HelpCircle } from 'lucide-react'
+import { airtable } from '@/lib/airtable'
+import { Plus, AlertCircle, RefreshCw, Check, Mail, MessageSquare, Zap } from 'lucide-react'
+import UniversalDataView from '@/components/UniversalDataView'
 
-const CATEGORIES = [
-  'CRM & Leads',
-  'Invoicing & Payments',
-  'Inventory & QR Codes',
-  'HR & Employees',
-  'Projects',
-  'GST Reports',
-  'Account & Billing',
-  'AI Features',
-  'Technical Issue',
-  'Other',
-]
+const PRIORITY_COLORS: Record<string, { bg: string; color: string }> = {
+  Low: { bg: '#F1F5F9', color: '#64748B' },
+  Medium: { bg: '#FEF3C7', color: '#92400E' },
+  High: { bg: '#FEE2E2', color: '#DC2626' },
+  Emergency: { bg: '#450a0a', color: '#FCA5A5' },
+}
 
-const PRIORITIES = [
-  { value: 'Low', label: 'Low', desc: 'General question or feedback', color: '#34D399', bg: '#D1FAE5' },
-  { value: 'Medium', label: 'Medium', desc: 'Feature not working as expected', color: '#FBBF24', bg: '#FEF3C7' },
-  { value: 'High', label: 'High', desc: 'Business operations blocked', color: '#EF4444', bg: '#FEE2E2' },
-]
+const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
+  Open: { bg: '#EDE9FE', color: '#8B5CF6' },
+  'In Progress': { bg: '#FEF3C7', color: '#92400E' },
+  Resolved: { bg: '#D1FAE5', color: '#065F46' },
+  Closed: { bg: '#F1F5F9', color: '#64748B' },
+}
+
+const CORRECT_EMAIL = 'hello.samyojak@gmail.com'
 
 export default function Support() {
+  const [userId, setUserId] = useState('')
+  const [userEmail, setUserEmail] = useState('')
+  const [tickets, setTickets] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
   const [form, setForm] = useState({
     subject: '',
-    category: 'Technical Issue',
+    description: '',
     priority: 'Medium',
-    message: '',
+    category: 'General',
   })
-  const [userEmail, setUserEmail] = useState('')
-  const [userName, setUserName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
-  const [error, setError] = useState('')
-  const [ticketId, setTicketId] = useState('')
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
+        setUserId(user.id)
         setUserEmail(user.email || '')
-        setUserName(user.user_metadata?.full_name || '')
       }
     })
   }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!form.message.trim() || !form.subject.trim()) {
-      setError('Please fill in subject and message.')
-      return
-    }
+  const fetchTickets = async () => {
     setLoading(true)
     setError('')
-
     try {
-      const res = await fetch('/api/support', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          userEmail,
-          userName,
-        }),
-      })
-      const data = await res.json()
-
-      if (data.success) {
-        setSent(true)
-        setTicketId(data.ticketId || 'TKT-' + Date.now())
-      } else {
-        setError(data.error || 'Failed to send. Try emailing samyojak@gmail.com directly.')
-      }
+      const d = await airtable.get('Support_Tickets')
+      setTickets(d.records || [])
     } catch (e: any) {
-      setError('Network error. Please email samyojak@gmail.com directly.')
+      setError('Could not load tickets: ' + e.message)
     }
     setLoading(false)
   }
 
+  useEffect(() => { fetchTickets() }, [refreshKey])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.subject.trim()) { setError('Subject is required'); return }
+    if (!form.description.trim()) { setError('Please describe your issue'); return }
+    setSaving(true)
+    setError('')
+    setSuccess('')
+    try {
+      const fields: Record<string, unknown> = {
+        Subject: form.subject.trim(),
+        Description: form.description.trim(),
+        Priority: form.priority,
+        Category: form.category,
+        Status: 'Open',
+        'User Email': userEmail,
+        'User ID': userId,
+        'Created At': new Date().toISOString().split('T')[0],
+      }
+      await airtable.create('Support_Tickets', fields)
+      setSuccess('Ticket submitted successfully! We will respond to ' + userEmail + ' within 24 hours.')
+      setShowModal(false)
+      setForm({ subject: '', description: '', priority: 'Medium', category: 'General' })
+      setRefreshKey(k => k + 1)
+    } catch (e: any) {
+      setError('Failed to submit ticket: ' + e.message)
+    }
+    setSaving(false)
+  }
+
+  const myTickets = tickets.filter(t =>
+    t.fields?.['User Email'] === userEmail ||
+    t.fields?.['User ID'] === userId
+  )
+
   return (
     <Layout>
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-5 max-w-3xl">
 
-        <div>
-          <h2 className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-            Support Center 🎯
-          </h2>
-          <p className="text-gray-500 text-sm mt-1">
-            We respond within 24 hours · Email: samyojak@gmail.com
-          </p>
-        </div>
+        {error && (
+          <div className="p-4 rounded-xl flex items-center gap-2 text-sm"
+            style={{ background: '#FEE2E2', border: '1.5px solid #FCA5A5', color: '#DC2626' }}>
+            <AlertCircle size={16} className="flex-shrink-0" />
+            <span className="flex-1">{error}</span>
+            <button onClick={() => setError('')}>✕</button>
+          </div>
+        )}
 
-        {/* Quick Help Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { icon: HelpCircle, title: 'Documentation', desc: 'Browse help articles', color: '#8B5CF6', bg: '#EDE9FE', action: 'View Docs' },
-            { icon: Clock, title: 'Response Time', desc: 'Usually under 24 hours', color: '#34D399', bg: '#D1FAE5', action: '24h SLA' },
-            { icon: AlertCircle, title: 'Emergency', desc: 'Email us directly', color: '#F472B6', bg: '#FCE7F3', action: 'samyojak@gmail.com' },
-          ].map(item => (
-            <div key={item.title} className="p-4 rounded-2xl"
-              style={{ background: item.bg, border: `2px solid ${item.color}` }}>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
-                style={{ background: 'white', border: `2px solid ${item.color}` }}>
-                <item.icon size={20} style={{ color: item.color }} />
-              </div>
-              <h3 className="font-black text-sm mb-1" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-                {item.title}
-              </h3>
-              <p className="text-xs mb-2" style={{ color: '#64748B' }}>{item.desc}</p>
-              <p className="text-xs font-bold" style={{ color: item.color }}>{item.action}</p>
-            </div>
-          ))}
-        </div>
+        {success && (
+          <div className="p-4 rounded-xl flex items-center gap-2 text-sm"
+            style={{ background: '#D1FAE5', border: '1.5px solid #34D399', color: '#065F46' }}>
+            <Check size={16} className="flex-shrink-0" />
+            <span className="flex-1">{success}</span>
+          </div>
+        )}
 
-        {/* Ticket Form */}
-        {sent ? (
-          <div className="p-8 rounded-2xl text-center"
-            style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '8px 8px 0px #34D399' }}>
-            <div className="text-6xl mb-4 float">✅</div>
-            <h3 className="text-2xl font-black mb-3" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-              Ticket Submitted!
-            </h3>
-            <p className="text-gray-500 mb-2">
-              Your support ticket has been received and sent to our team.
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+              Support
+            </h2>
+            <p className="text-gray-500 text-sm">
+              {myTickets.length} ticket{myTickets.length !== 1 ? 's' : ''} · We respond within 24 hours
             </p>
-            <p className="text-sm font-bold mb-6" style={{ color: '#8B5CF6' }}>
-              Ticket ID: {ticketId}
-            </p>
-            <p className="text-sm text-gray-400 mb-6">
-              We will reply to <strong>{userEmail}</strong> within 24 hours.
-            </p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setRefreshKey(k => k + 1)}
+              className="p-2 border border-gray-300 dark:border-white/20 rounded-xl hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
+              <RefreshCw size={16} className="text-gray-500 dark:text-gray-400" />
+            </button>
             <button
-              onClick={() => { setSent(false); setForm({ subject: '', category: 'Technical Issue', priority: 'Medium', message: '' }) }}
-              className="outline-btn px-6 py-2 text-sm"
-            >
-              Submit Another Ticket
+              onClick={() => { setShowModal(true); setError(''); setSuccess('') }}
+              className="candy-btn flex items-center gap-2 px-4 py-2 text-sm">
+              <Plus size={16} /> New Ticket
+            </button>
+          </div>
+        </div>
+
+        {/* Emergency contact card — CORRECT EMAIL */}
+        <div className="p-5 rounded-2xl"
+          style={{ background: '#0F172A', border: '2px solid #334155' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: '#EDE9FE' }}>
+                <MessageSquare size={18} style={{ color: '#8B5CF6' }} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-0.5">
+                  Standard Support
+                </p>
+                <p className="text-sm font-bold text-white">Submit a ticket</p>
+                <p className="text-xs text-gray-400">Response within 24 hours</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: '#D1FAE5' }}>
+                <Mail size={18} style={{ color: '#34D399' }} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-0.5">
+                  Email Support
+                </p>
+                <a href={`mailto:${CORRECT_EMAIL}`}
+                  className="text-sm font-bold hover:opacity-80 transition-opacity"
+                  style={{ color: '#34D399' }}>
+                  {CORRECT_EMAIL}
+                </a>
+                <p className="text-xs text-gray-400">For billing and account issues</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: '#FEE2E2' }}>
+                <Zap size={18} style={{ color: '#EF4444' }} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-0.5">
+                  🚨 Emergency Contact
+                </p>
+                <a href={`mailto:${CORRECT_EMAIL}?subject=EMERGENCY`}
+                  className="text-sm font-bold hover:opacity-80 transition-opacity"
+                  style={{ color: '#EF4444' }}>
+                  {CORRECT_EMAIL}
+                </a>
+                <p className="text-xs text-gray-400">Mark subject line: EMERGENCY</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* My tickets */}
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-violet-500"></div>
+          </div>
+        ) : myTickets.length === 0 ? (
+          <div className="text-center py-14 bg-white dark:bg-[#1a2740] rounded-2xl"
+            style={{ border: '2px solid #E2E8F0' }}>
+            <div className="text-5xl mb-4">🎫</div>
+            <h3 className="font-bold dark:text-white text-lg mb-2" style={{ fontFamily: 'Outfit' }}>
+              No support tickets yet
+            </h3>
+            <p className="text-gray-400 text-sm mb-5">
+              Having an issue? Submit a ticket and we will help you.
+            </p>
+            <button onClick={() => setShowModal(true)} className="candy-btn px-6 py-2.5 text-sm">
+              Submit First Ticket
             </button>
           </div>
         ) : (
-          <div className="p-6 rounded-2xl"
-            style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '6px 6px 0px #E2E8F0' }}>
-            <h3 className="font-black text-lg mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-              Submit a Support Ticket
-            </h3>
-
-            {error && (
-              <div className="p-4 rounded-xl mb-4"
-                style={{ background: '#FEE2E2', border: '2px solid #FCA5A5' }}>
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-
-              {/* Subject */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wide mb-2"
-                  style={{ color: '#1E293B', fontFamily: 'Outfit' }}>
-                  Subject *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Brief description of your issue"
-                  value={form.subject}
-                  onChange={e => setForm({ ...form, subject: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl outline-none transition-all"
-                  style={{ border: '2px solid #CBD5E1', fontFamily: 'Plus Jakarta Sans', color: '#1E293B' }}
-                  onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '4px 4px 0px #8B5CF6' }}
-                  onBlur={e => { e.target.style.borderColor = '#CBD5E1'; e.target.style.boxShadow = 'none' }}
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wide mb-2"
-                  style={{ color: '#1E293B', fontFamily: 'Outfit' }}>
-                  Category
-                </label>
-                <select
-                  value={form.category}
-                  onChange={e => setForm({ ...form, category: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl outline-none"
-                  style={{ border: '2px solid #CBD5E1', fontFamily: 'Plus Jakarta Sans', color: '#1E293B' }}
-                >
-                  {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                </select>
-              </div>
-
-              {/* Priority */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wide mb-2"
-                  style={{ color: '#1E293B', fontFamily: 'Outfit' }}>
-                  Priority
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {PRIORITIES.map(p => (
-                    <button
-                      key={p.value}
-                      type="button"
-                      onClick={() => setForm({ ...form, priority: p.value })}
-                      className="p-3 rounded-xl text-left transition-all"
-                      style={{
-                        background: form.priority === p.value ? p.bg : '#F8FAFC',
-                        border: `2px solid ${form.priority === p.value ? p.color : '#E2E8F0'}`,
-                      }}
-                    >
-                      <p className="text-xs font-black mb-1"
-                        style={{ color: form.priority === p.value ? p.color : '#1E293B', fontFamily: 'Outfit' }}>
-                        {p.label}
+          <div className="space-y-3">
+            <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">
+              Your Tickets
+            </p>
+            {myTickets.map(ticket => {
+              const priority = ticket.fields?.Priority || 'Medium'
+              const status = ticket.fields?.Status || 'Open'
+              const pc = PRIORITY_COLORS[priority] || PRIORITY_COLORS.Medium
+              const sc = STATUS_COLORS[status] || STATUS_COLORS.Open
+              return (
+                <div key={ticket.id}
+                  className="bg-white dark:bg-[#1a2740] rounded-2xl p-5"
+                  style={{ border: '2px solid #E2E8F0' }}>
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-gray-900 dark:text-white text-sm mb-1 truncate"
+                        style={{ fontFamily: 'Outfit' }}>
+                        {ticket.fields?.Subject || 'No subject'}
+                      </h4>
+                      <p className="text-xs text-gray-400 mb-3 line-clamp-2">
+                        {ticket.fields?.Description || '—'}
                       </p>
-                      <p className="text-xs" style={{ color: '#64748B' }}>{p.desc}</p>
-                    </button>
-                  ))}
+                      <div className="flex gap-2 flex-wrap">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold"
+                          style={{ background: pc.bg, color: pc.color }}>
+                          {priority}
+                        </span>
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold"
+                          style={{ background: sc.bg, color: sc.color }}>
+                          {status}
+                        </span>
+                        {ticket.fields?.Category && (
+                          <span className="px-2.5 py-1 rounded-full text-xs font-medium"
+                            style={{ background: '#F1F5F9', color: '#64748B' }}>
+                            {ticket.fields.Category}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-xs text-gray-400">
+                        {ticket.fields?.['Created At'] || '—'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              {/* Message */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wide mb-2"
-                  style={{ color: '#1E293B', fontFamily: 'Outfit' }}>
-                  Describe Your Issue *
-                </label>
-                <textarea
-                  required
-                  placeholder="Please describe what happened, what you expected, and what steps you took..."
-                  value={form.message}
-                  onChange={e => setForm({ ...form, message: e.target.value })}
-                  rows={5}
-                  className="w-full px-4 py-3 rounded-xl outline-none resize-none transition-all"
-                  style={{ border: '2px solid #CBD5E1', fontFamily: 'Plus Jakarta Sans', color: '#1E293B' }}
-                  onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '4px 4px 0px #8B5CF6' }}
-                  onBlur={e => { e.target.style.borderColor = '#CBD5E1'; e.target.style.boxShadow = 'none' }}
-                />
-              </div>
-
-              {/* From Info */}
-              <div className="p-3 rounded-xl"
-                style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0' }}>
-                <p className="text-xs" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
-                  Submitting as: <strong style={{ color: '#1E293B' }}>{userName || 'You'}</strong>
-                  {' · '}
-                  Reply to: <strong style={{ color: '#1E293B' }}>{userEmail}</strong>
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="candy-btn w-full py-4 flex items-center justify-center gap-3 text-base disabled:opacity-50"
-              >
-                {loading ? (
-                  <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Submitting...</>
-                ) : (
-                  <><Send size={20} /> Submit Ticket</>
-                )}
-              </button>
-            </form>
+              )
+            })}
           </div>
         )}
+
+        {/* New Ticket Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+              style={{ border: '2px solid #1E293B', boxShadow: '8px 8px 0px #8B5CF6' }}>
+
+              <h3 className="font-black text-lg mb-1 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+                Submit Support Ticket
+              </h3>
+              <p className="text-xs text-gray-400 mb-4">
+                We will respond to <strong>{userEmail}</strong> within 24 hours
+              </p>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-red-600 text-sm">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wide mb-1.5 dark:text-gray-300"
+                    style={{ fontFamily: 'Outfit' }}>
+                    Subject *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.subject}
+                    onChange={e => setForm({ ...form, subject: e.target.value })}
+                    placeholder="Brief description of the issue"
+                    className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500 outline-none dark:bg-white/5 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wide mb-1.5 dark:text-gray-300"
+                    style={{ fontFamily: 'Outfit' }}>
+                    Category
+                  </label>
+                  <select
+                    value={form.category}
+                    onChange={e => setForm({ ...form, category: e.target.value })}
+                    className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2.5 text-sm outline-none dark:bg-[#1a2740] dark:text-white">
+                    {[
+                      'General',
+                      'Technical Issue',
+                      'Billing',
+                      'Import / Export',
+                      'AI Assistant',
+                      'Account Access',
+                      'Feature Request',
+                      'Bug Report',
+                    ].map(c => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wide mb-1.5 dark:text-gray-300"
+                    style={{ fontFamily: 'Outfit' }}>
+                    Priority
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {['Low', 'Medium', 'High', 'Emergency'].map(p => {
+                      const pc = PRIORITY_COLORS[p]
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setForm({ ...form, priority: p })}
+                          className="py-2 rounded-xl text-xs font-bold transition-all"
+                          style={{
+                            background: form.priority === p ? pc.color : pc.bg,
+                            color: form.priority === p ? 'white' : pc.color,
+                            border: `2px solid ${pc.color}`,
+                          }}>
+                          {p}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {form.priority === 'Emergency' && (
+                    <div className="mt-2 p-3 rounded-xl text-xs"
+                      style={{ background: '#FEE2E2', color: '#DC2626' }}>
+                      🚨 For true emergencies, also email{' '}
+                      <a href={`mailto:${CORRECT_EMAIL}?subject=EMERGENCY`}
+                        className="font-bold underline">
+                        {CORRECT_EMAIL}
+                      </a>
+                      {' '}with subject line: EMERGENCY
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wide mb-1.5 dark:text-gray-300"
+                    style={{ fontFamily: 'Outfit' }}>
+                    Describe the issue *
+                  </label>
+                  <textarea
+                    required
+                    value={form.description}
+                    onChange={e => setForm({ ...form, description: e.target.value })}
+                    rows={5}
+                    placeholder="Please describe the issue in detail. Include what you were trying to do, what happened, and any error messages you saw."
+                    className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2.5 text-sm outline-none resize-none focus:ring-2 focus:ring-violet-500 dark:bg-white/5 dark:text-white"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => { setShowModal(false); setError('') }}
+                    className="flex-1 border border-gray-300 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors">
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="candy-btn flex-1 py-2.5 text-sm disabled:opacity-50">
+                    {saving ? 'Submitting...' : 'Submit Ticket'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
       </div>
     </Layout>
   )
