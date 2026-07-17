@@ -7,7 +7,7 @@ import {
   Contact, FolderKanban, Receipt, BarChart3, Bot,
   Search, Bell, ChevronDown, ArrowRight,
   ShieldCheck, Zap, RefreshCcw, Gauge, Building2, Check,
-  FileCheck, UserPlus, TrendingUp, Globe, ChevronUp,
+  Menu, X, FileCheck, UserPlus, TrendingUp, Globe, ChevronUp,
 } from 'lucide-react'
 
 function detectRegion() {
@@ -75,6 +75,7 @@ const MARQUEE_ITEMS = [
 ]
 
 export default function HomePage() {
+  const [menuOpen, setMenuOpen] = useState(false)
   const [billing, setBilling] = useState<'weekly' | 'monthly'>('weekly')
   const [region, setRegion] = useState<'india' | 'global' | 'western'>('global')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
@@ -91,40 +92,58 @@ export default function HomePage() {
       {/* ── NAVBAR ── */}
       <header className="sticky top-0 z-50 px-6 py-4"
         style={{ background: 'rgba(255,253,245,0.97)', backdropFilter: 'blur(10px)', borderBottom: '2px solid #1E293B' }}>
-        <div className="max-w-6xl mx-auto">
-          {/* Top row: logo + auth actions — always visible, no toggle */}
-          <div className="flex items-center justify-between gap-3">
-            <Link href="/" className="flex items-center gap-2.5 min-w-0">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg shrink-0"
-                style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B', fontFamily: 'Outfit, sans-serif' }}>
-                S
-              </div>
-              <div className="min-w-0">
-                <div className="font-black text-xl leading-tight truncate" style={{ fontFamily: 'Outfit, sans-serif' }}>Samyojak</div>
-                <div className="text-[11px] truncate" style={{ color: '#64748B' }}>ERP That Adapts To You</div>
-              </div>
-            </Link>
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg"
+              style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B', fontFamily: 'Outfit, sans-serif' }}>
+              S
+            </div>
+            <div>
+              <div className="font-black text-xl leading-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>Samyojak</div>
+              <div className="text-[11px]" style={{ color: '#64748B' }}>ERP That Adapts To You</div>
+            </div>
+          </Link>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <Link href="/login" className="hidden sm:block px-4 py-2 text-sm font-black rounded-full"
-                style={{ border: '2px solid #1E293B', background: 'white' }}>
+          {/* Desktop nav — links live in the same row as the logo */}
+          <nav className="hidden lg:flex items-center gap-7 text-sm font-bold">
+            {[['Features', '/features'], ['Pricing', '/pricing'], ['About', '/about'], ['Contact', '/contact']].map(([l, h]) => (
+              <Link key={h} href={h} className="hover:text-violet-600 transition-colors">{l}</Link>
+            ))}
+          </nav>
+
+          <div className="hidden lg:flex items-center gap-3">
+            <Link href="/login" className="px-4 py-2 text-sm font-black rounded-full"
+              style={{ border: '2px solid #1E293B', background: 'white' }}>
+              Sign In
+            </Link>
+            <Link href="/signup" className="candy-btn px-5 py-2 text-sm">
+              Start Trial <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          {/* Mobile hamburger toggle */}
+          <button className="lg:hidden p-2 rounded-lg" style={{ border: '2px solid #1E293B', background: 'white' }}
+            onClick={() => setMenuOpen(!menuOpen)}>
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+
+        {/* Mobile dropdown menu */}
+        {menuOpen && (
+          <div className="lg:hidden mt-4 pb-4 pt-4 space-y-3 max-w-6xl mx-auto" style={{ borderTop: '2px solid #E2E8F0' }}>
+            {[['Features', '/features'], ['Pricing', '/pricing'], ['About', '/about'], ['Contact', '/contact']].map(([l, h]) => (
+              <Link key={h} href={h} onClick={() => setMenuOpen(false)} className="block text-sm font-bold py-1">{l}</Link>
+            ))}
+            <div className="flex gap-3 pt-2">
+              <Link href="/login" className="flex-1 text-center py-2.5 text-sm font-black rounded-full" style={{ border: '2px solid #1E293B' }}>
                 Sign In
               </Link>
-              <Link href="/signup" className="candy-btn px-4 py-2 text-sm whitespace-nowrap">
-                Start Trial <ArrowRight className="h-3.5 w-3.5" />
+              <Link href="/signup" className="candy-btn flex-1 justify-center py-2.5 text-sm">
+                Start Trial
               </Link>
             </div>
           </div>
-
-          {/* Second row: nav links — always visible on every screen size, scrolls horizontally if tight */}
-          <nav className="flex items-center gap-6 text-sm font-bold mt-3 pt-3 overflow-x-auto"
-            style={{ borderTop: '2px solid #E2E8F0' }}>
-            {[['Features', '/features'], ['Pricing', '/pricing'], ['About', '/about'], ['Contact', '/contact']].map(([l, h]) => (
-              <Link key={h} href={h} className="hover:text-violet-600 transition-colors whitespace-nowrap">{l}</Link>
-            ))}
-            <Link href="/login" className="sm:hidden whitespace-nowrap ml-auto hover:text-violet-600 transition-colors">Sign In</Link>
-          </nav>
-        </div>
+        )}
       </header>
 
       {/* ── HERO ── */}
@@ -561,4 +580,4 @@ export default function HomePage() {
 
     </div>
   )
-                }
+}
