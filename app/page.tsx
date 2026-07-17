@@ -25,10 +25,10 @@ const PRICING: Record<string, Record<string, Record<string, string>>> = {
 }
 
 const PLANS = [
-  { key: 'starter', name: 'CRM Starter', emoji: '🚀', color: '#8B5CF6', bg: '#EDE9FE', features: ['CRM + AI lead scoring', 'Sales Quotations', 'Support tickets', 'CSV import any format', 'Export to CSV'] },
-  { key: 'basic', name: 'ERP Basic', emoji: '⚡', color: '#F472B6', bg: '#FCE7F3', popular: true, features: ['Everything in Starter', 'Universal Tax Invoicing', 'Recurring Invoices', 'Inventory + QR codes', 'BI Dashboard Charts', 'WhatsApp Invoicing'] },
-  { key: 'business', name: 'Business', emoji: '🏢', color: '#34D399', bg: '#D1FAE5', features: ['Everything in ERP Basic', 'HR & Payroll', 'Project Kanban', 'Recruiting Tracker', 'Advanced Analytics'] },
-  { key: 'complete', name: 'Complete ERP', emoji: '👑', color: '#FBBF24', bg: '#FEF3C7', features: ['Everything in Business', 'AI Business Intelligence', 'Live data AI analysis', 'Priority support', 'All future features'] },
+  { key: 'starter', name: 'CRM Starter', emoji: '🚀', color: '#8B5CF6', features: ['CRM + AI lead scoring', 'Sales Quotations', 'Support tickets', 'CSV import any format', 'Export to CSV'] },
+  { key: 'basic', name: 'ERP Basic', emoji: '⚡', color: '#F472B6', popular: true, features: ['Everything in Starter', 'Universal Tax Invoicing', 'Recurring Invoices', 'Inventory + QR codes', 'BI Dashboard Charts', 'WhatsApp Invoicing'] },
+  { key: 'business', name: 'Business', emoji: '🏢', color: '#34D399', features: ['Everything in ERP Basic', 'HR & Payroll', 'Project Kanban', 'Recruiting Tracker', 'Advanced Analytics'] },
+  { key: 'complete', name: 'Complete ERP', emoji: '👑', color: '#FBBF24', features: ['Everything in Business', 'AI Business Intelligence', 'Live data AI analysis', 'Priority support', 'All future features'] },
 ]
 
 const MODULES = [
@@ -74,31 +74,13 @@ const MARQUEE_ITEMS = [
   '⚡ 5-Min Setup', '📥 Import Any CSV', '💳 Weekly Plans', '🔒 Enterprise Security',
 ]
 
-// ── Shared "sticker card" hover handlers (hard shadow lift) ──
-function stickerHover(shadowColor: string) {
-  return {
-    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
-      const el = e.currentTarget as HTMLElement
-      el.style.transform = 'translate(-3px, -3px) rotate(-1deg)'
-      el.style.boxShadow = `9px 9px 0px ${shadowColor}`
-    },
-    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
-      const el = e.currentTarget as HTMLElement
-      el.style.transform = 'translate(0, 0) rotate(0deg)'
-      el.style.boxShadow = `6px 6px 0px ${shadowColor}`
-    },
-  }
-}
-
 export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [billing, setBilling] = useState<'weekly' | 'monthly'>('weekly')
   const [region, setRegion] = useState<'india' | 'global' | 'western'>('global')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
     setRegion(detectRegion() as any)
   }, [])
 
@@ -109,43 +91,36 @@ export default function HomePage() {
 
       {/* ── NAVBAR ── */}
       <header className="sticky top-0 z-50 px-6 py-4"
-        style={{ background: 'rgba(255,253,245,0.95)', backdropFilter: 'blur(12px)', borderBottom: '2px solid #1E293B' }}>
+        style={{ background: 'rgba(255,253,245,0.97)', backdropFilter: 'blur(10px)', borderBottom: '2px solid #1E293B' }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg"
               style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B', fontFamily: 'Outfit, sans-serif' }}>
               S
             </div>
             <div>
-              <div className="font-black text-xl leading-tight" style={{ fontFamily: 'Outfit, sans-serif', color: '#1E293B' }}>
-                Samyojak
-              </div>
+              <div className="font-black text-xl leading-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>Samyojak</div>
               <div className="text-[11px]" style={{ color: '#64748B' }}>ERP That Adapts To You</div>
             </div>
-          </div>
+          </Link>
 
-          <nav className="hidden lg:flex items-center gap-7 text-sm font-bold" style={{ color: '#1E293B' }}>
+          <nav className="hidden lg:flex items-center gap-7 text-sm font-bold">
             {[['Features', '/features'], ['Pricing', '/pricing'], ['About', '/about'], ['Contact', '/contact']].map(([l, h]) => (
               <Link key={h} href={h} className="hover:text-violet-600 transition-colors">{l}</Link>
             ))}
           </nav>
 
           <div className="hidden lg:flex items-center gap-3">
-            <Link href="/login"
-              className="px-4 py-2 text-sm font-black rounded-full transition-all"
-              style={{ border: '2px solid #1E293B', color: '#1E293B', background: 'white' }}>
+            <Link href="/login" className="px-4 py-2 text-sm font-black rounded-full"
+              style={{ border: '2px solid #1E293B', background: 'white' }}>
               Sign In
             </Link>
-            <button
-              className="candy-btn flex items-center gap-1.5 px-5 py-2 text-sm">
-              <Link href="/signup" className="flex items-center gap-1.5">
-                Start Trial <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </button>
+            <Link href="/signup" className="candy-btn px-5 py-2 text-sm">
+              Start Trial <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
 
-          <button className="lg:hidden p-2 rounded-lg"
-            style={{ border: '2px solid #1E293B', background: 'white' }}
+          <button className="lg:hidden p-2 rounded-lg" style={{ border: '2px solid #1E293B', background: 'white' }}
             onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -154,16 +129,13 @@ export default function HomePage() {
         {menuOpen && (
           <div className="lg:hidden mt-4 pb-4 pt-4 space-y-3 max-w-6xl mx-auto" style={{ borderTop: '2px solid #E2E8F0' }}>
             {[['Features', '/features'], ['Pricing', '/pricing'], ['About', '/about'], ['Contact', '/contact']].map(([l, h]) => (
-              <Link key={h} href={h} onClick={() => setMenuOpen(false)} className="block text-sm font-bold py-1" style={{ color: '#1E293B' }}>
-                {l}
-              </Link>
+              <Link key={h} href={h} onClick={() => setMenuOpen(false)} className="block text-sm font-bold py-1">{l}</Link>
             ))}
             <div className="flex gap-3 pt-2">
-              <Link href="/login" className="flex-1 text-center py-2.5 text-sm font-black rounded-full" style={{ border: '2px solid #1E293B', color: '#1E293B' }}>
+              <Link href="/login" className="flex-1 text-center py-2.5 text-sm font-black rounded-full" style={{ border: '2px solid #1E293B' }}>
                 Sign In
               </Link>
-              <Link href="/signup" className="flex-1 text-center py-2.5 text-sm font-black text-white rounded-full"
-                style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+              <Link href="/signup" className="candy-btn flex-1 justify-center py-2.5 text-sm">
                 Start Trial
               </Link>
             </div>
@@ -172,30 +144,22 @@ export default function HomePage() {
       </header>
 
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden">
-        {/* Dot grid texture */}
+      <section className="relative overflow-hidden px-6 py-16 lg:py-24">
         <div className="absolute inset-0 pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(circle, #8B5CF6 1.5px, transparent 1.5px)', backgroundSize: '28px 28px', opacity: 0.15 }} />
+          style={{ backgroundImage: 'radial-gradient(circle, #8B5CF6 1.5px, transparent 1.5px)', backgroundSize: '30px 30px', opacity: 0.12 }} />
 
-        {/* Confetti shapes — primitive geometric decorations */}
-        <div className="absolute top-16 left-8 w-16 h-16 rounded-full hidden md:block" style={{ background: '#FBBF24', border: '2px solid #1E293B', opacity: 0.9 }} />
-        <div className="absolute top-40 right-16 w-10 h-10 hidden md:block" style={{ background: '#34D399', border: '2px solid #1E293B', borderRadius: '9999px 9999px 9999px 0px', opacity: 0.9 }} />
-        <div className="absolute bottom-24 left-1/4 w-0 h-0 hidden md:block"
-          style={{ borderLeft: '18px solid transparent', borderRight: '18px solid transparent', borderBottom: '32px solid #F472B6', opacity: 0.85 }} />
-        <div className="absolute top-1/3 right-10 w-8 h-8 rounded-full hidden md:block" style={{ background: '#8B5CF6', border: '2px solid #1E293B', opacity: 0.7 }} />
-
-        <div className="relative max-w-6xl mx-auto px-6 py-16 lg:py-24 flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+        <div className="relative max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-14">
 
           {/* LEFT — text */}
-          <div className={`flex-1 min-w-0 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-xs font-black"
-              style={{ background: '#FEF3C7', border: '2px solid #1E293B', color: '#1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+          <div className="flex-1 min-w-0 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-black"
+              style={{ background: '#FEF3C7', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
               <Sparkles className="h-3.5 w-3.5" style={{ color: '#8B5CF6' }} />
               AI-Powered · Adaptive · Smart
             </div>
 
-            <h1 className="font-black leading-[1.05] tracking-tight mb-6"
-              style={{ fontFamily: 'Outfit, sans-serif', color: '#1E293B', fontSize: 'clamp(36px, 5vw, 58px)' }}>
+            <h1 className="font-black leading-[1.1] tracking-tight mb-6"
+              style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(34px, 5vw, 56px)' }}>
               The ERP
               <br />
               <span style={{ background: 'linear-gradient(135deg, #8B5CF6, #F472B6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
@@ -203,22 +167,21 @@ export default function HomePage() {
               </span>
             </h1>
 
-            <p className="text-lg leading-relaxed mb-8 max-w-lg" style={{ color: '#475569' }}>
+            <p className="text-lg leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0" style={{ color: '#475569' }}>
               Import your data from anywhere. No templates. No forced formats. No data loss.
               Samyojak <strong style={{ color: '#1E293B' }}>adapts to your business</strong> — not the other way around.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 mb-8">
-              <Link href="/signup" className="candy-btn group flex items-center justify-center gap-2 px-7 py-4 text-base">
-                Start Free Trial
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <div className="flex flex-col sm:flex-row gap-3 mb-8 justify-center lg:justify-start">
+              <Link href="/signup" className="candy-btn justify-center px-7 py-4 text-base">
+                Start Trial <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/contact" className="secondary-btn flex items-center justify-center gap-2 px-7 py-4 text-base">
+              <Link href="/contact" className="secondary-btn justify-center px-7 py-4 text-base">
                 Book a Demo
               </Link>
             </div>
 
-            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-bold" style={{ color: '#475569' }}>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-bold justify-center lg:justify-start" style={{ color: '#475569' }}>
               <div className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" style={{ color: '#34D399' }} /> No Credit Card Required</div>
               <div className="flex items-center gap-1.5"><Zap className="h-4 w-4" style={{ color: '#FBBF24' }} /> Setup in 5 Minutes</div>
               <div className="flex items-center gap-1.5"><Building2 className="h-4 w-4" style={{ color: '#8B5CF6' }} /> Made in India 🇮🇳</div>
@@ -226,113 +189,92 @@ export default function HomePage() {
           </div>
 
           {/* RIGHT — dashboard mockup */}
-          <div className="flex-1 min-w-0 w-full order-first lg:order-last">
-            <div className="relative">
-              {/* big yellow circle behind image — signature Playful Geometric move */}
-              <div className="absolute -top-10 -right-10 w-64 h-64 rounded-full hidden sm:block" style={{ background: '#FBBF24', opacity: 0.4 }} />
-              <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full hidden sm:block" style={{ background: '#34D399', opacity: 0.3 }} />
+          <div className="flex-1 min-w-0 w-full max-w-xl">
+            <div className="rounded-2xl overflow-hidden"
+              style={{ border: '2px solid #1E293B', boxShadow: '10px 10px 0px #1E293B', background: '#F8FAFC' }}>
+              <div className="flex">
+                {/* Sidebar */}
+                <div className="hidden sm:flex w-40 shrink-0 flex-col px-3 py-4" style={{ background: '#0F172A' }}>
+                  <div className="flex items-center gap-2 px-2 mb-5">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-sm" style={{ background: '#8B5CF6' }}>S</div>
+                    <span className="font-black text-white text-sm" style={{ fontFamily: 'Outfit, sans-serif' }}>Samyojak</span>
+                  </div>
+                  <nav className="flex flex-1 flex-col gap-0.5 text-[11px] font-medium" style={{ color: '#94A3B8' }}>
+                    {[
+                      { icon: LayoutDashboard, label: 'Dashboard', active: true },
+                      { icon: Contact, label: 'CRM' },
+                      { icon: FileCheck, label: 'Quotations' },
+                      { icon: Receipt, label: 'Invoices' },
+                      { icon: Boxes, label: 'Inventory' },
+                      { icon: Users, label: 'HR' },
+                      { icon: UserPlus, label: 'Recruiting' },
+                      { icon: FolderKanban, label: 'Projects' },
+                      { icon: BarChart3, label: 'BI Dashboard' },
+                      { icon: Bot, label: 'AI Assistant' },
+                    ].map(({ icon: Icon, label, active }) => (
+                      <div key={label} className="flex items-center gap-2 rounded-lg px-2 py-1.5"
+                        style={{ background: active ? '#8B5CF6' : 'transparent', color: active ? 'white' : '#94A3B8' }}>
+                        <Icon className="h-3 w-3 flex-shrink-0" /> {label}
+                      </div>
+                    ))}
+                  </nav>
+                  <div className="mt-3 rounded-xl p-2.5 text-white" style={{ background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)' }}>
+                    <div className="text-[9px] opacity-70">Current Plan</div>
+                    <div className="font-black text-xs" style={{ fontFamily: 'Outfit, sans-serif' }}>Business</div>
+                  </div>
+                </div>
 
-              <div className="relative rounded-2xl overflow-hidden"
-                style={{ border: '2px solid #1E293B', boxShadow: '10px 10px 0px #1E293B' }}>
-                <div className="flex" style={{ background: '#F8FAFC' }}>
-                  {/* Sidebar */}
-                  <div className="hidden sm:flex w-44 shrink-0 flex-col px-3 py-4" style={{ background: '#0F172A' }}>
-                    <div className="flex items-center gap-2 px-2 mb-5">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-sm" style={{ background: '#8B5CF6', fontFamily: 'Outfit, sans-serif' }}>S</div>
-                      <span className="font-black text-white text-sm" style={{ fontFamily: 'Outfit, sans-serif' }}>Samyojak</span>
+                {/* Main */}
+                <div className="flex-1 p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <div className="font-bold text-sm">Welcome back, Omkar 👋</div>
+                      <div className="text-[10px]" style={{ color: '#64748B' }}>Here&apos;s your business today</div>
                     </div>
-                    <nav className="flex flex-1 flex-col gap-0.5 text-xs font-medium" style={{ color: '#94A3B8' }}>
-                      {[
-                        { icon: LayoutDashboard, label: 'Dashboard', active: true },
-                        { icon: Contact, label: 'CRM' },
-                        { icon: FileCheck, label: 'Quotations' },
-                        { icon: Receipt, label: 'Invoices' },
-                        { icon: Boxes, label: 'Inventory' },
-                        { icon: Users, label: 'HR & Payroll' },
-                        { icon: UserPlus, label: 'Recruiting' },
-                        { icon: FolderKanban, label: 'Projects' },
-                        { icon: BarChart3, label: 'BI Dashboard' },
-                        { icon: Bot, label: 'AI Assistant' },
-                        { icon: Settings, label: 'Settings' },
-                      ].map(({ icon: Icon, label, active }) => (
-                        <div key={label} className="flex items-center gap-2.5 rounded-lg px-2.5 py-2"
-                          style={{ background: active ? '#8B5CF6' : 'transparent', color: active ? 'white' : '#94A3B8' }}>
-                          <Icon className="h-3 w-3 flex-shrink-0" />
-                          {label}
-                        </div>
-                      ))}
-                    </nav>
-                    <div className="mt-3 rounded-xl p-3 text-white" style={{ background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)' }}>
-                      <div className="text-[10px] opacity-70">Current Plan</div>
-                      <div className="font-black text-sm" style={{ fontFamily: 'Outfit, sans-serif' }}>Business</div>
-                      <div className="mt-2 rounded-lg py-1.5 text-center text-[11px] font-semibold" style={{ background: 'rgba(255,255,255,0.15)' }}>Upgrade Plan</div>
+                    <div className="hidden sm:flex items-center gap-2" style={{ color: '#94A3B8' }}>
+                      <Search className="h-3.5 w-3.5" />
+                      <Bell className="h-3.5 w-3.5" />
+                      <div className="w-6 h-6 rounded-full" style={{ background: 'linear-gradient(135deg, #8B5CF6, #F472B6)' }} />
                     </div>
                   </div>
 
-                  {/* Main */}
-                  <div className="flex-1 p-4" style={{ background: '#F8FAFC' }}>
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <div className="font-bold text-sm" style={{ color: '#1E293B' }}>Welcome back, Omkar 👋</div>
-                        <div className="text-[11px]" style={{ color: '#64748B' }}>Here&apos;s your business today</div>
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {[
+                      { label: 'Leads', value: '248', change: '+12%', color: '#8B5CF6', bg: '#EDE9FE' },
+                      { label: 'Invoices', value: '189', change: '+8%', color: '#F472B6', bg: '#FCE7F3' },
+                      { label: 'Products', value: '91', change: '+5%', color: '#FBBF24', bg: '#FEF3C7' },
+                      { label: 'Revenue', value: '₹4.6L', change: '+15%', color: '#34D399', bg: '#D1FAE5' },
+                    ].map(s => (
+                      <div key={s.label} className="rounded-xl p-2.5" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '2px 2px 0px #1E293B' }}>
+                        <div className="w-4 h-4 rounded-md mb-1" style={{ background: s.bg, border: `1.5px solid ${s.color}` }} />
+                        <div className="text-[9px] font-semibold" style={{ color: '#64748B' }}>{s.label}</div>
+                        <div className="font-black text-sm" style={{ fontFamily: 'Outfit, sans-serif' }}>{s.value}</div>
+                        <div className="text-[9px] font-bold" style={{ color: '#34D399' }}>↑ {s.change}</div>
                       </div>
-                      <div className="hidden sm:flex items-center gap-2" style={{ color: '#94A3B8' }}>
-                        <Search className="h-3.5 w-3.5" />
-                        <Bell className="h-3.5 w-3.5" />
-                        <div className="w-6 h-6 rounded-full" style={{ background: 'linear-gradient(135deg, #8B5CF6, #F472B6)' }} />
-                      </div>
-                    </div>
+                    ))}
+                  </div>
 
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      {[
-                        { label: 'Leads', value: '248', change: '+12%', color: '#8B5CF6', bg: '#EDE9FE' },
-                        { label: 'Invoices', value: '189', change: '+8%', color: '#F472B6', bg: '#FCE7F3' },
-                        { label: 'Products', value: '91', change: '+5%', color: '#FBBF24', bg: '#FEF3C7' },
-                        { label: 'Revenue', value: '₹4.6L', change: '+15%', color: '#34D399', bg: '#D1FAE5' },
-                      ].map(s => (
-                        <div key={s.label} className="rounded-xl p-3" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
-                          <div className="w-5 h-5 rounded-lg mb-1.5" style={{ background: s.bg, border: `1.5px solid ${s.color}` }} />
-                          <div className="text-[10px] font-semibold" style={{ color: '#64748B' }}>{s.label}</div>
-                          <div className="font-black text-sm" style={{ fontFamily: 'Outfit, sans-serif', color: '#1E293B' }}>{s.value}</div>
-                          <div className="text-[10px] font-bold" style={{ color: '#34D399' }}>↑ {s.change}</div>
-                        </div>
+                  <div className="rounded-xl p-3" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '2px 2px 0px #1E293B' }}>
+                    <div className="text-[10px] font-bold mb-2">Revenue Trend</div>
+                    <div className="flex items-end gap-1 h-10">
+                      {[30, 45, 40, 55, 50, 70, 85].map((h, i) => (
+                        <div key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%`, background: i === 6 ? '#8B5CF6' : '#EDE9FE' }} />
                       ))}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="rounded-xl p-3" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
-                        <div className="text-[11px] font-bold mb-2" style={{ fontFamily: 'Outfit, sans-serif', color: '#1E293B' }}>Revenue</div>
-                        <div className="flex items-end gap-1 h-12">
-                          {[30, 45, 40, 55, 50, 70, 85].map((h, i) => (
-                            <div key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%`, background: i === 6 ? '#8B5CF6' : '#EDE9FE' }} />
-                          ))}
-                        </div>
-                      </div>
-                      <div className="rounded-xl p-3" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
-                        <div className="text-[11px] font-bold mb-2" style={{ fontFamily: 'Outfit, sans-serif', color: '#1E293B' }}>Pipeline</div>
-                        <div className="space-y-1.5">
-                          {[{ w: '90%', c: '#8B5CF6' }, { w: '70%', c: '#F472B6' }, { w: '50%', c: '#FBBF24' }, { w: '30%', c: '#34D399' }].map((row, i) => (
-                            <div key={i} className="h-2.5 rounded-full" style={{ background: '#F1F5F9' }}>
-                              <div className="h-2.5 rounded-full" style={{ width: row.w, background: row.c }} />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Floating sticker chips */}
-              <div className="absolute -left-5 top-8 hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl"
-                style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '4px 4px 0px #1E293B' }}>
-                <Gauge className="h-4 w-4" style={{ color: '#34D399' }} />
-                <span className="text-xs font-black" style={{ fontFamily: 'Outfit, sans-serif', color: '#1E293B' }}>99.9% Uptime</span>
+            {/* Floating chips — safe static position, no overlap issues */}
+            <div className="flex gap-3 mt-4 justify-center flex-wrap">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-full" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+                <Gauge className="h-3.5 w-3.5" style={{ color: '#34D399' }} />
+                <span className="text-xs font-black">99.9% Uptime</span>
               </div>
-              <div className="absolute -bottom-4 -right-3 hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl"
-                style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '4px 4px 0px #1E293B' }}>
-                <RefreshCcw className="h-4 w-4" style={{ color: '#8B5CF6' }} />
-                <span className="text-xs font-black" style={{ fontFamily: 'Outfit, sans-serif', color: '#1E293B' }}>Zero Data Loss</span>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-full" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+                <RefreshCcw className="h-3.5 w-3.5" style={{ color: '#8B5CF6' }} />
+                <span className="text-xs font-black">Zero Data Loss</span>
               </div>
             </div>
           </div>
@@ -349,14 +291,13 @@ export default function HomePage() {
       </div>
 
       {/* ── 12 MODULES ── */}
-      <section className="max-w-6xl mx-auto px-6 py-20 relative">
-        <div className="absolute top-10 right-0 w-20 h-20 rounded-full hidden md:block" style={{ background: '#F472B6', opacity: 0.15 }} />
-        <div className="text-center mb-14 relative">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 text-xs font-black"
-            style={{ background: '#EDE9FE', border: '2px solid #1E293B', color: '#1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+      <section className="max-w-6xl mx-auto px-6 py-20">
+        <div className="text-center mb-14">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4 text-xs font-black"
+            style={{ background: '#EDE9FE', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
             <Sparkles className="h-3.5 w-3.5" style={{ color: '#8B5CF6' }} /> 12 Modules — One Platform
           </div>
-          <h2 className="font-black mb-3" style={{ fontFamily: 'Outfit, sans-serif', color: '#1E293B', fontSize: 'clamp(28px, 4vw, 40px)' }}>
+          <h2 className="font-black mb-3" style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(28px, 4vw, 40px)' }}>
             Everything your business needs
           </h2>
           <p className="text-base max-w-xl mx-auto" style={{ color: '#64748B' }}>
@@ -366,17 +307,13 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {MODULES.map(m => (
-            <div key={m.label}
-              className="rounded-xl p-6 cursor-pointer relative"
-              style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '6px 6px 0px #1E293B', transition: 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)' }}
-              {...stickerHover('#1E293B')}>
-              <div className="absolute -top-4 -left-2 w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ background: m.bg, border: `2px solid ${m.color}`, boxShadow: `3px 3px 0px ${m.color}` }}>
-                <m.icon className="h-4 w-4" style={{ color: m.color }} />
+            <div key={m.label} className="card-hover rounded-xl p-6"
+              style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '6px 6px 0px #1E293B' }}>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                style={{ background: m.bg, border: `2px solid ${m.color}` }}>
+                <m.icon className="h-5 w-5" style={{ color: m.color }} />
               </div>
-              <h3 className="font-black text-base mb-2 mt-3" style={{ fontFamily: 'Outfit, sans-serif', color: '#1E293B' }}>
-                {m.label}
-              </h3>
+              <h3 className="font-black text-base mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>{m.label}</h3>
               <p className="text-sm leading-relaxed" style={{ color: '#64748B' }}>{m.desc}</p>
             </div>
           ))}
@@ -384,11 +321,10 @@ export default function HomePage() {
       </section>
 
       {/* ── ADAPTIVE IMPORT — dark section ── */}
-      <section className="py-20 relative overflow-hidden" style={{ background: '#1E293B' }}>
-        <div className="absolute top-10 left-10 w-14 h-14 rounded-full hidden md:block" style={{ background: '#FBBF24', opacity: 0.15 }} />
-        <div className="max-w-5xl mx-auto px-6 text-center relative">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-xs font-black"
-            style={{ background: '#8B5CF6', border: '2px solid white', color: 'white', boxShadow: '3px 3px 0px rgba(0,0,0,0.3)' }}>
+      <section className="py-20" style={{ background: '#1E293B' }}>
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-black"
+            style={{ background: '#8B5CF6', border: '2px solid white', color: 'white' }}>
             <RefreshCcw className="h-3.5 w-3.5" /> The Feature That Changes Everything
           </div>
           <h2 className="font-black text-white mb-4" style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(28px, 4vw, 40px)' }}>
@@ -414,7 +350,7 @@ export default function HomePage() {
               { icon: ShieldCheck, title: 'Zero Data Loss', desc: 'Every row. Every column. 100% preserved.', color: '#34D399' },
               { icon: Zap, title: 'Instant Ready', desc: 'Import complete. Your ERP is live in 2 minutes.', color: '#FBBF24' },
             ].map(f => (
-              <div key={f.title} className="rounded-2xl p-5 text-left" style={{ border: '2px solid white', background: 'rgba(255,255,255,0.05)', boxShadow: '4px 4px 0px rgba(0,0,0,0.4)' }}>
+              <div key={f.title} className="rounded-2xl p-5 text-left" style={{ border: '2px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)' }}>
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: 'white' }}>
                   <f.icon className="h-5 w-5" style={{ color: f.color }} />
                 </div>
@@ -429,7 +365,7 @@ export default function HomePage() {
       {/* ── COMPARISON ── */}
       <section className="max-w-4xl mx-auto px-6 py-20">
         <div className="text-center mb-12">
-          <h2 className="font-black mb-3" style={{ fontFamily: 'Outfit, sans-serif', color: '#1E293B', fontSize: 'clamp(28px, 4vw, 40px)' }}>
+          <h2 className="font-black mb-3" style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(28px, 4vw, 40px)' }}>
             Samyojak vs Legacy ERP
           </h2>
           <p style={{ color: '#64748B' }}>Why growing businesses are switching</p>
@@ -439,10 +375,10 @@ export default function HomePage() {
           <div className="grid grid-cols-3" style={{ background: '#F8FAFC', borderBottom: '2px solid #1E293B' }}>
             <div className="p-4 text-xs font-black uppercase tracking-wide" style={{ color: '#94A3B8' }}>Feature</div>
             <div className="p-4 text-center">
-              <span className="px-3 py-1 rounded-full text-xs font-black text-white" style={{ background: '#8B5CF6', border: '2px solid #1E293B' }}>Samyojak</span>
+              <span className="px-3 py-1 rounded-full text-xs font-black text-white" style={{ background: '#8B5CF6' }}>Samyojak</span>
             </div>
             <div className="p-4 text-center">
-              <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: '#F1F5F9', color: '#64748B', border: '2px solid #E2E8F0' }}>Legacy ERP A/B</span>
+              <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: '#F1F5F9', color: '#64748B' }}>Legacy ERP A/B</span>
             </div>
           </div>
           {COMPARISON.map((row, i) => (
@@ -456,10 +392,10 @@ export default function HomePage() {
       </section>
 
       {/* ── PRICING ── */}
-      <section className="py-20 relative" style={{ background: '#F1F5F9' }}>
+      <section className="py-20" style={{ background: '#F1F5F9' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-10">
-            <h2 className="font-black mb-3" style={{ fontFamily: 'Outfit, sans-serif', color: '#1E293B', fontSize: 'clamp(28px, 4vw, 40px)' }}>
+            <h2 className="font-black mb-3" style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(28px, 4vw, 40px)' }}>
               Simple pricing. No surprises.
             </h2>
             <p className="mb-6" style={{ color: '#64748B' }}>No per-user fees. No annual lock-in. Cancel anytime.</p>
@@ -478,18 +414,17 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-3">
             {PLANS.map(plan => (
               <div key={plan.key} className="rounded-2xl p-6 flex flex-col relative"
                 style={{
                   background: plan.popular ? plan.color : 'white',
                   border: '2px solid #1E293B',
-                  boxShadow: plan.popular ? `8px 8px 0px #1E293B` : '6px 6px 0px #1E293B',
-                  transform: plan.popular ? 'scale(1.05)' : 'scale(1)',
+                  boxShadow: '6px 6px 0px #1E293B',
                 }}>
                 {plan.popular && (
-                  <div className="absolute -top-5 -right-3 px-3 py-1.5 rounded-full text-xs font-black whitespace-nowrap"
-                    style={{ background: '#FBBF24', border: '2px solid #1E293B', color: '#1E293B', boxShadow: '3px 3px 0px #1E293B', transform: 'rotate(12deg)' }}>
+                  <div className="absolute -top-3 right-4 px-3 py-1 rounded-full text-xs font-black"
+                    style={{ background: '#FBBF24', border: '2px solid #1E293B', color: '#1E293B' }}>
                     ⭐ POPULAR
                   </div>
                 )}
@@ -508,15 +443,12 @@ export default function HomePage() {
                 <ul className="space-y-2 mb-5 flex-1">
                   {plan.features.map(f => (
                     <li key={f} className="flex items-start gap-2 text-xs font-medium" style={{ color: plan.popular ? 'rgba(255,255,255,0.95)' : '#475569' }}>
-                      <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{ background: plan.popular ? 'rgba(255,255,255,0.25)' : '#D1FAE5' }}>
-                        <Check className="h-2.5 w-2.5" style={{ color: plan.popular ? 'white' : '#34D399' }} />
-                      </div>
+                      <Check className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" style={{ color: plan.popular ? 'white' : '#34D399' }} />
                       {f}
                     </li>
                   ))}
                 </ul>
-                <Link href="/signup" className="block w-full py-3 rounded-full text-sm font-black text-center transition-all hover:opacity-90"
+                <Link href="/signup" className="block w-full py-3 rounded-full text-sm font-black text-center"
                   style={{ background: plan.popular ? 'white' : '#1E293B', color: plan.popular ? plan.color : 'white', border: '2px solid #1E293B' }}>
                   Start Trial
                 </Link>
@@ -528,14 +460,14 @@ export default function HomePage() {
 
       {/* ── FAQ ── */}
       <section className="max-w-3xl mx-auto px-6 py-20">
-        <h2 className="font-black text-center mb-10" style={{ fontFamily: 'Outfit, sans-serif', color: '#1E293B', fontSize: 'clamp(28px, 4vw, 40px)' }}>
+        <h2 className="font-black text-center mb-10" style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(28px, 4vw, 40px)' }}>
           Frequently asked questions
         </h2>
         <div className="space-y-3">
           {FAQS.map((faq, i) => (
-            <div key={i} className="rounded-2xl overflow-hidden" style={{ border: '2px solid #1E293B', background: 'white', boxShadow: '4px 4px 0px #1E293B' }}>
+            <div key={i} className="rounded-2xl overflow-hidden" style={{ border: '2px solid #1E293B', background: 'white' }}>
               <button className="w-full flex items-center justify-between p-5 text-left" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
-                <span className="font-black text-sm pr-4" style={{ fontFamily: 'Outfit, sans-serif', color: '#1E293B' }}>{faq.q}</span>
+                <span className="font-black text-sm pr-4" style={{ fontFamily: 'Outfit, sans-serif' }}>{faq.q}</span>
                 {openFaq === i ? <ChevronUp className="h-4 w-4 flex-shrink-0" style={{ color: '#8B5CF6' }} /> : <ChevronDown className="h-4 w-4 flex-shrink-0" style={{ color: '#94A3B8' }} />}
               </button>
               {openFaq === i && (
@@ -549,11 +481,9 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-24 px-6 text-center relative overflow-hidden" style={{ background: '#1E293B' }}>
-        <div className="absolute top-10 right-16 w-16 h-16 rounded-full hidden md:block" style={{ background: '#FBBF24', opacity: 0.15 }} />
-        <div className="absolute bottom-10 left-16 w-20 h-20 rounded-full hidden md:block" style={{ background: '#34D399', opacity: 0.15 }} />
-        <div className="max-w-2xl mx-auto relative">
-          <h2 className="font-black text-white mb-4" style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(32px, 5vw, 48px)' }}>
+      <section className="py-24 px-6 text-center" style={{ background: '#1E293B' }}>
+        <div className="max-w-2xl mx-auto">
+          <h2 className="font-black text-white mb-4" style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(30px, 5vw, 46px)' }}>
             Your business data.
             <br />
             <span style={{ background: 'linear-gradient(135deg, #8B5CF6, #F472B6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
@@ -564,11 +494,10 @@ export default function HomePage() {
             Start your trial. Import your data. Running in 5 minutes. Cancel anytime.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
-            <Link href="/signup" className="candy-btn group flex items-center gap-2 px-8 py-4 text-base">
-              Start Free Trial
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <Link href="/signup" className="candy-btn px-8 py-4 text-base">
+              Start Trial <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link href="/contact" className="flex items-center gap-2 px-8 py-4 text-base font-black rounded-full transition-all hover:bg-white/10"
+            <Link href="/contact" className="flex items-center gap-2 px-8 py-4 text-base font-black rounded-full"
               style={{ border: '2px solid white', color: 'white' }}>
               Talk to Us
             </Link>
@@ -583,7 +512,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm" style={{ background: '#8B5CF6', fontFamily: 'Outfit, sans-serif' }}>S</div>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm" style={{ background: '#8B5CF6' }}>S</div>
                 <span className="font-black text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>Samyojak</span>
               </div>
               <p className="text-xs leading-relaxed" style={{ color: '#64748B' }}>The ERP that adapts to you. Not the other way around.</p>
@@ -592,23 +521,23 @@ export default function HomePage() {
             <div>
               <p className="font-black text-white text-sm mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>Product</p>
               {[['Features', '/features'], ['Pricing', '/pricing'], ['About', '/about']].map(([l, h]) => (
-                <Link key={h} href={h} className="block text-xs mb-2 transition-colors hover:text-violet-400" style={{ color: '#64748B' }}>{l}</Link>
+                <Link key={h} href={h} className="block text-xs mb-2 hover:text-violet-400 transition-colors" style={{ color: '#64748B' }}>{l}</Link>
               ))}
             </div>
             <div>
               <p className="font-black text-white text-sm mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>Company</p>
               {[['About Us', '/about'], ['Contact', '/contact'], ['Support', '/support']].map(([l, h]) => (
-                <Link key={h} href={h} className="block text-xs mb-2 transition-colors hover:text-violet-400" style={{ color: '#64748B' }}>{l}</Link>
+                <Link key={h} href={h} className="block text-xs mb-2 hover:text-violet-400 transition-colors" style={{ color: '#64748B' }}>{l}</Link>
               ))}
             </div>
             <div>
               <p className="font-black text-white text-sm mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>Legal</p>
               {[['Privacy Policy', '/privacy'], ['Terms of Service', '/terms']].map(([l, h]) => (
-                <Link key={h} href={h} className="block text-xs mb-2 transition-colors hover:text-violet-400" style={{ color: '#64748B' }}>{l}</Link>
+                <Link key={h} href={h} className="block text-xs mb-2 hover:text-violet-400 transition-colors" style={{ color: '#64748B' }}>{l}</Link>
               ))}
               <div className="mt-4">
                 <p className="text-xs mb-1" style={{ color: '#64748B' }}>Support email</p>
-                <a href="mailto:hello.samyojak@gmail.com" className="text-xs transition-colors hover:text-violet-300" style={{ color: '#8B5CF6' }}>
+                <a href="mailto:hello.samyojak@gmail.com" className="text-xs hover:text-violet-300 transition-colors" style={{ color: '#8B5CF6' }}>
                   hello.samyojak@gmail.com
                 </a>
               </div>
@@ -623,4 +552,4 @@ export default function HomePage() {
 
     </div>
   )
-}
+   }
