@@ -7,49 +7,10 @@ html {
   scroll-behavior: smooth;
 }
 
-.candy-btn {
-  background: #8B5CF6;
-  color: white;
-  border: 2px solid #1E293B;
-  box-shadow: 4px 4px 0px #1E293B;
-  border-radius: 9999px;
-  font-weight: 800;
-  font-family: 'Outfit', sans-serif;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  text-decoration: none;
-}
-.candy-btn:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px #1E293B;
-}
-.candy-btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px #1E293B;
-}
-
-.secondary-btn {
-  background: transparent;
-  color: #1E293B;
-  border: 2px solid #1E293B;
-  border-radius: 9999px;
-  font-weight: 800;
-  font-family: 'Outfit', sans-serif;
-  display: inline-flex;
-  align-items: center;
-  transition: background 0.2s ease;
-  text-decoration: none;
-}
-.secondary-btn:hover {
-  background: #FBBF24;
-}
-
-.card-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.card-hover:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 8px 8px 0px #1E293B !important;
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
