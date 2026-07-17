@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
-  Sparkles, LayoutDashboard, Users, FileText, Boxes,
+  Sparkles, LayoutDashboard, Users, Boxes,
   Contact, FolderKanban, Receipt, BarChart3, Bot,
-  Settings, Search, Bell, ChevronDown, ArrowRight,
+  Search, Bell, ChevronDown, ArrowRight,
   ShieldCheck, Zap, RefreshCcw, Gauge, Building2, Check,
   Menu, X, FileCheck, UserPlus, TrendingUp, Globe, ChevronUp,
 } from 'lucide-react'
@@ -25,25 +25,25 @@ const PRICING: Record<string, Record<string, Record<string, string>>> = {
 }
 
 const PLANS = [
-  { key: 'starter', name: 'CRM Starter', emoji: '🚀', gradient: 'from-violet-500 to-violet-600', features: ['CRM + AI lead scoring', 'Sales Quotations', 'Support tickets', 'CSV import any format', 'Export to CSV'] },
-  { key: 'basic', name: 'ERP Basic', emoji: '⚡', gradient: 'from-pink-500 to-pink-600', popular: true, features: ['Everything in Starter', 'Universal Tax Invoicing', 'Recurring Invoices', 'Inventory + QR codes', 'BI Dashboard Charts', 'WhatsApp Invoicing'] },
-  { key: 'business', name: 'Business', emoji: '🏢', gradient: 'from-emerald-500 to-emerald-600', features: ['Everything in ERP Basic', 'HR & Payroll', 'Project Kanban', 'Recruiting Tracker', 'Advanced Analytics'] },
-  { key: 'complete', name: 'Complete ERP', emoji: '👑', gradient: 'from-amber-500 to-amber-600', features: ['Everything in Business', 'AI Business Intelligence', 'Live data AI analysis', 'Priority support', 'All future features'] },
+  { key: 'starter', name: 'CRM Starter', emoji: '🚀', color: '#8B5CF6', features: ['CRM + AI lead scoring', 'Sales Quotations', 'Support tickets', 'CSV import any format', 'Export to CSV'] },
+  { key: 'basic', name: 'ERP Basic', emoji: '⚡', color: '#F472B6', popular: true, features: ['Everything in Starter', 'Universal Tax Invoicing', 'Recurring Invoices', 'Inventory + QR codes', 'BI Dashboard Charts', 'WhatsApp Invoicing'] },
+  { key: 'business', name: 'Business', emoji: '🏢', color: '#34D399', features: ['Everything in ERP Basic', 'HR & Payroll', 'Project Kanban', 'Recruiting Tracker', 'Advanced Analytics'] },
+  { key: 'complete', name: 'Complete ERP', emoji: '👑', color: '#FBBF24', features: ['Everything in Business', 'AI Business Intelligence', 'Live data AI analysis', 'Priority support', 'All future features'] },
 ]
 
 const MODULES = [
-  { icon: Contact, label: 'CRM', desc: 'AI lead scoring, pipeline, follow-ups', gradient: 'from-violet-500 to-violet-600' },
-  { icon: FileCheck, label: 'Quotations', desc: 'Build quotes, PDF export, convert to invoice', gradient: 'from-pink-500 to-pink-600' },
-  { icon: Receipt, label: 'Invoices', desc: 'GST/VAT/HST for 15+ countries', gradient: 'from-amber-500 to-amber-600' },
-  { icon: Boxes, label: 'Inventory', desc: 'Stock tracking + free auto QR codes', gradient: 'from-emerald-500 to-emerald-600' },
-  { icon: Users, label: 'HR & Payroll', desc: 'Team, salaries, departments, leave', gradient: 'from-violet-500 to-violet-600' },
-  { icon: UserPlus, label: 'Recruiting', desc: 'Applied → Screened → Interview → Hired', gradient: 'from-pink-500 to-pink-600' },
-  { icon: FolderKanban, label: 'Projects', desc: 'Kanban: Planning → In Progress → Done', gradient: 'from-amber-500 to-amber-600' },
-  { icon: BarChart3, label: 'BI Dashboard', desc: 'Live recharts across all modules', gradient: 'from-emerald-500 to-emerald-600' },
-  { icon: Bot, label: 'AI Assistant', desc: 'Reads your live data, gives real answers', gradient: 'from-violet-500 to-violet-600' },
-  { icon: TrendingUp, label: 'Reports', desc: 'GST reports, revenue analytics, exports', gradient: 'from-pink-500 to-pink-600' },
-  { icon: Globe, label: 'Universal Import', desc: 'Any CSV, any software, zero field mapping', gradient: 'from-amber-500 to-amber-600' },
-  { icon: RefreshCcw, label: 'Recurring Bills', desc: 'Auto-invoice weekly, monthly, yearly', gradient: 'from-emerald-500 to-emerald-600' },
+  { icon: Contact, label: 'CRM', desc: 'AI lead scoring, pipeline, follow-ups', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: FileCheck, label: 'Quotations', desc: 'Build quotes, PDF export, convert to invoice', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: Receipt, label: 'Invoices', desc: 'GST/VAT/HST for 15+ countries', color: '#FBBF24', bg: '#FEF3C7' },
+  { icon: Boxes, label: 'Inventory', desc: 'Stock tracking + free auto QR codes', color: '#34D399', bg: '#D1FAE5' },
+  { icon: Users, label: 'HR & Payroll', desc: 'Team, salaries, departments, leave', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: UserPlus, label: 'Recruiting', desc: 'Applied → Screened → Interview → Hired', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: FolderKanban, label: 'Projects', desc: 'Kanban: Planning → In Progress → Done', color: '#FBBF24', bg: '#FEF3C7' },
+  { icon: BarChart3, label: 'BI Dashboard', desc: 'Live recharts across all modules', color: '#34D399', bg: '#D1FAE5' },
+  { icon: Bot, label: 'AI Assistant', desc: 'Reads your live data, gives real answers', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: TrendingUp, label: 'Reports', desc: 'GST reports, revenue analytics, exports', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: Globe, label: 'Universal Import', desc: 'Any CSV, any software, zero field mapping', color: '#FBBF24', bg: '#FEF3C7' },
+  { icon: RefreshCcw, label: 'Recurring Bills', desc: 'Auto-invoice weekly, monthly, yearly', color: '#34D399', bg: '#D1FAE5' },
 ]
 
 const COMPARISON = [
@@ -87,52 +87,55 @@ export default function HomePage() {
   const prices = PRICING[region][billing]
 
   return (
-    <div className="bg-[#F7F7FB] text-slate-900 [font-family:'Plus_Jakarta_Sans',sans-serif]">
+    <div style={{ background: '#FFFDF5', fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#1E293B' }}>
 
       {/* ── NAVBAR ── */}
-      <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+      <header className="sticky top-0 z-50 px-6 py-4"
+        style={{ background: 'rgba(255,253,245,0.97)', backdropFilter: 'blur(10px)', borderBottom: '2px solid #1E293B' }}>
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 shadow-[0_4px_14px_-2px_rgba(139,92,246,0.55)]">
-              <span className="text-lg font-bold text-white [font-family:'Outfit',sans-serif]">S</span>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg"
+              style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B', fontFamily: 'Outfit, sans-serif' }}>
+              S
             </div>
-            <div className="leading-tight">
-              <div className="text-[17px] font-bold tracking-tight [font-family:'Outfit',sans-serif]">Samyojak</div>
-              <div className="text-[11px] text-slate-500">ERP That Adapts To You</div>
+            <div>
+              <div className="font-black text-xl leading-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>Samyojak</div>
+              <div className="text-[11px]" style={{ color: '#64748B' }}>ERP That Adapts To You</div>
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-7 text-[14.5px] font-semibold text-slate-600 lg:flex">
+          <nav className="hidden lg:flex items-center gap-7 text-sm font-bold">
             {[['Features', '/features'], ['Pricing', '/pricing'], ['About', '/about'], ['Contact', '/contact']].map(([l, h]) => (
-              <Link key={h} href={h} className="transition-colors hover:text-violet-700">{l}</Link>
+              <Link key={h} href={h} className="hover:text-violet-600 transition-colors">{l}</Link>
             ))}
           </nav>
 
-          <div className="hidden items-center gap-3 lg:flex">
-            <Link href="/login" className="rounded-lg border border-slate-200 px-4 py-2 text-[14px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
+          <div className="hidden lg:flex items-center gap-3">
+            <Link href="/login" className="px-4 py-2 text-sm font-black rounded-full"
+              style={{ border: '2px solid #1E293B', background: 'white' }}>
               Sign In
             </Link>
-            <Link href="/signup" className="group flex items-center gap-1.5 rounded-lg bg-gradient-to-b from-violet-500 to-violet-700 px-4 py-2 text-[14px] font-semibold text-white shadow-[0_6px_16px_-4px_rgba(124,58,237,0.6)] transition hover:shadow-[0_8px_20px_-4px_rgba(124,58,237,0.75)]">
-              Start Trial
-              <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+            <Link href="/signup" className="candy-btn px-5 py-2 text-sm">
+              Start Trial <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 
-          <button className="rounded-lg border border-slate-200 p-2 lg:hidden" onClick={() => setMenuOpen(!menuOpen)}>
+          <button className="lg:hidden p-2 rounded-lg" style={{ border: '2px solid #1E293B', background: 'white' }}
+            onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
         {menuOpen && (
-          <div className="mx-auto max-w-6xl space-y-3 border-t border-slate-200 px-6 pb-4 pt-4 lg:hidden">
+          <div className="lg:hidden mt-4 pb-4 pt-4 space-y-3 max-w-6xl mx-auto" style={{ borderTop: '2px solid #E2E8F0' }}>
             {[['Features', '/features'], ['Pricing', '/pricing'], ['About', '/about'], ['Contact', '/contact']].map(([l, h]) => (
-              <Link key={h} href={h} onClick={() => setMenuOpen(false)} className="block text-[14.5px] font-semibold text-slate-700">{l}</Link>
+              <Link key={h} href={h} onClick={() => setMenuOpen(false)} className="block text-sm font-bold py-1">{l}</Link>
             ))}
             <div className="flex gap-3 pt-2">
-              <Link href="/login" className="flex-1 rounded-lg border border-slate-200 py-2.5 text-center text-[14px] font-semibold text-slate-700">
+              <Link href="/login" className="flex-1 text-center py-2.5 text-sm font-black rounded-full" style={{ border: '2px solid #1E293B' }}>
                 Sign In
               </Link>
-              <Link href="/signup" className="flex-1 rounded-lg bg-gradient-to-b from-violet-500 to-violet-700 py-2.5 text-center text-[14px] font-semibold text-white">
+              <Link href="/signup" className="candy-btn flex-1 justify-center py-2.5 text-sm">
                 Start Trial
               </Link>
             </div>
@@ -141,73 +144,68 @@ export default function HomePage() {
       </header>
 
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute -left-40 -top-40 h-[480px] w-[480px] rounded-full bg-violet-300/25 blur-3xl" />
-        <div className="pointer-events-none absolute -right-32 top-20 h-[420px] w-[420px] rounded-full bg-pink-200/30 blur-3xl" />
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.35]"
-          style={{ backgroundImage: 'radial-gradient(circle, rgba(139,92,246,0.15) 1px, transparent 1px)', backgroundSize: '26px 26px' }}
-        />
+      <section className="relative overflow-hidden px-6 py-16 lg:py-24">
+        {/* Dot grid texture */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ backgroundImage: 'radial-gradient(circle, #1E293B 1.5px, transparent 1.5px)', backgroundSize: '28px 28px', opacity: 0.06 }} />
 
-        <div className="relative mx-auto grid max-w-6xl grid-cols-1 gap-14 px-6 pb-20 pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:pt-20">
-          {/* Left */}
-          <div className="text-center lg:text-left">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3.5 py-1.5 text-[13px] font-semibold text-violet-700">
-              <Sparkles className="h-3.5 w-3.5" />
+        {/* Blob decorations */}
+        <div className="absolute -top-20 -left-24 w-72 h-72 rounded-full pointer-events-none" style={{ background: '#FBBF24', opacity: 0.25 }} />
+        <div className="absolute top-40 -right-16 w-56 h-56 rounded-full pointer-events-none" style={{ background: '#34D399', opacity: 0.2 }} />
+        <div className="absolute bottom-0 left-1/3 w-40 h-40 rotate-45 pointer-events-none" style={{ background: '#F472B6', opacity: 0.15, borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%' }} />
+
+        <div className="relative max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-14">
+
+          {/* LEFT — text */}
+          <div className="flex-1 min-w-0 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-black"
+              style={{ background: '#FEF3C7', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+              <Sparkles className="h-3.5 w-3.5" style={{ color: '#8B5CF6' }} />
               AI-Powered · Adaptive · Smart
             </div>
 
-            <h1 className="text-[38px] font-extrabold leading-[1.1] tracking-tight text-slate-900 [font-family:'Outfit',sans-serif] sm:text-[52px]">
+            <h1 className="font-black leading-[1.1] tracking-tight mb-6"
+              style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(34px, 5vw, 56px)' }}>
               The ERP
               <br />
-              <span className="bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
+              <span style={{ background: 'linear-gradient(135deg, #8B5CF6, #F472B6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 That Adapts To You
               </span>
             </h1>
 
-            <p className="mx-auto mt-6 max-w-lg text-[16.5px] leading-relaxed text-slate-600 lg:mx-0">
-              Import your data from anywhere. No templates. No forced formats.
-              No data loss. Samyojak{' '}
-              <span className="font-semibold text-slate-800">adapts to your business</span>{' '}
-              — not the other way around.
+            <p className="text-lg leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0" style={{ color: '#475569' }}>
+              Import your data from anywhere. No templates. No forced formats. No data loss.
+              Samyojak <strong style={{ color: '#1E293B' }}>adapts to your business</strong> — not the other way around.
             </p>
 
-            <div className="mt-9 flex flex-col justify-center gap-3.5 sm:flex-row lg:justify-start">
-              <Link href="/signup" className="group flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-violet-500 to-violet-700 px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_10px_24px_-6px_rgba(124,58,237,0.55)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-6px_rgba(124,58,237,0.65)]">
-                Start Trial
-                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+            <div className="flex flex-col sm:flex-row gap-3 mb-8 justify-center lg:justify-start">
+              <Link href="/signup" className="candy-btn justify-center px-7 py-4 text-base">
+                Start Trial <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/contact" className="flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-7 py-3.5 text-[15px] font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-md">
+              <Link href="/contact" className="secondary-btn justify-center px-7 py-4 text-base">
                 Book a Demo
               </Link>
             </div>
 
-            <div className="mt-9 flex flex-wrap justify-center gap-x-8 gap-y-3 text-[13.5px] font-medium text-slate-600 lg:justify-start">
-              <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-emerald-500" /> No Credit Card Required</div>
-              <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-amber-500" /> Setup in 5 Minutes</div>
-              <div className="flex items-center gap-2"><Building2 className="h-4 w-4 text-violet-500" /> Made in India 🇮🇳</div>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-bold justify-center lg:justify-start" style={{ color: '#475569' }}>
+              <div className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" style={{ color: '#34D399' }} /> No Credit Card Required</div>
+              <div className="flex items-center gap-1.5"><Zap className="h-4 w-4" style={{ color: '#FBBF24' }} /> Setup in 5 Minutes</div>
+              <div className="flex items-center gap-1.5"><Building2 className="h-4 w-4" style={{ color: '#8B5CF6' }} /> Made in India 🇮🇳</div>
             </div>
           </div>
 
-          {/* Right — dashboard mockup */}
-          <div className="relative mx-auto w-full max-w-xl [perspective:1800px] lg:mx-0">
-            <div className="pointer-events-none absolute -inset-6 rounded-[28px] bg-gradient-to-br from-violet-400/20 to-pink-300/10 blur-2xl" />
-
-            <div
-              className="relative rounded-2xl border border-slate-200/70 bg-white shadow-[0_30px_60px_-20px_rgba(76,29,149,0.35),0_10px_24px_-8px_rgba(0,0,0,0.15)] transition-transform duration-500 ease-out hover:[transform:rotateY(0deg)_rotateX(0deg)]"
-              style={{ transform: 'rotateY(-6deg) rotateX(3deg)' }}
-            >
-              <div className="flex overflow-hidden rounded-2xl">
+          {/* RIGHT — dashboard mockup */}
+          <div className="flex-1 min-w-0 w-full max-w-xl relative">
+            <div className="rounded-2xl overflow-hidden"
+              style={{ border: '2px solid #1E293B', boxShadow: '10px 10px 0px #1E293B', background: '#F8FAFC' }}>
+              <div className="flex">
                 {/* Sidebar */}
-                <div className="hidden w-[180px] shrink-0 flex-col bg-[#0F1225] px-3 py-4 sm:flex">
-                  <div className="mb-5 flex items-center gap-2 px-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-violet-700">
-                      <span className="text-[13px] font-bold text-white">S</span>
-                    </div>
-                    <span className="text-[13px] font-bold text-white [font-family:'Outfit',sans-serif]">Samyojak</span>
+                <div className="hidden sm:flex w-40 shrink-0 flex-col px-3 py-4" style={{ background: '#0F172A' }}>
+                  <div className="flex items-center gap-2 px-2 mb-5">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-sm" style={{ background: '#8B5CF6' }}>S</div>
+                    <span className="font-black text-white text-sm" style={{ fontFamily: 'Outfit, sans-serif' }}>Samyojak</span>
                   </div>
-
-                  <nav className="flex flex-1 flex-col gap-0.5 text-[11.5px] font-medium text-slate-400">
+                  <nav className="flex flex-1 flex-col gap-0.5 text-[11px] font-medium" style={{ color: '#94A3B8' }}>
                     {[
                       { icon: LayoutDashboard, label: 'Dashboard', active: true },
                       { icon: Contact, label: 'CRM' },
@@ -220,58 +218,53 @@ export default function HomePage() {
                       { icon: BarChart3, label: 'BI Dashboard' },
                       { icon: Bot, label: 'AI Assistant' },
                     ].map(({ icon: Icon, label, active }) => (
-                      <div
-                        key={label}
-                        className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 ${
-                          active ? 'bg-violet-600 text-white shadow-[0_4px_12px_-2px_rgba(124,58,237,0.6)]' : 'hover:bg-white/5'
-                        }`}
-                      >
-                        <Icon className="h-3.5 w-3.5" /> {label}
+                      <div key={label} className="flex items-center gap-2 rounded-lg px-2 py-1.5"
+                        style={{ background: active ? '#8B5CF6' : 'transparent', color: active ? 'white' : '#94A3B8' }}>
+                        <Icon className="h-3 w-3 flex-shrink-0" /> {label}
                       </div>
                     ))}
                   </nav>
-
-                  <div className="mt-3 rounded-xl bg-gradient-to-br from-violet-600 to-pink-600 p-3 text-white">
-                    <div className="text-[10.5px] opacity-80">Current Plan</div>
-                    <div className="text-[13px] font-bold">Business</div>
+                  <div className="mt-3 rounded-xl p-2.5 text-white" style={{ background: 'linear-gradient(135deg, #8B5CF6, #F472B6)' }}>
+                    <div className="text-[9px] opacity-70">Current Plan</div>
+                    <div className="font-black text-xs" style={{ fontFamily: 'Outfit, sans-serif' }}>Business</div>
                   </div>
                 </div>
 
                 {/* Main */}
-                <div className="flex-1 bg-slate-50 p-5">
-                  <div className="mb-5 flex items-center justify-between">
+                <div className="flex-1 p-4">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
-                      <div className="text-[15px] font-bold text-slate-900">Welcome back, Omkar 👋</div>
-                      <div className="text-[11.5px] text-slate-500">Here&apos;s your business today</div>
+                      <div className="font-bold text-sm">Welcome back, Omkar 👋</div>
+                      <div className="text-[10px]" style={{ color: '#64748B' }}>Here&apos;s your business today</div>
                     </div>
-                    <div className="hidden items-center gap-2.5 text-slate-400 sm:flex">
-                      <Search className="h-4 w-4" />
-                      <Bell className="h-4 w-4" />
-                      <div className="h-6 w-6 rounded-full bg-gradient-to-br from-violet-400 to-pink-500" />
+                    <div className="hidden sm:flex items-center gap-2" style={{ color: '#94A3B8' }}>
+                      <Search className="h-3.5 w-3.5" />
+                      <Bell className="h-3.5 w-3.5" />
+                      <div className="w-6 h-6 rounded-full" style={{ background: 'linear-gradient(135deg, #8B5CF6, #F472B6)' }} />
                     </div>
                   </div>
 
-                  <div className="mb-4 grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2 mb-3">
                     {[
-                      { label: 'Leads', value: '248', change: '+12%', gradient: 'from-violet-500 to-violet-600' },
-                      { label: 'Invoices', value: '189', change: '+8%', gradient: 'from-pink-500 to-pink-600' },
-                      { label: 'Products', value: '91', change: '+5%', gradient: 'from-amber-500 to-amber-600' },
-                      { label: 'Revenue', value: '₹4.6L', change: '+15%', gradient: 'from-emerald-500 to-emerald-600' },
-                    ].map((s) => (
-                      <div key={s.label} className="rounded-xl border border-slate-200 bg-white p-3 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1)]">
-                        <div className={`mb-2 h-6 w-6 rounded-lg bg-gradient-to-br ${s.gradient}`} />
-                        <div className="text-[10.5px] text-slate-500">{s.label}</div>
-                        <div className="text-[15px] font-bold text-slate-900 [font-family:'Outfit',sans-serif]">{s.value}</div>
-                        <div className="text-[10px] font-semibold text-emerald-600">↑ {s.change}</div>
+                      { label: 'Leads', value: '248', change: '+12%', color: '#8B5CF6', bg: '#EDE9FE' },
+                      { label: 'Invoices', value: '189', change: '+8%', color: '#F472B6', bg: '#FCE7F3' },
+                      { label: 'Products', value: '91', change: '+5%', color: '#FBBF24', bg: '#FEF3C7' },
+                      { label: 'Revenue', value: '₹4.6L', change: '+15%', color: '#34D399', bg: '#D1FAE5' },
+                    ].map(s => (
+                      <div key={s.label} className="rounded-xl p-2.5" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '2px 2px 0px #1E293B' }}>
+                        <div className="w-4 h-4 rounded-md mb-1" style={{ background: s.bg, border: `1.5px solid ${s.color}` }} />
+                        <div className="text-[9px] font-semibold" style={{ color: '#64748B' }}>{s.label}</div>
+                        <div className="font-black text-sm" style={{ fontFamily: 'Outfit, sans-serif' }}>{s.value}</div>
+                        <div className="text-[9px] font-bold" style={{ color: '#34D399' }}>↑ {s.change}</div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]">
-                    <div className="mb-3 text-[12.5px] font-bold text-slate-800">Revenue Trend</div>
-                    <div className="flex h-16 items-end gap-1.5">
+                  <div className="rounded-xl p-3" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '2px 2px 0px #1E293B' }}>
+                    <div className="text-[10px] font-bold mb-2">Revenue Trend</div>
+                    <div className="flex items-end gap-1 h-10">
                       {[30, 45, 40, 55, 50, 70, 85].map((h, i) => (
-                        <div key={i} className="flex-1 rounded-t-sm bg-gradient-to-t from-violet-200 to-violet-500" style={{ height: `${h}%` }} />
+                        <div key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%`, background: i === 6 ? '#8B5CF6' : '#EDE9FE' }} />
                       ))}
                     </div>
                   </div>
@@ -279,17 +272,27 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* floating chips */}
-            <div className="absolute -left-6 top-10 hidden rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 shadow-[0_16px_30px_-10px_rgba(0,0,0,0.25)] sm:block">
-              <div className="flex items-center gap-2">
-                <Gauge className="h-4 w-4 text-emerald-500" />
-                <span className="text-[12px] font-bold text-slate-800">99.9% Uptime</span>
-              </div>
+            {/* Floating chips */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-full absolute -top-4 left-6"
+              style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+              <Gauge className="h-3.5 w-3.5" style={{ color: '#34D399' }} />
+              <span className="text-xs font-black">99.9% Uptime</span>
             </div>
-            <div className="absolute -bottom-5 -right-4 hidden rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 shadow-[0_16px_30px_-10px_rgba(0,0,0,0.25)] sm:block">
-              <div className="flex items-center gap-2">
-                <RefreshCcw className="h-4 w-4 text-violet-500" />
-                <span className="text-[12px] font-bold text-slate-800">Zero Data Loss</span>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-full absolute -bottom-4 right-6"
+              style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+              <RefreshCcw className="h-3.5 w-3.5" style={{ color: '#8B5CF6' }} />
+              <span className="text-xs font-black">Zero Data Loss</span>
+            </div>
+
+            {/* mobile-only stacked chips (no absolute overlap on small screens) */}
+            <div className="flex sm:hidden gap-3 mt-4 justify-center flex-wrap">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-full" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '2px 2px 0px #1E293B' }}>
+                <Gauge className="h-3.5 w-3.5" style={{ color: '#34D399' }} />
+                <span className="text-xs font-black">99.9% Uptime</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-full" style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '2px 2px 0px #1E293B' }}>
+                <RefreshCcw className="h-3.5 w-3.5" style={{ color: '#8B5CF6' }} />
+                <span className="text-xs font-black">Zero Data Loss</span>
               </div>
             </div>
           </div>
@@ -297,78 +300,80 @@ export default function HomePage() {
       </section>
 
       {/* ── MARQUEE ── */}
-      <div className="overflow-hidden border-y border-slate-200/70 bg-gradient-to-r from-violet-50 via-pink-50 to-violet-50 py-3.5">
+      <div className="overflow-hidden py-4" style={{ background: '#8B5CF6', borderTop: '2px solid #1E293B', borderBottom: '2px solid #1E293B' }}>
         <div className="flex gap-8 whitespace-nowrap" style={{ animation: 'marquee 28s linear infinite' }}>
           {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
-            <span key={i} className="flex-shrink-0 text-[13px] font-semibold text-violet-700">{item}</span>
+            <span key={i} className="text-white font-black text-sm flex-shrink-0">{item}</span>
           ))}
         </div>
       </div>
 
       {/* ── 12 MODULES ── */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <div className="mb-14 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3.5 py-1.5 text-[13px] font-semibold text-violet-700">
-            <Sparkles className="h-3.5 w-3.5" /> 12 Modules — One Platform
+      <section className="max-w-6xl mx-auto px-6 py-20 relative">
+        <div className="text-center mb-14">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4 text-xs font-black"
+            style={{ background: '#EDE9FE', border: '2px solid #1E293B', boxShadow: '3px 3px 0px #1E293B' }}>
+            <Sparkles className="h-3.5 w-3.5" style={{ color: '#8B5CF6' }} /> 12 Modules — One Platform
           </div>
-          <h2 className="mb-3 text-[30px] font-extrabold [font-family:'Outfit',sans-serif] sm:text-[38px]">
+          <h2 className="font-black mb-3" style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(28px, 4vw, 40px)' }}>
             Everything your business needs
           </h2>
-          <p className="mx-auto max-w-xl text-[15.5px] text-slate-600">
+          <p className="text-base max-w-xl mx-auto" style={{ color: '#64748B' }}>
             From CRM to AI — every tool in one workspace. No switching tabs. No disconnected tools.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {MODULES.map((m) => (
-            <div
-              key={m.label}
-              className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_32px_-12px_rgba(76,29,149,0.25)]"
-            >
-              <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${m.gradient} shadow-[0_6px_14px_-4px_rgba(0,0,0,0.35)] transition group-hover:scale-105`}>
-                <m.icon className="h-5 w-5 text-white" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {MODULES.map(m => (
+            <div key={m.label} className="card-wiggle rounded-xl p-6"
+              style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '6px 6px 0px #1E293B' }}>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                style={{ background: m.bg, border: `2px solid ${m.color}` }}>
+                <m.icon className="h-5 w-5" style={{ color: m.color }} />
               </div>
-              <h3 className="mb-1.5 text-[16px] font-bold text-slate-900 [font-family:'Outfit',sans-serif]">{m.label}</h3>
-              <p className="text-[14px] leading-relaxed text-slate-600">{m.desc}</p>
+              <h3 className="font-black text-base mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>{m.label}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: '#64748B' }}>{m.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── ADAPTIVE IMPORT — dark section ── */}
-      <section className="bg-[#0F1225] py-20">
-        <div className="mx-auto max-w-5xl px-6 text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-[13px] font-semibold text-white">
+      <section className="py-20" style={{ background: '#1E293B' }}>
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-black"
+            style={{ background: '#8B5CF6', border: '2px solid white', color: 'white' }}>
             <RefreshCcw className="h-3.5 w-3.5" /> The Feature That Changes Everything
           </div>
-          <h2 className="mb-4 text-[30px] font-extrabold text-white [font-family:'Outfit',sans-serif] sm:text-[38px]">
+          <h2 className="font-black text-white mb-4" style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(28px, 4vw, 40px)' }}>
             Upload any CSV. Get all your data.
           </h2>
-          <p className="mx-auto mb-10 max-w-2xl text-[15.5px] leading-relaxed text-slate-400">
+          <p className="text-base leading-relaxed mb-10 max-w-2xl mx-auto" style={{ color: '#94A3B8' }}>
             Every other ERP says: rename your columns first. Match our exact field names.
             Or your import will fail. We say: upload whatever you have. We understand it.
           </p>
 
-          <div className="mb-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {['🟠 Zoho CRM', '☁️ Salesforce', '🟡 HubSpot', '📊 Tally', '📋 Busy', '🟣 Odoo', '📗 Excel', '📊 Google Sheets'].map((s) => (
-              <div key={s} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[13.5px] font-semibold text-white">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
+            {['🟠 Zoho CRM', '☁️ Salesforce', '🟡 HubSpot', '📊 Tally', '📋 Busy', '🟣 Odoo', '📗 Excel', '📊 Google Sheets'].map(s => (
+              <div key={s} className="rounded-xl py-3 px-4 text-sm font-bold"
+                style={{ border: '2px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'white' }}>
                 {s}
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { icon: RefreshCcw, title: 'Zero Field Mapping', desc: 'Upload exactly as-is. No column renaming ever.', color: 'text-violet-400' },
-              { icon: ShieldCheck, title: 'Zero Data Loss', desc: 'Every row. Every column. 100% preserved.', color: 'text-emerald-400' },
-              { icon: Zap, title: 'Instant Ready', desc: 'Import complete. Your ERP is live in 2 minutes.', color: 'text-amber-400' },
-            ].map((f) => (
-              <div key={f.title} className="rounded-2xl border border-white/10 bg-white/5 p-5 text-left">
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white">
-                  <f.icon className={`h-5 w-5 ${f.color}`} />
+              { icon: RefreshCcw, title: 'Zero Field Mapping', desc: 'Upload exactly as-is. No column renaming ever.', color: '#8B5CF6' },
+              { icon: ShieldCheck, title: 'Zero Data Loss', desc: 'Every row. Every column. 100% preserved.', color: '#34D399' },
+              { icon: Zap, title: 'Instant Ready', desc: 'Import complete. Your ERP is live in 2 minutes.', color: '#FBBF24' },
+            ].map(f => (
+              <div key={f.title} className="rounded-2xl p-5 text-left" style={{ border: '2px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)' }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: 'white' }}>
+                  <f.icon className="h-5 w-5" style={{ color: f.color }} />
                 </div>
-                <p className="mb-1 font-bold text-white [font-family:'Outfit',sans-serif]">{f.title}</p>
-                <p className="text-[13.5px] text-slate-400">{f.desc}</p>
+                <p className="font-black text-white mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>{f.title}</p>
+                <p className="text-sm" style={{ color: '#94A3B8' }}>{f.desc}</p>
               </div>
             ))}
           </div>
@@ -376,98 +381,98 @@ export default function HomePage() {
       </section>
 
       {/* ── COMPARISON ── */}
-      <section className="mx-auto max-w-4xl px-6 py-20">
-        <div className="mb-12 text-center">
-          <h2 className="mb-3 text-[30px] font-extrabold [font-family:'Outfit',sans-serif] sm:text-[38px]">
+      <section className="max-w-4xl mx-auto px-6 py-20">
+        <div className="text-center mb-12">
+          <h2 className="font-black mb-3" style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(28px, 4vw, 40px)' }}>
             Samyojak vs Legacy ERP
           </h2>
-          <p className="text-slate-600">Why growing businesses are switching</p>
+          <p style={{ color: '#64748B' }}>Why growing businesses are switching</p>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_10px_30px_-12px_rgba(0,0,0,0.15)]">
-          <div className="grid grid-cols-3 border-b border-slate-200 bg-slate-50">
-            <div className="p-4 text-[11.5px] font-bold uppercase tracking-wide text-slate-400">Feature</div>
+        <div className="rounded-2xl overflow-hidden" style={{ border: '2px solid #1E293B', boxShadow: '8px 8px 0px #1E293B' }}>
+          <div className="grid grid-cols-3" style={{ background: '#F8FAFC', borderBottom: '2px solid #1E293B' }}>
+            <div className="p-4 text-xs font-black uppercase tracking-wide" style={{ color: '#94A3B8' }}>Feature</div>
             <div className="p-4 text-center">
-              <span className="rounded-full bg-gradient-to-b from-violet-500 to-violet-700 px-3 py-1 text-[11.5px] font-bold text-white">Samyojak</span>
+              <span className="px-3 py-1 rounded-full text-xs font-black text-white" style={{ background: '#8B5CF6' }}>Samyojak</span>
             </div>
             <div className="p-4 text-center">
-              <span className="rounded-full bg-slate-200 px-3 py-1 text-[11.5px] font-semibold text-slate-600">Legacy ERP A/B</span>
+              <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: '#F1F5F9', color: '#64748B' }}>Legacy ERP A/B</span>
             </div>
           </div>
           {COMPARISON.map((row, i) => (
-            <div key={i} className={`grid grid-cols-3 ${i < COMPARISON.length - 1 ? 'border-b border-slate-100' : ''}`}>
-              <div className="p-4 text-[13.5px] font-semibold text-slate-700">{row.feature}</div>
-              <div className="p-4 text-center text-[13.5px] font-bold text-emerald-600">✓ {row.samyojak}</div>
-              <div className="p-4 text-center text-[13.5px] text-slate-400">✕ {row.others}</div>
+            <div key={i} className="grid grid-cols-3" style={{ borderBottom: i < COMPARISON.length - 1 ? '2px solid #F1F5F9' : 'none' }}>
+              <div className="p-4 text-sm font-bold" style={{ color: '#475569' }}>{row.feature}</div>
+              <div className="p-4 text-center text-sm font-black" style={{ color: '#34D399' }}>✅ {row.samyojak}</div>
+              <div className="p-4 text-center text-sm" style={{ color: '#94A3B8' }}>❌ {row.others}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── PRICING ── */}
-      <section className="bg-white py-20">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="mb-10 text-center">
-            <h2 className="mb-3 text-[30px] font-extrabold [font-family:'Outfit',sans-serif] sm:text-[38px]">
+      <section className="py-20" style={{ background: '#F1F5F9' }}>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-10">
+            <h2 className="font-black mb-3" style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(28px, 4vw, 40px)' }}>
               Simple pricing. No surprises.
             </h2>
-            <p className="mb-6 text-slate-600">No per-user fees. No annual lock-in. Cancel anytime.</p>
+            <p className="mb-6" style={{ color: '#64748B' }}>No per-user fees. No annual lock-in. Cancel anytime.</p>
 
-            <div className="mb-4 inline-flex rounded-full border border-slate-200 bg-slate-50 p-1">
-              {(['weekly', 'monthly'] as const).map((b) => (
-                <button
-                  key={b}
-                  onClick={() => setBilling(b)}
-                  className={`rounded-full px-6 py-2 text-[13.5px] font-bold capitalize transition-all ${
-                    billing === b ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500'
-                  }`}
-                >
+            <div className="inline-flex p-1 rounded-full mb-4" style={{ background: 'white', border: '2px solid #1E293B' }}>
+              {(['weekly', 'monthly'] as const).map(b => (
+                <button key={b} onClick={() => setBilling(b)}
+                  className="px-6 py-2 rounded-full text-sm font-black capitalize transition-all"
+                  style={{ background: billing === b ? '#1E293B' : 'transparent', color: billing === b ? 'white' : '#64748B' }}>
                   {b}
                 </button>
               ))}
             </div>
-            <div className="text-[12.5px] font-semibold text-slate-400">
+            <div className="text-xs font-bold" style={{ color: '#94A3B8' }}>
               {region === 'india' ? '🇮🇳 India pricing detected' : region === 'western' ? '🌎 Western pricing detected' : '🌍 Global pricing detected'}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 pt-3 sm:grid-cols-2 lg:grid-cols-4">
-            {PLANS.map((plan) => (
-              <div
-                key={plan.key}
-                className={`relative flex flex-col rounded-2xl border bg-white p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)] transition hover:-translate-y-1 hover:shadow-[0_20px_32px_-12px_rgba(76,29,149,0.25)] ${
-                  plan.popular ? 'border-violet-300 ring-2 ring-violet-200' : 'border-slate-200'
-                }`}
-              >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-3">
+            {PLANS.map(plan => (
+              <div key={plan.key} className="card-wiggle rounded-2xl p-6 flex flex-col relative"
+                style={{
+                  background: plan.popular ? plan.color : 'white',
+                  border: '2px solid #1E293B',
+                  boxShadow: plan.popular ? '8px 8px 0px #1E293B' : '6px 6px 0px #1E293B',
+                }}>
                 {plan.popular && (
-                  <div className="absolute -top-3 right-4 rounded-full bg-gradient-to-b from-violet-500 to-violet-700 px-3 py-1 text-[11px] font-bold text-white shadow-[0_4px_10px_-2px_rgba(124,58,237,0.6)]">
-                    ⭐ POPULAR
+                  <div className="absolute -top-5 -right-3 w-16 h-16 rounded-full flex items-center justify-center text-center leading-none"
+                    style={{
+                      background: '#FBBF24',
+                      border: '2px solid #1E293B',
+                      transform: 'rotate(15deg)',
+                      fontFamily: 'Outfit, sans-serif',
+                    }}>
+                    <span className="text-[9px] font-black" style={{ color: '#1E293B' }}>MOST<br />POPULAR</span>
                   </div>
                 )}
-                <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${plan.gradient} text-lg shadow-[0_6px_14px_-4px_rgba(0,0,0,0.3)]`}>
-                  {plan.emoji}
-                </div>
-                <h3 className="mb-1 text-[16px] font-bold text-slate-900 [font-family:'Outfit',sans-serif]">{plan.name}</h3>
+                <div className="text-2xl mb-2">{plan.emoji}</div>
+                <h3 className="font-black text-base mb-1" style={{ fontFamily: 'Outfit, sans-serif', color: plan.popular ? 'white' : '#1E293B' }}>
+                  {plan.name}
+                </h3>
                 <div className="mb-4">
-                  <span className="text-[30px] font-extrabold text-slate-900 [font-family:'Outfit',sans-serif]">{prices[plan.key]}</span>
-                  <span className="ml-1 text-[12px] text-slate-400">/{billing === 'weekly' ? 'week' : 'month'}</span>
+                  <span className="font-black text-3xl" style={{ fontFamily: 'Outfit, sans-serif', color: plan.popular ? 'white' : '#1E293B' }}>
+                    {prices[plan.key]}
+                  </span>
+                  <span className="text-xs ml-1" style={{ color: plan.popular ? 'rgba(255,255,255,0.7)' : '#94A3B8' }}>
+                    /{billing === 'weekly' ? 'week' : 'month'}
+                  </span>
                 </div>
-                <ul className="mb-5 flex-1 space-y-2">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-[12.5px] font-medium text-slate-600">
-                      <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-emerald-500" />
+                <ul className="space-y-2 mb-5 flex-1">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-start gap-2 text-xs font-medium" style={{ color: plan.popular ? 'rgba(255,255,255,0.95)' : '#475569' }}>
+                      <Check className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" style={{ color: plan.popular ? 'white' : '#34D399' }} />
                       {f}
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href="/signup"
-                  className={`block w-full rounded-xl py-3 text-center text-[14px] font-bold transition hover:-translate-y-0.5 ${
-                    plan.popular
-                      ? 'bg-gradient-to-b from-violet-500 to-violet-700 text-white shadow-[0_10px_20px_-6px_rgba(124,58,237,0.55)]'
-                      : 'border border-slate-300 text-slate-800 hover:bg-slate-50'
-                  }`}
-                >
+                <Link href="/signup" className="block w-full py-3 rounded-full text-sm font-black text-center"
+                  style={{ background: plan.popular ? 'white' : '#1E293B', color: plan.popular ? plan.color : 'white', border: '2px solid #1E293B' }}>
                   Start Trial
                 </Link>
               </div>
@@ -477,20 +482,20 @@ export default function HomePage() {
       </section>
 
       {/* ── FAQ ── */}
-      <section className="mx-auto max-w-3xl px-6 py-20">
-        <h2 className="mb-10 text-center text-[30px] font-extrabold [font-family:'Outfit',sans-serif] sm:text-[38px]">
+      <section className="max-w-3xl mx-auto px-6 py-20">
+        <h2 className="font-black text-center mb-10" style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(28px, 4vw, 40px)' }}>
           Frequently asked questions
         </h2>
         <div className="space-y-3">
           {FAQS.map((faq, i) => (
-            <div key={i} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_8px_-4px_rgba(0,0,0,0.06)]">
-              <button className="flex w-full items-center justify-between p-5 text-left" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
-                <span className="pr-4 text-[14.5px] font-bold text-slate-900 [font-family:'Outfit',sans-serif]">{faq.q}</span>
-                {openFaq === i ? <ChevronUp className="h-4 w-4 flex-shrink-0 text-violet-600" /> : <ChevronDown className="h-4 w-4 flex-shrink-0 text-slate-400" />}
+            <div key={i} className="rounded-2xl overflow-hidden" style={{ border: '2px solid #1E293B', background: 'white' }}>
+              <button className="w-full flex items-center justify-between p-5 text-left" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                <span className="font-black text-sm pr-4" style={{ fontFamily: 'Outfit, sans-serif' }}>{faq.q}</span>
+                {openFaq === i ? <ChevronUp className="h-4 w-4 flex-shrink-0" style={{ color: '#8B5CF6' }} /> : <ChevronDown className="h-4 w-4 flex-shrink-0" style={{ color: '#94A3B8' }} />}
               </button>
               {openFaq === i && (
-                <div className="border-t border-slate-100 px-5 pb-5">
-                  <p className="pt-4 text-[14px] leading-relaxed text-slate-600">{faq.a}</p>
+                <div className="px-5 pb-5" style={{ borderTop: '2px solid #F1F5F9' }}>
+                  <p className="pt-4 text-sm leading-relaxed" style={{ color: '#64748B' }}>{faq.a}</p>
                 </div>
               )}
             </div>
@@ -499,76 +504,77 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="bg-[#0F1225] px-6 py-24 text-center">
-        <div className="mx-auto max-w-2xl">
-          <h2 className="mb-4 text-[32px] font-extrabold text-white [font-family:'Outfit',sans-serif] sm:text-[42px]">
+      <section className="py-24 px-6 text-center relative overflow-hidden" style={{ background: '#1E293B' }}>
+        <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full pointer-events-none" style={{ background: '#8B5CF6', opacity: 0.2 }} />
+        <div className="absolute bottom-0 right-10 w-32 h-32 rounded-full pointer-events-none" style={{ background: '#F472B6', opacity: 0.15 }} />
+        <div className="max-w-2xl mx-auto relative">
+          <h2 className="font-black text-white mb-4" style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(30px, 5vw, 46px)' }}>
             Your business data.
             <br />
-            <span className="bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">
+            <span style={{ background: 'linear-gradient(135deg, #8B5CF6, #F472B6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               Your way. Always.
             </span>
           </h2>
-          <p className="mb-8 text-[16px] text-slate-400">
+          <p className="text-lg mb-8" style={{ color: '#94A3B8' }}>
             Start your trial. Import your data. Running in 5 minutes. Cancel anytime.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/signup" className="group flex items-center gap-2 rounded-xl bg-gradient-to-b from-violet-500 to-violet-700 px-7 py-3.5 text-[15px] font-bold text-white shadow-[0_10px_24px_-6px_rgba(124,58,237,0.55)] transition hover:-translate-y-0.5">
-              Start Trial <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Link href="/signup" className="candy-btn px-8 py-4 text-base">
+              Start Trial <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link href="/contact" className="flex items-center gap-2 rounded-xl border border-white/30 px-7 py-3.5 text-[15px] font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/5">
+            <Link href="/contact" className="flex items-center gap-2 px-8 py-4 text-base font-black rounded-full"
+              style={{ border: '2px solid white', color: 'white' }}>
               Talk to Us
             </Link>
           </div>
-          <p className="mt-6 text-[12.5px] text-slate-500">No credit card required · No field mapping · No data loss</p>
+          <p className="text-xs mt-6" style={{ color: '#94A3B8' }}>No credit card required · No field mapping · No data loss</p>
         </div>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="border-t border-white/10 bg-[#0B0E1F] px-6 py-12">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-8 grid grid-cols-2 gap-8 md:grid-cols-4">
+      <footer className="px-6 py-12" style={{ background: '#0F172A', borderTop: '2px solid rgba(255,255,255,0.1)' }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-violet-700">
-                  <span className="text-[13px] font-bold text-white">S</span>
-                </div>
-                <span className="font-bold text-white [font-family:'Outfit',sans-serif]">Samyojak</span>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm" style={{ background: '#8B5CF6' }}>S</div>
+                <span className="font-black text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>Samyojak</span>
               </div>
-              <p className="text-[12.5px] leading-relaxed text-slate-400">The ERP that adapts to you. Not the other way around.</p>
-              <p className="mt-3 text-[12px] text-slate-500">MSME Registered · Pune, India 🇮🇳</p>
+              <p className="text-xs leading-relaxed" style={{ color: '#64748B' }}>The ERP that adapts to you. Not the other way around.</p>
+              <p className="text-xs mt-3" style={{ color: '#475569' }}>MSME Registered · Pune, India 🇮🇳</p>
             </div>
             <div>
-              <p className="mb-3 text-[13.5px] font-bold text-white [font-family:'Outfit',sans-serif]">Product</p>
+              <p className="font-black text-white text-sm mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>Product</p>
               {[['Features', '/features'], ['Pricing', '/pricing'], ['About', '/about']].map(([l, h]) => (
-                <Link key={h} href={h} className="mb-2 block text-[12.5px] text-slate-400 transition-colors hover:text-violet-400">{l}</Link>
+                <Link key={h} href={h} className="block text-xs mb-2 hover:text-violet-400 transition-colors" style={{ color: '#64748B' }}>{l}</Link>
               ))}
             </div>
             <div>
-              <p className="mb-3 text-[13.5px] font-bold text-white [font-family:'Outfit',sans-serif]">Company</p>
+              <p className="font-black text-white text-sm mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>Company</p>
               {[['About Us', '/about'], ['Contact', '/contact'], ['Support', '/support']].map(([l, h]) => (
-                <Link key={h} href={h} className="mb-2 block text-[12.5px] text-slate-400 transition-colors hover:text-violet-400">{l}</Link>
+                <Link key={h} href={h} className="block text-xs mb-2 hover:text-violet-400 transition-colors" style={{ color: '#64748B' }}>{l}</Link>
               ))}
             </div>
             <div>
-              <p className="mb-3 text-[13.5px] font-bold text-white [font-family:'Outfit',sans-serif]">Legal</p>
+              <p className="font-black text-white text-sm mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>Legal</p>
               {[['Privacy Policy', '/privacy'], ['Terms of Service', '/terms']].map(([l, h]) => (
-                <Link key={h} href={h} className="mb-2 block text-[12.5px] text-slate-400 transition-colors hover:text-violet-400">{l}</Link>
+                <Link key={h} href={h} className="block text-xs mb-2 hover:text-violet-400 transition-colors" style={{ color: '#64748B' }}>{l}</Link>
               ))}
               <div className="mt-4">
-                <p className="mb-1 text-[12px] text-slate-500">Support email</p>
-                <a href="mailto:hello.samyojak@gmail.com" className="text-[12.5px] text-violet-400 transition-colors hover:text-violet-300">
+                <p className="text-xs mb-1" style={{ color: '#64748B' }}>Support email</p>
+                <a href="mailto:hello.samyojak@gmail.com" className="text-xs hover:text-violet-300 transition-colors" style={{ color: '#8B5CF6' }}>
                   hello.samyojak@gmail.com
                 </a>
               </div>
             </div>
           </div>
-          <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 md:flex-row">
-            <p className="text-[12px] text-slate-500">© 2025 Samyojak. All rights reserved. MSME Registered India.</p>
-            <p className="text-[12px] text-slate-500">🌍 Built for the world · Made in India 🇮🇳</p>
+          <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <p className="text-xs" style={{ color: '#475569' }}>© 2025 Samyojak. All rights reserved. MSME Registered India.</p>
+            <p className="text-xs" style={{ color: '#475569' }}>🌍 Built for the world · Made in India 🇮🇳</p>
           </div>
         </div>
       </footer>
 
     </div>
   )
-            }
+                  }
