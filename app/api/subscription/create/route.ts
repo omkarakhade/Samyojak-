@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createSupabaseServerClient } from '@/lib/supabaseServer'
 import { createSubscriptionRecord } from '@/lib/subscriptionDb'
 import type { PlanType, PlanTier } from '@/lib/trialLogic'
 
 export async function POST(req: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies })
+  const supabase = createSupabaseServerClient()
   const { data: { session } } = await supabase.auth.getSession()
 
   if (!session) {
