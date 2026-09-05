@@ -4,7 +4,7 @@ import { createSubscriptionRecord } from '@/lib/subscriptionDb'
 import type { PlanType, PlanTier } from '@/lib/trialLogic'
 
 export async function POST(req: NextRequest) {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data: { session } } = await supabase.auth.getSession()
 
   if (!session) {
