@@ -3,15 +3,19 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createBrowserClient } from '@supabase/ssr'
 import { ArrowRight, Lock } from 'lucide-react'
 
 export default function UpgradePage() {
   const [userEmail, setUserEmail] = useState<string>('')
-  const supabase = createClientComponentClient()
   const router = useRouter()
 
   useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
     async function loadUser() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
