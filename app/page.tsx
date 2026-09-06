@@ -7,6 +7,7 @@ import {
   FolderOpen, BarChart3, Globe, Zap, ChevronDown, ChevronUp,
   Building2, Stethoscope, ShoppingBag, Factory,
   GraduationCap, Truck, Code, UtensilsCrossed, Menu, X,
+  Scissors, Home, Briefcase, Car, Dumbbell, Camera,
 } from 'lucide-react'
 
 const FEATURES = [
@@ -29,10 +30,16 @@ const BUSINESS_TYPES = [
   { icon: Truck, name: 'Logistics & Delivery', desc: 'Fleet, shipments, tracking, billing', color: '#F472B6' },
   { icon: UtensilsCrossed, name: 'Restaurants & Food', desc: 'Orders, inventory, staff, billing', color: '#34D399' },
   { icon: Code, name: 'SaaS & Tech', desc: 'Leads, subscriptions, projects, team', color: '#FBBF24' },
+  { icon: Scissors, name: 'Salons & Spas', desc: 'Appointments, staff, inventory, billing', color: '#8B5CF6' },
+  { icon: Home, name: 'Real Estate', desc: 'Property leads, client management, invoicing', color: '#F472B6' },
+  { icon: Briefcase, name: 'Legal & Accounting', desc: 'Client cases, billing, document tracking', color: '#34D399' },
+  { icon: Car, name: 'Automotive Services', desc: 'Service records, inventory, customer follow-ups', color: '#FBBF24' },
+  { icon: Dumbbell, name: 'Gyms & Fitness', desc: 'Member management, billing, staff scheduling', color: '#8B5CF6' },
+  { icon: Camera, name: 'Event & Media', desc: 'Client bookings, project tracking, invoicing', color: '#F472B6' },
 ]
 
 const FAQS = [
-  { q: 'Does Samyojak work for my type of business?', a: 'Yes. Samyojak adapts to your business — not the other way around. Whether you run a clinic, retail shop, agency, school, or manufacturing unit, Samyojak works with your existing data format.' },
+  { q: 'Does Samyojak work for my type of business?', a: 'Yes. Samyojak adapts to your business — not the other way around. Whether you run a clinic, retail shop, agency, school, salon, or manufacturing unit, Samyojak works with your existing data format.' },
   { q: 'Can I import my data from any existing ERP or spreadsheet?', a: 'Yes. Upload any CSV file from any ERP system. Samyojak reads your column names as-is and stores everything without forcing you to rename or restructure your data.' },
   { q: 'Does it support GST, VAT, and other taxes?', a: 'Yes. Universal tax engine supports GST for India, VAT for UK, Germany, UAE, HST for Canada, Sales Tax for US, and 10+ more countries. Switch between them per invoice.' },
   { q: 'Can I cancel anytime?', a: 'Yes. Weekly plans expire at the end of the week if you turn off auto-pay. No cancellation fees. No lock-in ever.' },
@@ -49,48 +56,105 @@ function detectRegion() {
   return 'global'
 }
 
-const PRICING: Record<string, { weekly: string; monthly: string; yearly: string; note: string }> = {
-  india: { weekly: '$4.99', monthly: '$15', yearly: '$144', note: 'India pricing' },
-  global: { weekly: '$6.99', monthly: '$21', yearly: '$199', note: 'Global pricing' },
-  western: { weekly: '$9.99', monthly: '$29', yearly: '$279', note: 'Western pricing' },
+// Full pricing matrix — every plan tier × every billing cycle × every region
+type BillingCycle = 'weekly' | 'monthly' | 'yearly'
+type Region = 'india' | 'global' | 'western'
+
+const PRICING_MATRIX: Record<Region, Record<BillingCycle, { starter: string; basic: string; business: string; complete: string }>> = {
+  india: {
+    weekly:  { starter: '$4.99', basic: '$9.99',  business: '$14.99', complete: '$19.99' },
+    monthly: { starter: '$15',   basic: '$29',    business: '$45',    complete: '$59'    },
+    yearly:  { starter: '$144',  basic: '$279',   business: '$432',   complete: '$566'   },
+  },
+  global: {
+    weekly:  { starter: '$6.99', basic: '$12.99', business: '$18.99', complete: '$24.99' },
+    monthly: { starter: '$21',   basic: '$39',    business: '$59',    complete: '$79'    },
+    yearly:  { starter: '$199',  basic: '$374',   business: '$566',   complete: '$758'   },
+  },
+  western: {
+    weekly:  { starter: '$9.99', basic: '$17.99', business: '$26.99', complete: '$34.99' },
+    monthly: { starter: '$29',   basic: '$54',    business: '$81',    complete: '$109'   },
+    yearly:  { starter: '$279',  basic: '$518',   business: '$778',   complete: '$1,046' },
+  },
 }
 
+const REGION_NOTES: Record<Region, string> = {
+  india: 'India pricing',
+  global: 'Global pricing',
+  western: 'Western pricing',
+}
+
+const PERIOD_LABEL: Record<BillingCycle, string> = {
+  weekly: 'wk',
+  monthly: 'mo',
+  yearly: 'yr',
+}
+
+const BONUS_LABEL: Record<BillingCycle, { label: string; hasTrial: boolean }> = {
+  weekly: { label: '+1 week free', hasTrial: false },
+  monthly: { label: '14-day free trial', hasTrial: true },
+  yearly: { label: '14-day free trial', hasTrial: true },
+}
+
+interface PlanDefinition {
+  key: 'starter' | 'basic' | 'business' | 'complete'
+  name: string
+  emoji: string
+  popular: boolean
+  features: string[]
+  locked: string[]
+}
+
+const PLAN_DEFINITIONS: PlanDefinition[] = [
+  {
+    key: 'starter',
+    name: 'CRM Starter',
+    emoji: '🚀',
+    popular: false,
+    features: ['CRM with AI lead scoring', 'Contact management', 'Follow-up reminders', 'Import & Export CSV', 'Support tickets', 'Mobile-friendly'],
+    locked: ['Invoices', 'Inventory', 'HR', 'Projects', 'AI Assistant'],
+  },
+  {
+    key: 'basic',
+    name: 'ERP Basic',
+    emoji: '⚡',
+    popular: true,
+    features: ['Everything in CRM Starter', 'Universal tax invoicing', 'Inventory + free QR codes', 'WhatsApp invoice sending', 'GST Reports'],
+    locked: ['HR & Payroll', 'Projects', 'AI Assistant'],
+  },
+  {
+    key: 'business',
+    name: 'Business',
+    emoji: '🏢',
+    popular: false,
+    features: ['Everything in ERP Basic', 'HR & Payroll management', 'Project management Kanban', 'Team management', 'Advanced reports'],
+    locked: ['AI Assistant'],
+  },
+  {
+    key: 'complete',
+    name: 'Complete ERP',
+    emoji: '👑',
+    popular: false,
+    features: ['Everything in Business', 'AI Business Intelligence', 'AI reads your live data', 'Priority support', 'White label available', 'All future features'],
+    locked: [],
+  },
+]
+
 export default function Home() {
-  const [billing, setBilling] = useState<'weekly' | 'monthly' | 'yearly'>('weekly')
-  const [region, setRegion] = useState<'india' | 'global' | 'western'>('global')
+  const [billing, setBilling] = useState<BillingCycle>('weekly')
+  const [region, setRegion] = useState<Region>('global')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [mounted, setMounted] = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
 
   useEffect(() => {
-    setRegion(detectRegion() as any)
+    setRegion(detectRegion() as Region)
     setMounted(true)
   }, [])
 
-  const price = PRICING[region]
-
-  const PLANS = [
-    {
-      name: 'CRM Starter', emoji: '🚀', price: price.weekly, period: 'wk', bonus: '+1 week free', popular: false, hasTrial: false,
-      features: ['CRM with AI lead scoring', 'Contact management', 'Follow-up reminders', 'Import & Export CSV', 'Support tickets', 'Mobile-friendly'],
-      locked: ['Invoices', 'Inventory', 'HR', 'Projects', 'AI Assistant'],
-    },
-    {
-      name: 'ERP Basic', emoji: '⚡', price: price.monthly, period: 'mo', bonus: '14-day free trial', popular: true, hasTrial: true,
-      features: ['Everything in CRM Starter', 'Universal tax invoicing', 'Inventory + free QR codes', 'WhatsApp invoice sending', 'GST Reports'],
-      locked: ['HR & Payroll', 'Projects', 'AI Assistant'],
-    },
-    {
-      name: 'Business', emoji: '🏢', price: price.monthly, period: 'mo', bonus: '14-day free trial', popular: false, hasTrial: true,
-      features: ['Everything in ERP Basic', 'HR & Payroll management', 'Project management Kanban', 'Team management', 'Advanced reports'],
-      locked: ['AI Assistant'],
-    },
-    {
-      name: 'Complete ERP', emoji: '👑', price: price.yearly, period: 'yr', bonus: '14-day free trial', popular: false, hasTrial: true,
-      features: ['Everything in Business', 'AI Business Intelligence', 'AI reads your live data', 'Priority support', 'White label available', 'All future features'],
-      locked: [],
-    },
-  ]
+  const currentPrices = PRICING_MATRIX[region][billing]
+  const currentBonus = BONUS_LABEL[billing]
+  const currentPeriod = PERIOD_LABEL[billing]
 
   const navLinks = [
     { href: '/features', label: 'Features' },
@@ -163,7 +227,7 @@ export default function Home() {
         )}
       </nav>
 
-      {/* HERO — light, animated, colorful, dashboard on right */}
+      {/* HERO */}
       <section className="relative px-6 py-20 md:py-24 overflow-hidden"
         style={{ background: '#FFFDF5' }}>
 
@@ -179,7 +243,6 @@ export default function Home() {
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
-            {/* LEFT — headline + CTA */}
             <div className="text-center lg:text-left">
               <div
                 className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full mb-6 text-sm font-semibold transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
@@ -242,7 +305,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* RIGHT — dashboard preview */}
             <div
               className={`relative transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               style={{ transitionDelay: '600ms' }}>
@@ -253,7 +315,6 @@ export default function Home() {
                   boxShadow: '0 32px 80px rgba(139,92,246,0.12), 0 8px 24px rgba(0,0,0,0.08), 8px 8px 0px #8B5CF620',
                 }}>
 
-                {/* Browser chrome */}
                 <div className="flex items-center gap-2 px-4 py-3"
                   style={{ background: '#F8FAFC', borderBottom: '1.5px solid #E2E8F0' }}>
                   <div className="flex gap-1.5">
@@ -267,10 +328,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Dashboard content — mirrors real sidebar/menu */}
                 <div className="flex" style={{ background: '#FAFBFF' }}>
 
-                  {/* Sidebar */}
                   <div className="hidden sm:flex flex-col w-40 shrink-0 p-3" style={{ background: '#0F172A' }}>
                     <div className="flex items-center gap-2 px-2 mb-4">
                       <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white font-black text-xs"
@@ -299,7 +358,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Main panel */}
                   <div className="flex-1 p-5">
                     <div className="flex items-center justify-between mb-4">
                       <div>
@@ -390,7 +448,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ADAPTIVE ERP VISION */}
+      {/* ADAPTIVE ERP VISION — Expanded: 14 business types */}
       <section className="px-6 py-24" style={{ background: '#0F172A' }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -400,7 +458,7 @@ export default function Home() {
             </div>
             <h2 className="text-4xl md:text-5xl font-black mb-6 text-white" style={{ fontFamily: 'Outfit' }}>
               One ERP for{' '}
-              <span style={{ color: '#8B5CF6' }}>every business on the planet</span>
+              <span style={{ color: '#8B5CF6' }}>14+ types of businesses</span>
             </h2>
             <p className="text-lg max-w-2xl mx-auto" style={{ color: '#94A3B8' }}>
               Traditional ERP forces you to adapt to their structure. Samyojak flips this entirely — your data adapts, not you.
@@ -471,7 +529,7 @@ export default function Home() {
             <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
               Everything your business needs
             </h2>
-            <p className="text-lg" style={{ color: '#64748B' }}>Six powerful modules unified in one workspace</p>
+            <p className="text-lg" style={{ color: '#64748B' }}>Eight powerful modules unified in one workspace</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {FEATURES.map(f => (
@@ -490,32 +548,42 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PRICING — 14-day trial on Monthly/Yearly only */}
+      {/* PRICING — NOW ACTUALLY REACTIVE TO billing STATE */}
       <section id="pricing" className="px-6 py-24" style={{ background: '#F8FAFC' }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Simple pricing. Big value.</h2>
             <p className="text-lg mb-6" style={{ color: '#64748B' }}>No annual lock-in. No per-user fees. Cancel anytime.</p>
+
+            {/* Billing toggle — now correctly wired */}
             <div className="inline-flex p-1 rounded-full" style={{ background: '#E2E8F0' }}>
-              {(['weekly', 'monthly', 'yearly'] as const).map(b => (
-                <button key={b} onClick={() => setBilling(b)}
-                  className="px-5 py-2 rounded-full text-sm font-bold capitalize transition-all"
-                  style={{ background: billing === b ? '#1E293B' : 'transparent', color: billing === b ? 'white' : '#64748B' }}>
+              {(['weekly', 'monthly', 'yearly'] as BillingCycle[]).map(b => (
+                <button
+                  key={b}
+                  type="button"
+                  onClick={() => setBilling(b)}
+                  className="px-5 py-2 rounded-full text-sm font-bold capitalize transition-all cursor-pointer"
+                  style={{
+                    background: billing === b ? '#1E293B' : 'transparent',
+                    color: billing === b ? 'white' : '#64748B',
+                  }}
+                >
                   {b}{b === 'yearly' && <span style={{ color: '#FBBF24' }}> -20%</span>}
                 </button>
               ))}
             </div>
+
             <div className="mt-3">
               <span className="text-xs font-semibold px-3 py-1 rounded-full"
                 style={{ background: '#EDE9FE', color: '#8B5CF6' }}>
-                {price.note} — detected automatically 🌍
+                {REGION_NOTES[region]} — detected automatically 🌍
               </span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {PLANS.map(plan => (
-              <div key={plan.name} className="relative p-6 rounded-2xl"
+            {PLAN_DEFINITIONS.map(plan => (
+              <div key={plan.key} className="relative p-6 rounded-2xl"
                 style={{
                   background: plan.popular ? '#8B5CF6' : 'white',
                   border: '2px solid #1E293B',
@@ -533,26 +601,31 @@ export default function Home() {
                   style={{ fontFamily: 'Outfit', color: plan.popular ? 'white' : '#1E293B' }}>
                   {plan.name}
                 </h3>
+
+                {/* Price — now correctly pulled from PRICING_MATRIX[region][billing] */}
                 <div className="mb-3">
                   <span className="text-4xl font-black"
                     style={{ fontFamily: 'Outfit', color: plan.popular ? 'white' : '#1E293B' }}>
-                    {plan.price}
+                    {currentPrices[plan.key]}
                   </span>
                   <span className="text-sm ml-1" style={{ color: plan.popular ? 'rgba(255,255,255,0.7)' : '#94A3B8' }}>
-                    /{plan.period}
+                    /{currentPeriod}
                   </span>
                 </div>
+
+                {/* Bonus/trial badge — now correctly switches with billing */}
                 <div className="inline-block px-3 py-1 rounded-full text-xs font-bold mb-4"
                   style={{
-                    background: plan.hasTrial
+                    background: currentBonus.hasTrial
                       ? (plan.popular ? 'rgba(255,255,255,0.2)' : '#D1FAE5')
                       : (plan.popular ? 'rgba(255,255,255,0.2)' : '#EDE9FE'),
-                    color: plan.hasTrial
+                    color: currentBonus.hasTrial
                       ? (plan.popular ? 'white' : '#065F46')
                       : (plan.popular ? 'white' : '#5B21B6'),
                   }}>
-                  {plan.hasTrial ? '✨ ' : '🎁 '}{plan.bonus}
+                  {currentBonus.hasTrial ? '✨ ' : '🎁 '}{currentBonus.label}
                 </div>
+
                 <ul className="space-y-2 mb-6">
                   {plan.features.map(f => (
                     <li key={f} className="flex items-start gap-2 text-xs"
@@ -738,4 +811,4 @@ export default function Home() {
       </footer>
     </div>
   )
-                  }
+   }
