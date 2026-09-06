@@ -7,7 +7,7 @@ import {
   FolderOpen, BarChart3, Globe, Zap, ChevronDown, ChevronUp,
   Building2, Stethoscope, ShoppingBag, Factory,
   GraduationCap, Truck, Code, UtensilsCrossed, Menu, X,
-  Scissors, Home, Briefcase, Car, Dumbbell, Camera,
+  Scissors, HomeIcon, Briefcase, Car, Dumbbell, Camera,
 } from 'lucide-react'
 
 const FEATURES = [
@@ -31,7 +31,7 @@ const BUSINESS_TYPES = [
   { icon: UtensilsCrossed, name: 'Restaurants & Food', desc: 'Orders, inventory, staff, billing', color: '#34D399' },
   { icon: Code, name: 'SaaS & Tech', desc: 'Leads, subscriptions, projects, team', color: '#FBBF24' },
   { icon: Scissors, name: 'Salons & Spas', desc: 'Appointments, staff, inventory, billing', color: '#8B5CF6' },
-  { icon: Home, name: 'Real Estate', desc: 'Property leads, client management, invoicing', color: '#F472B6' },
+  { icon: HomeIcon, name: 'Real Estate', desc: 'Property leads, client management, invoicing', color: '#F472B6' },
   { icon: Briefcase, name: 'Legal & Accounting', desc: 'Client cases, billing, document tracking', color: '#34D399' },
   { icon: Car, name: 'Automotive Services', desc: 'Service records, inventory, customer follow-ups', color: '#FBBF24' },
   { icon: Dumbbell, name: 'Gyms & Fitness', desc: 'Member management, billing, staff scheduling', color: '#8B5CF6' },
@@ -56,7 +56,6 @@ function detectRegion() {
   return 'global'
 }
 
-// Full pricing matrix — every plan tier × every billing cycle × every region
 type BillingCycle = 'weekly' | 'monthly' | 'yearly'
 type Region = 'india' | 'global' | 'western'
 
@@ -448,7 +447,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ADAPTIVE ERP VISION — Expanded: 14 business types */}
+      {/* ADAPTIVE ERP VISION */}
       <section className="px-6 py-24" style={{ background: '#0F172A' }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -548,14 +547,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PRICING — NOW ACTUALLY REACTIVE TO billing STATE */}
+      {/* PRICING */}
       <section id="pricing" className="px-6 py-24" style={{ background: '#F8FAFC' }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Simple pricing. Big value.</h2>
             <p className="text-lg mb-6" style={{ color: '#64748B' }}>No annual lock-in. No per-user fees. Cancel anytime.</p>
 
-            {/* Billing toggle — now correctly wired */}
             <div className="inline-flex p-1 rounded-full" style={{ background: '#E2E8F0' }}>
               {(['weekly', 'monthly', 'yearly'] as BillingCycle[]).map(b => (
                 <button
@@ -602,7 +600,6 @@ export default function Home() {
                   {plan.name}
                 </h3>
 
-                {/* Price — now correctly pulled from PRICING_MATRIX[region][billing] */}
                 <div className="mb-3">
                   <span className="text-4xl font-black"
                     style={{ fontFamily: 'Outfit', color: plan.popular ? 'white' : '#1E293B' }}>
@@ -613,7 +610,6 @@ export default function Home() {
                   </span>
                 </div>
 
-                {/* Bonus/trial badge — now correctly switches with billing */}
                 <div className="inline-block px-3 py-1 rounded-full text-xs font-bold mb-4"
                   style={{
                     background: currentBonus.hasTrial
