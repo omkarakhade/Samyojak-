@@ -18,6 +18,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/alternatives',
     '/alternatives/odoo',
     '/alternatives/zoho',
+    '/industries',
+    '/industries/manufacturing',
+    '/industries/retail',
+    '/industries/healthcare',
+    '/industries/education',
   ]
 
   return staticRoutes.map(route => ({
