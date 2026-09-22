@@ -12,8 +12,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/contact',
     '/support',
     '/referral',
+    '/compare',
     '/compare/samyojak-vs-odoo',
     '/compare/samyojak-vs-zoho',
+    '/alternatives',
     '/alternatives/odoo',
     '/alternatives/zoho',
   ]
