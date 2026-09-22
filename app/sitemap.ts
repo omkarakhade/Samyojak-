@@ -23,6 +23,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/industries/retail',
     '/industries/healthcare',
     '/industries/education',
+    '/industries/services',
+    '/industries/construction',
+    '/industries/real-estate',
+    '/industries/logistics',
+    '/industries/hospitality',
+    '/industries/agencies',
+    '/industries/finance',
   ]
 
   return staticRoutes.map(route => ({
