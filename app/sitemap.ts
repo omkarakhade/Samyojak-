@@ -30,6 +30,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/industries/hospitality',
     '/industries/agencies',
     '/industries/finance',
+    '/solutions',
+    '/solutions/small-business',
+    '/solutions/startups',
+    '/solutions/growing-businesses',
+    '/solutions/replace-spreadsheets',
+    '/solutions/replace-multiple-tools',
+    '/solutions/business-automation',
+    '/solutions/centralized-business-management',
   ]
 
   return staticRoutes.map(route => ({
