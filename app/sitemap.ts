@@ -50,6 +50,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/solutions/replace-multiple-tools',
     '/solutions/business-automation',
     '/solutions/centralized-business-management',
+    '/migration',
+    '/migration/from-excel',
+    '/migration/from-odoo',
+    '/migration/from-zoho',
+    '/migration/from-google-sheets',
   ]
 
   return staticRoutes.map(route => ({
