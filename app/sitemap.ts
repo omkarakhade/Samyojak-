@@ -55,6 +55,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/migration/from-odoo',
     '/migration/from-zoho',
     '/migration/from-google-sheets',
+    '/best',
+    '/best/erp-for-small-business',
+    '/best/crm-software',
+    '/best/adaptive-erp',
+    '/best/affordable-erp',
   ]
 
   return staticRoutes.map(route => ({
