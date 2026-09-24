@@ -68,6 +68,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/learn/erp-vs-spreadsheet',
     '/learn/how-does-erp-work',
     '/learn/how-to-choose-an-erp',
+    '/glossary',
+    '/glossary/erp',
+    '/glossary/crm',
+    '/glossary/saas',
+    '/glossary/inventory-management',
+    '/glossary/business-intelligence',
+    '/glossary/lead-management',
+    '/glossary/business-automation',
+    '/glossary/business-operating-system',
+    '/glossary/adaptive-erp',
   ]
 
   return staticRoutes.map(route => ({
@@ -76,4 +86,4 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: route === '' ? 'daily' as const : 'weekly' as const,
     priority: route === '' ? 1 : 0.7,
   }))
-}
+    }
