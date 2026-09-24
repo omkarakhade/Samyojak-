@@ -60,6 +60,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/best/crm-software',
     '/best/adaptive-erp',
     '/best/affordable-erp',
+    '/learn',
+    '/learn/what-is-erp',
+    '/learn/what-is-crm',
+    '/learn/what-is-adaptive-erp',
+    '/learn/erp-vs-crm',
+    '/learn/erp-vs-spreadsheet',
+    '/learn/how-does-erp-work',
+    '/learn/how-to-choose-an-erp',
   ]
 
   return staticRoutes.map(route => ({
