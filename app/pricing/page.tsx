@@ -35,8 +35,9 @@ const REGION_LABELS: Record<string, string> = {
   western: '🌎 Western pricing detected',
 }
 
-// No free trial question
+// FAQ updated: added trial-specific question, removed nothing else
 const FAQS = [
+  { q: 'Is there a free trial?', a: 'Weekly plans include a 7-day bonus period — pay for 7 days, get 7 extra days free, so you get two full weeks before renewal. Monthly and yearly plans include a 14-day free trial before you\'re charged.' },
   { q: 'Can I cancel anytime?', a: 'Yes. Weekly plans expire at the end of the week if you turn off auto-pay. Monthly and yearly plans expire at the end of the period. No cancellation fees ever.' },
   { q: 'What happens when I upgrade?', a: 'You immediately get access to all features in the new plan. The difference is prorated to your billing cycle.' },
   { q: 'How does geo-based pricing work?', a: 'We detect your timezone to determine your region and apply the appropriate pricing. India users get India pricing, Western users get Western pricing, others get Global pricing.' },
@@ -129,7 +130,19 @@ export default function Pricing() {
   ]
 
   const period = billing === 'weekly' ? '/week' : billing === 'monthly' ? '/month' : '/year'
-  const bonus = billing === 'weekly' ? '+1 week free' : billing === 'monthly' ? '+1 month free' : '+3 months free'
+
+  // ── THE FIX ──
+  // Weekly: keep the existing +7 days free bonus messaging
+  // Monthly / Yearly: now shows 14-day free trial, matching the homepage promise
+  const bonusLabel = billing === 'weekly'
+    ? '🎁 +7 days free'
+    : '✨ 14-day free trial'
+
+  const bonusBg = billing === 'weekly' ? undefined : '#EDE9FE'
+  const bonusColorLight = billing === 'weekly' ? '#065F46' : '#5B21B6'
+  const bonusBgLight = billing === 'weekly' ? '#D1FAE5' : '#EDE9FE'
+
+  const ctaLabel = billing === 'weekly' ? 'Start Trial' : 'Start 14-Day Trial'
 
   return (
     <div style={{ background: '#FFFDF5', fontFamily: 'Plus Jakarta Sans' }}>
@@ -164,7 +177,8 @@ export default function Pricing() {
             <span style={{ color: '#8B5CF6' }}>No surprises.</span>
           </h1>
           <p className="text-lg mb-8" style={{ color: '#64748B' }}>
-            No per-user fees. No annual lock-in. Cancel anytime. Every plan includes bonus time.
+            No per-user fees. No annual lock-in. Cancel anytime. Weekly plans include a bonus week —
+            monthly and yearly plans include a 14-day free trial.
           </p>
 
           <div className="inline-block px-4 py-2 rounded-full text-sm font-semibold mb-6"
@@ -185,6 +199,12 @@ export default function Pricing() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* NEW — dynamic offer banner beneath billing toggle, matches homepage pattern */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mt-4 text-xs font-black"
+            style={{ background: billing === 'weekly' ? '#D1FAE5' : '#EDE9FE', border: '2px solid #1E293B' }}>
+            {billing === 'weekly' ? '🎁 Pay 7 Days, Get 7 Extra Days Free' : '✨ 14-Day Free Trial — No Card Required'}
           </div>
         </div>
       </section>
@@ -229,9 +249,13 @@ export default function Pricing() {
                   </span>
                 </div>
 
+                {/* UPDATED — bonus/trial badge now reflects billing cycle correctly */}
                 <div className="inline-block px-3 py-1 rounded-full text-xs font-bold mb-5"
-                  style={{ background: plan.popular ? 'rgba(255,255,255,0.2)' : '#D1FAE5', color: plan.popular ? 'white' : '#065F46' }}>
-                  🎁 {bonus}
+                  style={{
+                    background: plan.popular ? 'rgba(255,255,255,0.2)' : bonusBgLight,
+                    color: plan.popular ? 'white' : bonusColorLight,
+                  }}>
+                  {bonusLabel}
                 </div>
 
                 <ul className="space-y-2 mb-4 flex-1">
@@ -264,11 +288,15 @@ export default function Pricing() {
                     color: plan.popular ? '#8B5CF6' : 'white',
                     border: '2px solid #1E293B',
                   }}>
-                  Start Trial
+                  {ctaLabel}
                 </Link>
               </div>
             ))}
           </div>
+
+          <p className="text-center text-xs font-bold mt-8" style={{ color: '#64748B' }}>
+            Weekly plans: pay for 7 days, use it free for 14 total · Monthly & Yearly: try free for 14 days before you pay
+          </p>
 
           {/* All plans include */}
           <div className="mt-12 p-8 rounded-2xl text-center"
@@ -285,7 +313,7 @@ export default function Pricing() {
                 { emoji: '📥', label: 'CSV import', desc: 'Any format accepted' },
                 { emoji: '📤', label: 'CSV export', desc: 'Your data, always' },
                 { emoji: '🔄', label: 'Cancel anytime', desc: 'No lock-in ever' },
-                { emoji: '🎁', label: 'Bonus period', desc: 'Every plan' },
+                { emoji: '🎁', label: 'Trial or bonus', desc: 'Every plan' },
               ].map(item => (
                 <div key={item.label} className="p-3 rounded-xl" style={{ background: '#F8FAFC' }}>
                   <span className="text-2xl block mb-1">{item.emoji}</span>
@@ -298,7 +326,7 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* FAQ — no free trial question */}
+      {/* FAQ — now includes free trial question, answered accurately */}
       <section className="px-6 py-16" style={{ background: '#F8FAFC' }}>
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl font-black text-center mb-10" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
@@ -334,7 +362,7 @@ export default function Pricing() {
           Start your trial today.
         </h2>
         <p className="mb-8" style={{ color: '#94A3B8' }}>
-          Weekly plans from $4.99. Cancel anytime. No lock-in.
+          Weekly plans from $4.99. Or start a 14-day free trial on Monthly or Yearly. Cancel anytime.
         </p>
         <Link href="/signup" className="candy-btn px-10 py-5 text-xl inline-flex items-center gap-2">
           Start Trial <ArrowRight size={18} />
