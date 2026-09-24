@@ -78,6 +78,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/glossary/business-automation',
     '/glossary/business-operating-system',
     '/glossary/adaptive-erp',
+    '/resources',
+    '/resources/invoice-template',
+    '/resources/crm-template',
+    '/resources/inventory-template',
+    '/resources/lead-tracker',
+    '/resources/project-management-template',
+    '/resources/erp-checklist',
+    '/resources/business-management-checklist',
   ]
 
   return staticRoutes.map(route => ({
@@ -86,4 +94,4 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: route === '' ? 'daily' as const : 'weekly' as const,
     priority: route === '' ? 1 : 0.7,
   }))
-    }
+}
