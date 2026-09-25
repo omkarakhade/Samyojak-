@@ -6,7 +6,7 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://samyojak.vercel.app'),
+  metadataBase: new URL('https://www.samyojak-erp.com'),
   title: {
     default: 'Samyojak — Coordinate Everything. Run Anything.',
     template: '%s | Samyojak ERP',
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     'HR software', 'project management', 'SaaS ERP',
     'small business ERP', 'AI ERP', 'business software India',
   ],
-  authors: [{ name: 'Samyojak', url: 'https://samyojak.vercel.app' }],
+  authors: [{ name: 'Samyojak', url: 'https://www.samyojak-erp.com' }],
   creator: 'Samyojak',
   publisher: 'Samyojak',
   robots: {
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://samyojak.vercel.app',
+    url: 'https://www.samyojak-erp.com',
     siteName: 'Samyojak',
     title: 'Samyojak — Coordinate Everything. Run Anything.',
     description: 'The all-in-one AI-powered ERP for modern businesses globally.',
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     description: 'All-in-one AI-powered ERP. CRM, Invoicing, Inventory, HR, Projects.',
     images: ['/og-image.png'],
   },
-  alternates: { canonical: 'https://samyojak.vercel.app' },
+  alternates: { canonical: 'https://www.samyojak-erp.com' },
   icons: { icon: '/favicon.svg', shortcut: '/favicon.svg' },
 }
 
@@ -55,10 +55,10 @@ const structuredData = {
   '@graph': [
     {
       '@type': 'SoftwareApplication',
-      '@id': 'https://samyojak.vercel.app/#software',
+      '@id': 'https://www.samyojak-erp.com/#software',
       name: 'Samyojak',
       description: 'All-in-one AI-powered ERP for modern businesses.',
-      url: 'https://samyojak.vercel.app',
+      url: 'https://www.samyojak-erp.com',
       applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web',
       offers: {
@@ -89,23 +89,23 @@ const structuredData = {
     },
     {
       '@type': 'Organization',
-      '@id': 'https://samyojak.vercel.app/#organization',
+      '@id': 'https://www.samyojak-erp.com/#organization',
       name: 'Samyojak',
-      url: 'https://samyojak.vercel.app',
+      url: 'https://www.samyojak-erp.com',
       description: 'Samyojak builds AI-powered ERP software for modern businesses worldwide.',
       contactPoint: {
         '@type': 'ContactPoint',
-        email: 'samyojak@gmail.com',
+        email: 'hello.samyojak@gmail.com',
         contactType: 'customer support',
       },
     },
     {
       '@type': 'WebSite',
-      '@id': 'https://samyojak.vercel.app/#website',
-      url: 'https://samyojak.vercel.app',
+      '@id': 'https://www.samyojak-erp.com/#website',
+      url: 'https://www.samyojak-erp.com',
       name: 'Samyojak',
       description: 'All-in-one AI-powered ERP for modern businesses',
-      publisher: { '@id': 'https://samyojak.vercel.app/#organization' },
+      publisher: { '@id': 'https://www.samyojak-erp.com/#organization' },
     },
     {
       '@type': 'FAQPage',
@@ -123,7 +123,7 @@ const structuredData = {
           name: 'How much does Samyojak cost?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Plans start at $4.99 per week for India, $6.99 for global, $9.99 for western markets. Every plan includes a bonus period.',
+            text: 'Plans start at $4.99 per week for India, $6.99 for global, $9.99 for western markets. Weekly plans include a bonus period; monthly and yearly plans include a 14-day free trial.',
           },
         },
         {
