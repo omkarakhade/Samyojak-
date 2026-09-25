@@ -32,23 +32,22 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: 'https://www.samyojak-erp.com',
-    siteName: 'Samyojak',
-    title: 'Samyojak — Coordinate Everything. Run Anything.',
-    description: 'The all-in-one AI-powered ERP for modern businesses globally.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Samyojak ERP' }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Samyojak — Coordinate Everything. Run Anything.',
-    description: 'All-in-one AI-powered ERP. CRM, Invoicing, Inventory, HR, Projects.',
-    images: ['/og-image.png'],
-  },
+  openGraph: {
+  type: 'website',
+  locale: 'en_US',
+  url: 'https://www.samyojak-erp.com',
+  siteName: 'Samyojak',
+  title: 'Samyojak — Coordinate Everything. Run Anything.',
+  description: 'The all-in-one AI-powered ERP for modern businesses globally.',
+},
+twitter: {
+  card: 'summary_large_image',
+  title: 'Samyojak — Coordinate Everything. Run Anything.',
+  description: 'All-in-one AI-powered ERP. CRM, Invoicing, Inventory, HR, Projects.',
+},
   alternates: { canonical: 'https://www.samyojak-erp.com' },
   icons: { icon: '/favicon.svg', shortcut: '/favicon.svg' },
-}
+},
 
 const structuredData = {
   '@context': 'https://schema.org',
