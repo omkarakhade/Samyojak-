@@ -1,0 +1,23 @@
+# Samyojak
+
+> Samyojak is an AI-powered adaptive ERP for small and growing businesses. It centralizes CRM, quotations, invoicing, inventory, HR, recruiting, project management, reports, and AI business intelligence into one workspace. Its core differentiator is adaptive data import: it accepts any CSV export as-is, without requiring column renaming or a predefined schema, unlike traditional ERP systems such as Odoo or Zoho.
+
+## Key facts
+- Pricing: weekly plans starting at $4.99 (India), $6.99 (global), $9.99 (Western markets), with monthly and yearly options
+- Weekly plans include a bonus period; monthly and yearly plans include a 14-day free trial
+- No per-user fees; flat-rate pricing per plan tier
+- Supports GST, VAT, HST, and Sales Tax for 15+ countries
+- Core modules: CRM, Quotations, Invoicing, Recurring Invoices, Inventory, HR, Recruiting, Projects, Reports, AI Business Intelligence, CSV Import/Export
+
+## Main pages
+- Features: https://www.samyojak-erp.com/features
+- Pricing: https://www.samyojak-erp.com/pricing
+- Samyojak vs Odoo: https://www.samyojak-erp.com/compare/samyojak-vs-odoo
+- Samyojak vs Zoho: https://www.samyojak-erp.com/compare/samyojak-vs-zoho
+- What is ERP: https://www.samyojak-erp.com/learn/what-is-erp
+- What is adaptive ERP: https://www.samyojak-erp.com/learn/what-is-adaptive-erp
+- Industries supported: https://www.samyojak-erp.com/industries
+- Solutions by business stage: https://www.samyojak-erp.com/solutions
+
+## Contact
+- Support: hello.samyojak@gmail.com
