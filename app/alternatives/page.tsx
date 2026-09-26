@@ -9,11 +9,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'ERP & CRM Alternatives — Samyojak',
   description: 'Exploring alternatives to Odoo, Zoho, spreadsheets, or juggling multiple business tools? See how Samyojak\'s adaptive ERP approach compares.',
-  alternates: { canonical: 'https://samyojak.vercel.app/alternatives' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/alternatives' },
   openGraph: {
     title: 'ERP & CRM Alternatives — Samyojak',
     description: 'Exploring alternatives to Odoo, Zoho, spreadsheets, or multiple business tools? See how Samyojak compares.',
-    url: 'https://samyojak.vercel.app/alternatives',
+    url: 'https://www.samyojak-erp.com/alternatives',
   },
 }
 
