@@ -11,11 +11,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Centralized Business Management — Samyojak',
   description: 'Manage CRM, invoices, inventory, HR, projects, and reports from one centralized workspace with Samyojak\'s adaptive ERP.',
-  alternates: { canonical: 'https://samyojak.vercel.app/solutions/centralized-business-management' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/solutions/centralized-business-management' },
   openGraph: {
     title: 'Centralized Business Management — Samyojak',
     description: 'Manage CRM, invoices, inventory, HR, projects, and reports from one workspace.',
-    url: 'https://samyojak.vercel.app/solutions/centralized-business-management',
+    url: 'https://www.samyojak-erp.com/solutions/centralized-business-management',
   },
 }
 

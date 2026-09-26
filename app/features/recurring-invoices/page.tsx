@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Recurring Invoices — Samyojak Features',
   description: 'Automatically generate and send invoices on a weekly, monthly, or yearly schedule for retainer or subscription clients with Samyojak.',
-  alternates: { canonical: 'https://samyojak.vercel.app/features/recurring-invoices' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/features/recurring-invoices' },
   openGraph: {
     title: 'Recurring Invoices — Samyojak Features',
     description: 'Automatically generate and send invoices on a schedule.',
-    url: 'https://samyojak.vercel.app/features/recurring-invoices',
+    url: 'https://www.samyojak-erp.com/features/recurring-invoices',
   },
 }
 

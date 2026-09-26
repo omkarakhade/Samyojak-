@@ -9,11 +9,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Best ERP & CRM Guides — Samyojak',
   description: 'Guides to choosing the best ERP for small business, best CRM software, and best adaptive ERP for growing companies.',
-  alternates: { canonical: 'https://samyojak.vercel.app/best' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/best' },
   openGraph: {
     title: 'Best ERP & CRM Guides — Samyojak',
     description: 'Guides to choosing the best ERP and CRM software for your business.',
-    url: 'https://samyojak.vercel.app/best',
+    url: 'https://www.samyojak-erp.com/best',
   },
 }
 

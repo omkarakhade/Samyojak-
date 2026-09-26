@@ -8,11 +8,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'CRM Definition — Glossary',
   description: 'CRM (Customer Relationship Management) definition — software that tracks leads, customers, and sales pipeline stages.',
-  alternates: { canonical: 'https://samyojak.vercel.app/glossary/crm' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/glossary/crm' },
   openGraph: {
     title: 'CRM Definition — Glossary',
     description: 'CRM definition and explanation.',
-    url: 'https://samyojak.vercel.app/glossary/crm',
+    url: 'https://www.samyojak-erp.com/glossary/crm',
   },
 }
 

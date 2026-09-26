@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Best ERP for Small Business — What to Look For',
   description: 'A guide to choosing the best ERP for small business: setup time, pricing structure, data migration, and which features actually matter at small business scale.',
-  alternates: { canonical: 'https://samyojak.vercel.app/best/erp-for-small-business' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/best/erp-for-small-business' },
   openGraph: {
     title: 'Best ERP for Small Business — What to Look For',
     description: 'A guide to choosing the best ERP for small business.',
-    url: 'https://samyojak.vercel.app/best/erp-for-small-business',
+    url: 'https://www.samyojak-erp.com/best/erp-for-small-business',
   },
 }
 

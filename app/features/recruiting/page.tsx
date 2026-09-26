@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Recruiting — Samyojak Features',
   description: 'Track candidates through Applied, Screening, Interview, Offer, and Hired stages with Samyojak\'s recruiting module.',
-  alternates: { canonical: 'https://samyojak.vercel.app/features/recruiting' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/features/recruiting' },
   openGraph: {
     title: 'Recruiting — Samyojak Features',
     description: 'Track candidates through Applied, Screening, Interview, Offer, and Hired.',
-    url: 'https://samyojak.vercel.app/features/recruiting',
+    url: 'https://www.samyojak-erp.com/features/recruiting',
   },
 }
 

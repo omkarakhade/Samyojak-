@@ -9,11 +9,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'What Is CRM? Definition, Purpose & Examples',
   description: 'CRM (Customer Relationship Management) explained simply — what it tracks, how lead scoring works, and why businesses use it.',
-  alternates: { canonical: 'https://samyojak.vercel.app/learn/what-is-crm' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/learn/what-is-crm' },
   openGraph: {
     title: 'What Is CRM? Definition, Purpose & Examples',
     description: 'CRM explained simply — what it tracks and why businesses use it.',
-    url: 'https://samyojak.vercel.app/learn/what-is-crm',
+    url: 'https://www.samyojak-erp.com/learn/what-is-crm',
   },
 }
 

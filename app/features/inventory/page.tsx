@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Inventory + Free QR Codes — Samyojak Features',
   description: 'Track stock levels with automatic QR code generation, low-stock alerts, and reorder management. Import your existing inventory data without reformatting.',
-  alternates: { canonical: 'https://samyojak.vercel.app/features/inventory' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/features/inventory' },
   openGraph: {
     title: 'Inventory + Free QR Codes — Samyojak Features',
     description: 'Stock tracking with auto-generated QR codes and low-stock alerts.',
-    url: 'https://samyojak.vercel.app/features/inventory',
+    url: 'https://www.samyojak-erp.com/features/inventory',
   },
 }
 

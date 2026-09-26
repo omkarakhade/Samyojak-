@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Migrate from Zoho to Samyojak',
   description: 'Step-by-step guide to exporting your Zoho CRM and Zoho Books data and importing it into Samyojak without reformatting.',
-  alternates: { canonical: 'https://samyojak.vercel.app/migration/from-zoho' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/migration/from-zoho' },
   openGraph: {
     title: 'Migrate from Zoho to Samyojak',
     description: 'Move your Zoho CRM and Books data into one unified workspace.',
-    url: 'https://samyojak.vercel.app/migration/from-zoho',
+    url: 'https://www.samyojak-erp.com/migration/from-zoho',
   },
 }
 

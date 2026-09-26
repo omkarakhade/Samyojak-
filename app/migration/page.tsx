@@ -9,11 +9,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Migrate to Samyojak — Import Your Existing Data',
   description: 'See how to migrate your business data from Excel, Odoo, Zoho, or Google Sheets into Samyojak without reformatting or losing information.',
-  alternates: { canonical: 'https://samyojak.vercel.app/migration' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/migration' },
   openGraph: {
     title: 'Migrate to Samyojak — Import Your Existing Data',
     description: 'Migrate from Excel, Odoo, Zoho, or Google Sheets without reformatting.',
-    url: 'https://samyojak.vercel.app/migration',
+    url: 'https://www.samyojak-erp.com/migration',
   },
 }
 

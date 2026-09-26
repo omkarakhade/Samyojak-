@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'AI Business Intelligence — Samyojak Features',
   description: 'Ask your AI assistant anything about your business. Samyojak reads your live leads, invoices, inventory, and projects to give real answers.',
-  alternates: { canonical: 'https://samyojak.vercel.app/features/ai-assistant' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/features/ai-assistant' },
   openGraph: {
     title: 'AI Business Intelligence — Samyojak Features',
     description: 'Ask AI anything about your business, get real answers from your live data.',
-    url: 'https://samyojak.vercel.app/features/ai-assistant',
+    url: 'https://www.samyojak-erp.com/features/ai-assistant',
   },
 }
 

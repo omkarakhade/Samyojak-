@@ -11,11 +11,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Replace Multiple Business Tools — Samyojak',
   description: 'Stop juggling separate apps for CRM, invoicing, inventory, and HR. Samyojak consolidates them into one adaptive workspace.',
-  alternates: { canonical: 'https://samyojak.vercel.app/solutions/replace-multiple-tools' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/solutions/replace-multiple-tools' },
   openGraph: {
     title: 'Replace Multiple Business Tools — Samyojak',
     description: 'Stop juggling separate apps for CRM, invoicing, inventory, and HR.',
-    url: 'https://samyojak.vercel.app/solutions/replace-multiple-tools',
+    url: 'https://www.samyojak-erp.com/solutions/replace-multiple-tools',
   },
 }
 

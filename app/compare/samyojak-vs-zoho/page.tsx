@@ -11,11 +11,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Samyojak vs Zoho — Which ERP Is Right for You?',
   description: 'Compare Samyojak and Zoho across CRM, invoicing, pricing, and setup complexity. See how Samyojak\'s unified adaptive ERP compares to Zoho\'s suite of separate apps.',
-  alternates: { canonical: 'https://samyojak.vercel.app/compare/samyojak-vs-zoho' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/compare/samyojak-vs-zoho' },
   openGraph: {
     title: 'Samyojak vs Zoho — Which ERP Is Right for You?',
     description: 'Compare Samyojak and Zoho across CRM, invoicing, pricing, and setup complexity.',
-    url: 'https://samyojak.vercel.app/compare/samyojak-vs-zoho',
+    url: 'https://www.samyojak-erp.com/compare/samyojak-vs-zoho',
   },
 }
 

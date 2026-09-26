@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'HR & Payroll — Samyojak Features',
   description: 'Manage employee records, salary tracking, and leave balance in one place with Samyojak\'s HR module.',
-  alternates: { canonical: 'https://samyojak.vercel.app/features/hr' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/features/hr' },
   openGraph: {
     title: 'HR & Payroll — Samyojak Features',
     description: 'Employee management, salary tracking, and leave balance.',
-    url: 'https://samyojak.vercel.app/features/hr',
+    url: 'https://www.samyojak-erp.com/features/hr',
   },
 }
 

@@ -11,11 +11,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Business Automation — Samyojak',
   description: 'Automate recurring invoices, lead scoring, and reporting with Samyojak, reducing manual work across your business operations.',
-  alternates: { canonical: 'https://samyojak.vercel.app/solutions/business-automation' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/solutions/business-automation' },
   openGraph: {
     title: 'Business Automation — Samyojak',
     description: 'Automate recurring invoices, lead scoring, and reporting with Samyojak.',
-    url: 'https://samyojak.vercel.app/solutions/business-automation',
+    url: 'https://www.samyojak-erp.com/solutions/business-automation',
   },
 }
 

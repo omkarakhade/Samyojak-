@@ -11,11 +11,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'ERP for Hospitality Businesses — Samyojak',
   description: 'Manage staff, inventory, customer relationships, and invoicing for your hospitality business with Samyojak\'s adaptive ERP.',
-  alternates: { canonical: 'https://samyojak.vercel.app/industries/hospitality' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/industries/hospitality' },
   openGraph: {
     title: 'ERP for Hospitality Businesses — Samyojak',
     description: 'Manage staff, inventory, customer relationships, and invoicing for your hospitality business.',
-    url: 'https://samyojak.vercel.app/industries/hospitality',
+    url: 'https://www.samyojak-erp.com/industries/hospitality',
   },
 }
 

@@ -9,11 +9,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Compare Samyojak — ERP Comparisons',
   description: 'See how Samyojak compares to other ERP and business management platforms, and how ERP compares to CRM, spreadsheets, and using multiple separate tools.',
-  alternates: { canonical: 'https://samyojak.vercel.app/compare' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/compare' },
   openGraph: {
     title: 'Compare Samyojak — ERP Comparisons',
     description: 'See how Samyojak compares to other ERP and business management platforms.',
-    url: 'https://samyojak.vercel.app/compare',
+    url: 'https://www.samyojak-erp.com/compare',
   },
 }
 

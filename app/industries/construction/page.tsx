@@ -11,11 +11,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'ERP for Construction Businesses — Samyojak',
   description: 'Manage projects, materials, clients, and invoicing for your construction business with Samyojak\'s adaptive ERP.',
-  alternates: { canonical: 'https://samyojak.vercel.app/industries/construction' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/industries/construction' },
   openGraph: {
     title: 'ERP for Construction Businesses — Samyojak',
     description: 'Manage projects, materials, clients, and invoicing for your construction business.',
-    url: 'https://samyojak.vercel.app/industries/construction',
+    url: 'https://www.samyojak-erp.com/industries/construction',
   },
 }
 

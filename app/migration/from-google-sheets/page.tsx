@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Migrate from Google Sheets to Samyojak',
   description: 'Step-by-step guide to exporting your Google Sheets and importing them into Samyojak without reformatting.',
-  alternates: { canonical: 'https://samyojak.vercel.app/migration/from-google-sheets' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/migration/from-google-sheets' },
   openGraph: {
     title: 'Migrate from Google Sheets to Samyojak',
     description: 'Import directly from your Google Sheets exports, no reformatting needed.',
-    url: 'https://samyojak.vercel.app/migration/from-google-sheets',
+    url: 'https://www.samyojak-erp.com/migration/from-google-sheets',
   },
 }
 

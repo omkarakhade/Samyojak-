@@ -4,11 +4,11 @@ import SeoTemplateChecklist from '@/components/SeoTemplateChecklist'
 export const metadata: Metadata = {
   title: 'ERP Evaluation Checklist',
   description: 'A checklist for evaluating ERP software before you commit — data migration, pricing, modules, and setup time.',
-  alternates: { canonical: 'https://samyojak.vercel.app/resources/erp-checklist' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/resources/erp-checklist' },
   openGraph: {
     title: 'ERP Evaluation Checklist',
     description: 'A checklist for evaluating ERP software before you commit.',
-    url: 'https://samyojak.vercel.app/resources/erp-checklist',
+    url: 'https://www.samyojak-erp.com/resources/erp-checklist',
   },
 }
 

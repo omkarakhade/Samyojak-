@@ -8,11 +8,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Adaptive ERP Definition — Glossary',
   description: 'Adaptive ERP definition — an ERP that adjusts to a business\'s existing data structure instead of requiring reformatting.',
-  alternates: { canonical: 'https://samyojak.vercel.app/glossary/adaptive-erp' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/glossary/adaptive-erp' },
   openGraph: {
     title: 'Adaptive ERP Definition — Glossary',
     description: 'Adaptive ERP definition and explanation.',
-    url: 'https://samyojak.vercel.app/glossary/adaptive-erp',
+    url: 'https://www.samyojak-erp.com/glossary/adaptive-erp',
   },
 }
 

@@ -4,11 +4,11 @@ import SeoTemplateChecklist from '@/components/SeoTemplateChecklist'
 export const metadata: Metadata = {
   title: 'Project Management Template — Starting Structure',
   description: 'A starting structure for tracking projects — what fields, stages, and deadlines to include for client work.',
-  alternates: { canonical: 'https://samyojak.vercel.app/resources/project-management-template' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/resources/project-management-template' },
   openGraph: {
     title: 'Project Management Template — Starting Structure',
     description: 'A starting structure for tracking projects and deadlines.',
-    url: 'https://samyojak.vercel.app/resources/project-management-template',
+    url: 'https://www.samyojak-erp.com/resources/project-management-template',
   },
 }
 

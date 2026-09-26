@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'CRM with AI Lead Scoring — Samyojak Features',
   description: 'Manage your sales pipeline with AI-powered lead scoring, follow-up reminders, and status tracking. Import leads from any CRM without reformatting.',
-  alternates: { canonical: 'https://samyojak.vercel.app/features/crm' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/features/crm' },
   openGraph: {
     title: 'CRM with AI Lead Scoring — Samyojak Features',
     description: 'Manage your sales pipeline with AI-powered lead scoring and follow-up reminders.',
-    url: 'https://samyojak.vercel.app/features/crm',
+    url: 'https://www.samyojak-erp.com/features/crm',
   },
 }
 

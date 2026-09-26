@@ -8,11 +8,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'SaaS Definition — Glossary',
   description: 'SaaS (Software as a Service) definition — cloud-hosted software accessed through a subscription, with no installation required.',
-  alternates: { canonical: 'https://samyojak.vercel.app/glossary/saas' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/glossary/saas' },
   openGraph: {
     title: 'SaaS Definition — Glossary',
     description: 'SaaS definition and explanation.',
-    url: 'https://samyojak.vercel.app/glossary/saas',
+    url: 'https://www.samyojak-erp.com/glossary/saas',
   },
 }
 

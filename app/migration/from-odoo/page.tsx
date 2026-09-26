@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Migrate from Odoo to Samyojak',
   description: 'Step-by-step guide to exporting your Odoo data and importing it into Samyojak without reformatting.',
-  alternates: { canonical: 'https://samyojak.vercel.app/migration/from-odoo' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/migration/from-odoo' },
   openGraph: {
     title: 'Migrate from Odoo to Samyojak',
     description: 'Export your Odoo data and bring it into Samyojak in minutes.',
-    url: 'https://samyojak.vercel.app/migration/from-odoo',
+    url: 'https://www.samyojak-erp.com/migration/from-odoo',
   },
 }
 

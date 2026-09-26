@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Odoo Alternative — Samyojak Adaptive ERP',
   description: 'Looking for an Odoo alternative? Samyojak is an adaptive ERP that imports your existing data as-is and gets CRM, invoicing, inventory, HR, and projects running in minutes.',
-  alternates: { canonical: 'https://samyojak.vercel.app/alternatives/odoo' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/alternatives/odoo' },
   openGraph: {
     title: 'Odoo Alternative — Samyojak Adaptive ERP',
     description: 'Looking for an Odoo alternative? Samyojak imports your existing data and gets you running in minutes.',
-    url: 'https://samyojak.vercel.app/alternatives/odoo',
+    url: 'https://www.samyojak-erp.com/alternatives/odoo',
   },
 }
 

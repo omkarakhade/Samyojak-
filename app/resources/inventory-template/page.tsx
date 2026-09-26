@@ -4,11 +4,11 @@ import SeoTemplateChecklist from '@/components/SeoTemplateChecklist'
 export const metadata: Metadata = {
   title: 'Inventory Template — Starting Structure for Stock Tracking',
   description: 'A starting structure for tracking inventory — what fields to include for stock levels, reorder points, and product identification.',
-  alternates: { canonical: 'https://samyojak.vercel.app/resources/inventory-template' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/resources/inventory-template' },
   openGraph: {
     title: 'Inventory Template — Starting Structure for Stock Tracking',
     description: 'A starting structure for tracking inventory.',
-    url: 'https://samyojak.vercel.app/resources/inventory-template',
+    url: 'https://www.samyojak-erp.com/resources/inventory-template',
   },
 }
 

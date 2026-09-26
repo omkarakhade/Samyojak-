@@ -14,7 +14,7 @@ const nextConfig = {
             value: 'http',
           },
         ],
-        destination: 'https://samyojak.vercel.app/:path*',
+        destination: 'https://www.samyojak-erp.com/:path*',
         permanent: true,
       },
     ]

@@ -8,11 +8,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Lead Management Definition — Glossary',
   description: 'Lead management definition — tracking and prioritizing potential customers through a sales pipeline.',
-  alternates: { canonical: 'https://samyojak.vercel.app/glossary/lead-management' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/glossary/lead-management' },
   openGraph: {
     title: 'Lead Management Definition — Glossary',
     description: 'Lead management definition and explanation.',
-    url: 'https://samyojak.vercel.app/glossary/lead-management',
+    url: 'https://www.samyojak-erp.com/glossary/lead-management',
   },
 }
 

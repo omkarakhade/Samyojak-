@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'How to Choose an ERP — A Practical Checklist',
   description: 'A step-by-step checklist for evaluating ERP software: data migration, pricing structure, required modules, and setup time.',
-  alternates: { canonical: 'https://samyojak.vercel.app/learn/how-to-choose-an-erp' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/learn/how-to-choose-an-erp' },
   openGraph: {
     title: 'How to Choose an ERP — A Practical Checklist',
     description: 'A step-by-step checklist for evaluating ERP software.',
-    url: 'https://samyojak.vercel.app/learn/how-to-choose-an-erp',
+    url: 'https://www.samyojak-erp.com/learn/how-to-choose-an-erp',
   },
 }
 

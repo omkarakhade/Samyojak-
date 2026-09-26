@@ -12,11 +12,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'ERP for Every Industry — Samyojak',
   description: 'Samyojak adapts to how your industry already works. See how manufacturing, retail, healthcare, education, services, construction, real estate, logistics, hospitality, agencies, and finance businesses use Samyojak.',
-  alternates: { canonical: 'https://samyojak.vercel.app/industries' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/industries' },
   openGraph: {
     title: 'ERP for Every Industry — Samyojak',
     description: 'Samyojak adapts to how your industry already works.',
-    url: 'https://samyojak.vercel.app/industries',
+    url: 'https://www.samyojak-erp.com/industries',
   },
 }
 

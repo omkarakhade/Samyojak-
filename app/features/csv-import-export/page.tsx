@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'CSV Import & Export — Samyojak Features',
   description: 'Migrate from any existing ERP, CRM, or spreadsheet without renaming a single column. Samyojak\'s adaptive import accepts any CSV format.',
-  alternates: { canonical: 'https://samyojak.vercel.app/features/csv-import-export' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/features/csv-import-export' },
   openGraph: {
     title: 'CSV Import & Export — Samyojak Features',
     description: 'Migrate from any existing ERP or spreadsheet without reformatting.',
-    url: 'https://samyojak.vercel.app/features/csv-import-export',
+    url: 'https://www.samyojak-erp.com/features/csv-import-export',
   },
 }
 

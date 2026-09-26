@@ -11,11 +11,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Business Management for Healthcare — Samyojak',
   description: 'Manage billing, staff, and administrative operations for your healthcare business with Samyojak. Adaptive data import, invoicing, and HR management included.',
-  alternates: { canonical: 'https://samyojak.vercel.app/industries/healthcare' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/industries/healthcare' },
   openGraph: {
     title: 'Business Management for Healthcare — Samyojak',
     description: 'Manage billing, staff, and administrative operations for your healthcare business.',
-    url: 'https://samyojak.vercel.app/industries/healthcare',
+    url: 'https://www.samyojak-erp.com/industries/healthcare',
   },
 }
 

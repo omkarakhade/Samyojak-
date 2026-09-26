@@ -11,11 +11,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'ERP for Manufacturing Businesses — Samyojak',
   description: 'Manage inventory, suppliers, invoicing, and projects for your manufacturing business with Samyojak\'s adaptive ERP. Import your existing data and get running in minutes.',
-  alternates: { canonical: 'https://samyojak.vercel.app/industries/manufacturing' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/industries/manufacturing' },
   openGraph: {
     title: 'ERP for Manufacturing Businesses — Samyojak',
     description: 'Manage inventory, suppliers, invoicing, and projects for your manufacturing business.',
-    url: 'https://samyojak.vercel.app/industries/manufacturing',
+    url: 'https://www.samyojak-erp.com/industries/manufacturing',
   },
 }
 

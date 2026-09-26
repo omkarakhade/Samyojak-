@@ -8,11 +8,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Inventory Management Definition — Glossary',
   description: 'Inventory management definition — tracking stock levels, reorder points, and product data for a business.',
-  alternates: { canonical: 'https://samyojak.vercel.app/glossary/inventory-management' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/glossary/inventory-management' },
   openGraph: {
     title: 'Inventory Management Definition — Glossary',
     description: 'Inventory management definition and explanation.',
-    url: 'https://samyojak.vercel.app/glossary/inventory-management',
+    url: 'https://www.samyojak-erp.com/glossary/inventory-management',
   },
 }
 

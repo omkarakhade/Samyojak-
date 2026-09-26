@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Tax Reports & Analytics — Samyojak Features',
   description: 'Generate GSTR-1 compatible tax reports, monthly revenue summaries, and collection rate analytics with Samyojak.',
-  alternates: { canonical: 'https://samyojak.vercel.app/features/reports' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/features/reports' },
   openGraph: {
     title: 'Tax Reports & Analytics — Samyojak Features',
     description: 'GSTR-1 format, monthly summaries, revenue analytics.',
-    url: 'https://samyojak.vercel.app/features/reports',
+    url: 'https://www.samyojak-erp.com/features/reports',
   },
 }
 

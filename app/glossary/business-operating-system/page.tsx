@@ -8,11 +8,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Business Operating System Definition — Glossary',
   description: 'Business operating system definition — a single connected platform for running every core function of a business.',
-  alternates: { canonical: 'https://samyojak.vercel.app/glossary/business-operating-system' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/glossary/business-operating-system' },
   openGraph: {
     title: 'Business Operating System Definition — Glossary',
     description: 'Business operating system definition and explanation.',
-    url: 'https://samyojak.vercel.app/glossary/business-operating-system',
+    url: 'https://www.samyojak-erp.com/glossary/business-operating-system',
   },
 }
 

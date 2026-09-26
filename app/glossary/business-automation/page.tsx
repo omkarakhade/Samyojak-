@@ -8,11 +8,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Business Automation Definition — Glossary',
   description: 'Business automation definition — using software to handle repetitive tasks like recurring invoices, alerts, and reporting automatically.',
-  alternates: { canonical: 'https://samyojak.vercel.app/glossary/business-automation' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/glossary/business-automation' },
   openGraph: {
     title: 'Business Automation Definition — Glossary',
     description: 'Business automation definition and explanation.',
-    url: 'https://samyojak.vercel.app/glossary/business-automation',
+    url: 'https://www.samyojak-erp.com/glossary/business-automation',
   },
 }
 

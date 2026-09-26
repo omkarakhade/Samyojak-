@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Project Management — Samyojak Features',
   description: 'Track client projects on a Kanban board with Planning, In Progress, Review, and Done stages, deadlines, and progress tracking.',
-  alternates: { canonical: 'https://samyojak.vercel.app/features/projects' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/features/projects' },
   openGraph: {
     title: 'Project Management — Samyojak Features',
     description: 'Kanban board, deadlines, progress tracking, client projects.',
-    url: 'https://samyojak.vercel.app/features/projects',
+    url: 'https://www.samyojak-erp.com/features/projects',
   },
 }
 

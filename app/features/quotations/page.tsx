@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Quotations — Samyojak Features',
   description: 'Build professional quotations, send them to clients, and convert accepted quotes to invoices in one click with Samyojak.',
-  alternates: { canonical: 'https://samyojak.vercel.app/features/quotations' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/features/quotations' },
   openGraph: {
     title: 'Quotations — Samyojak Features',
     description: 'Build professional quotations and convert them to invoices in one click.',
-    url: 'https://samyojak.vercel.app/features/quotations',
+    url: 'https://www.samyojak-erp.com/features/quotations',
   },
 }
 

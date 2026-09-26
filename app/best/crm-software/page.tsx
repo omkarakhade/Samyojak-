@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Best CRM Software — What to Look For',
   description: 'A guide to choosing CRM software: lead scoring, pipeline tracking, follow-up automation, and data import compatibility.',
-  alternates: { canonical: 'https://samyojak.vercel.app/best/crm-software' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/best/crm-software' },
   openGraph: {
     title: 'Best CRM Software — What to Look For',
     description: 'A guide to choosing CRM software for your business.',
-    url: 'https://samyojak.vercel.app/best/crm-software',
+    url: 'https://www.samyojak-erp.com/best/crm-software',
   },
 }
 

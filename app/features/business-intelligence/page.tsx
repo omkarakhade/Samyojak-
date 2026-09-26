@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'BI Dashboard — Samyojak Features',
   description: 'View revenue trends, lead pipeline, invoice status, inventory levels, and payroll breakdowns in one visual dashboard with Samyojak.',
-  alternates: { canonical: 'https://samyojak.vercel.app/features/business-intelligence' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/features/business-intelligence' },
   openGraph: {
     title: 'BI Dashboard — Samyojak Features',
     description: 'Revenue trends, lead pipeline, invoice status, and payroll in one dashboard.',
-    url: 'https://samyojak.vercel.app/features/business-intelligence',
+    url: 'https://www.samyojak-erp.com/features/business-intelligence',
   },
 }
 

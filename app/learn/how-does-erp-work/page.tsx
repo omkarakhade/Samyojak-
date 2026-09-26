@@ -9,11 +9,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'How Does ERP Work?',
   description: 'How data flows through an ERP system — from entry in CRM or invoicing, through operations, to reporting and business intelligence.',
-  alternates: { canonical: 'https://samyojak.vercel.app/learn/how-does-erp-work' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/learn/how-does-erp-work' },
   openGraph: {
     title: 'How Does ERP Work?',
     description: 'How data flows through an ERP system, from entry to reporting.',
-    url: 'https://samyojak.vercel.app/learn/how-does-erp-work',
+    url: 'https://www.samyojak-erp.com/learn/how-does-erp-work',
   },
 }
 

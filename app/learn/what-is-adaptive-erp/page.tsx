@@ -9,11 +9,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'What Is Adaptive ERP?',
   description: 'Adaptive ERP explained — how it differs from traditional module-based ERP systems by adjusting to your existing data instead of forcing a predefined structure.',
-  alternates: { canonical: 'https://samyojak.vercel.app/learn/what-is-adaptive-erp' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/learn/what-is-adaptive-erp' },
   openGraph: {
     title: 'What Is Adaptive ERP?',
     description: 'How adaptive ERP differs from traditional, module-based ERP.',
-    url: 'https://samyojak.vercel.app/learn/what-is-adaptive-erp',
+    url: 'https://www.samyojak-erp.com/learn/what-is-adaptive-erp',
   },
 }
 

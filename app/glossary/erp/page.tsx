@@ -8,11 +8,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'ERP Definition — Glossary',
   description: 'ERP (Enterprise Resource Planning) definition — software that centralizes core business functions like CRM, invoicing, inventory, and HR.',
-  alternates: { canonical: 'https://samyojak.vercel.app/glossary/erp' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/glossary/erp' },
   openGraph: {
     title: 'ERP Definition — Glossary',
     description: 'ERP definition and explanation.',
-    url: 'https://samyojak.vercel.app/glossary/erp',
+    url: 'https://www.samyojak-erp.com/glossary/erp',
   },
 }
 

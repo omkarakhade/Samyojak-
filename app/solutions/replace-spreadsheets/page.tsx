@@ -11,11 +11,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Replace Spreadsheets — Samyojak',
   description: 'Move your CRM, invoicing, and inventory tracking out of Excel spreadsheets and into Samyojak, without losing any of your existing data.',
-  alternates: { canonical: 'https://samyojak.vercel.app/solutions/replace-spreadsheets' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/solutions/replace-spreadsheets' },
   openGraph: {
     title: 'Replace Spreadsheets — Samyojak',
     description: 'Move your CRM, invoicing, and inventory tracking out of Excel and into one system.',
-    url: 'https://samyojak.vercel.app/solutions/replace-spreadsheets',
+    url: 'https://www.samyojak-erp.com/solutions/replace-spreadsheets',
   },
 }
 

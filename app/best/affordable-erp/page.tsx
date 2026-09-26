@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Best Affordable ERP — Avoiding Hidden Costs',
   description: 'A guide to finding affordable ERP software: understanding per-user fees, annual contracts, and hidden implementation costs.',
-  alternates: { canonical: 'https://samyojak.vercel.app/best/affordable-erp' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/best/affordable-erp' },
   openGraph: {
     title: 'Best Affordable ERP — Avoiding Hidden Costs',
     description: 'A guide to finding affordable ERP software without hidden costs.',
-    url: 'https://samyojak.vercel.app/best/affordable-erp',
+    url: 'https://www.samyojak-erp.com/best/affordable-erp',
   },
 }
 

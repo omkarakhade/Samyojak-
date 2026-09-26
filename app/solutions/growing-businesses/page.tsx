@@ -11,11 +11,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'ERP for Growing Businesses — Samyojak',
   description: 'Manage more clients, more staff, and more data without breaking your workflow. Samyojak scales from CRM and invoicing to HR, projects, and AI as you grow.',
-  alternates: { canonical: 'https://samyojak.vercel.app/solutions/growing-businesses' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/solutions/growing-businesses' },
   openGraph: {
     title: 'ERP for Growing Businesses — Samyojak',
     description: 'Manage more clients, more staff, and more data without breaking your workflow.',
-    url: 'https://samyojak.vercel.app/solutions/growing-businesses',
+    url: 'https://www.samyojak-erp.com/solutions/growing-businesses',
   },
 }
 

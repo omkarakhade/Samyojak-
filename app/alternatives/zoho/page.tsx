@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Zoho Alternative — Samyojak Adaptive ERP',
   description: 'Looking for a Zoho alternative? Samyojak unifies CRM, invoicing, inventory, HR, and projects into one adaptive ERP that accepts your existing data as-is.',
-  alternates: { canonical: 'https://samyojak.vercel.app/alternatives/zoho' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/alternatives/zoho' },
   openGraph: {
     title: 'Zoho Alternative — Samyojak Adaptive ERP',
     description: 'Looking for a Zoho alternative? Samyojak unifies your core business operations into one adaptive ERP.',
-    url: 'https://samyojak.vercel.app/alternatives/zoho',
+    url: 'https://www.samyojak-erp.com/alternatives/zoho',
   },
 }
 

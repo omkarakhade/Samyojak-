@@ -146,7 +146,7 @@ export default function DebugPage() {
 
             <div className="p-4 rounded-xl" style={{ background: '#1E3A5F', border: '1.5px solid #2563EB' }}>
               <p className="text-blue-300 text-sm font-bold mb-1">💡 How to use this page</p>
-              <p className="text-blue-200 text-xs">Click "Run Full System Test" above to automatically check all APIs and database connections. Use the manual checklist above for UI testing. Share this page with testers by sending them to samyojak.vercel.app/debug (password protect it before sharing).</p>
+              <p className="text-blue-200 text-xs">Click "Run Full System Test" above to automatically check all APIs and database connections. Use the manual checklist above for UI testing. Share this page with testers by sending them to www.samyojak-erp.com/debug (password protect it before sharing).</p>
             </div>
           </div>
         )}

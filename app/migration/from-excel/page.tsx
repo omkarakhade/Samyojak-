@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Migrate from Excel to Samyojak',
   description: 'Step-by-step guide to importing your Excel spreadsheets — leads, invoices, inventory, or staff records — into Samyojak without reformatting.',
-  alternates: { canonical: 'https://samyojak.vercel.app/migration/from-excel' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/migration/from-excel' },
   openGraph: {
     title: 'Migrate from Excel to Samyojak',
     description: 'Import your Excel spreadsheets into Samyojak without reformatting.',
-    url: 'https://samyojak.vercel.app/migration/from-excel',
+    url: 'https://www.samyojak-erp.com/migration/from-excel',
   },
 }
 

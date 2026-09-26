@@ -104,7 +104,7 @@ export default function AdminPanel() {
 
   const getBaseUrl = () => {
     if (typeof window !== 'undefined') return window.location.origin
-    return 'https://samyojak.vercel.app'
+    return 'https://www.samyojak-erp.com'
   }
 
   const generateLink = (token: string) => `${getBaseUrl()}/demo?token=${token}`

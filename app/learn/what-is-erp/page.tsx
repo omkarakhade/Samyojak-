@@ -9,11 +9,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'What Is ERP? Definition, Purpose & Examples',
   description: 'ERP (Enterprise Resource Planning) explained simply — what it does, what modules it typically includes, and why businesses use it.',
-  alternates: { canonical: 'https://samyojak.vercel.app/learn/what-is-erp' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/learn/what-is-erp' },
   openGraph: {
     title: 'What Is ERP? Definition, Purpose & Examples',
     description: 'ERP explained simply — what it does and why businesses use it.',
-    url: 'https://samyojak.vercel.app/learn/what-is-erp',
+    url: 'https://www.samyojak-erp.com/learn/what-is-erp',
   },
 }
 

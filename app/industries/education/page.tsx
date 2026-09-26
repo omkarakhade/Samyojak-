@@ -11,11 +11,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Business Management for Education — Samyojak',
   description: 'Manage staff, billing, and administrative operations for your school or training institute with Samyojak\'s adaptive ERP.',
-  alternates: { canonical: 'https://samyojak.vercel.app/industries/education' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/industries/education' },
   openGraph: {
     title: 'Business Management for Education — Samyojak',
     description: 'Manage staff, billing, and administrative operations for your school or training institute.',
-    url: 'https://samyojak.vercel.app/industries/education',
+    url: 'https://www.samyojak-erp.com/industries/education',
   },
 }
 

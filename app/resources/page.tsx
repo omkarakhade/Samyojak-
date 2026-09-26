@@ -9,11 +9,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Resources — Templates & Checklists',
   description: 'Free templates and checklists for invoicing, CRM, inventory, lead tracking, project management, and ERP evaluation.',
-  alternates: { canonical: 'https://samyojak.vercel.app/resources' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/resources' },
   openGraph: {
     title: 'Resources — Templates & Checklists',
     description: 'Free templates and checklists for business management.',
-    url: 'https://samyojak.vercel.app/resources',
+    url: 'https://www.samyojak-erp.com/resources',
   },
 }
 

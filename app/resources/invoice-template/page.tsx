@@ -4,11 +4,11 @@ import SeoTemplateChecklist from '@/components/SeoTemplateChecklist'
 export const metadata: Metadata = {
   title: 'Invoice Template — What to Include',
   description: 'What a professional, tax-compliant invoice should include — client details, line items, tax calculation, and payment terms.',
-  alternates: { canonical: 'https://samyojak.vercel.app/resources/invoice-template' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/resources/invoice-template' },
   openGraph: {
     title: 'Invoice Template — What to Include',
     description: 'What a professional, tax-compliant invoice should include.',
-    url: 'https://samyojak.vercel.app/resources/invoice-template',
+    url: 'https://www.samyojak-erp.com/resources/invoice-template',
   },
 }
 

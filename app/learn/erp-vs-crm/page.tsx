@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'ERP vs CRM — What\'s the Difference?',
   description: 'ERP and CRM explained side by side — what each covers, how they overlap, and when a business needs one, the other, or both.',
-  alternates: { canonical: 'https://samyojak.vercel.app/learn/erp-vs-crm' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/learn/erp-vs-crm' },
   openGraph: {
     title: 'ERP vs CRM — What\'s the Difference?',
     description: 'ERP and CRM explained side by side.',
-    url: 'https://samyojak.vercel.app/learn/erp-vs-crm',
+    url: 'https://www.samyojak-erp.com/learn/erp-vs-crm',
   },
 }
 

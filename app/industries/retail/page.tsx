@@ -11,11 +11,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'ERP for Retail Businesses — Samyojak',
   description: 'Manage inventory, customer relationships, and invoicing for your retail business with Samyojak. Free QR codes, low-stock alerts, and adaptive data import included.',
-  alternates: { canonical: 'https://samyojak.vercel.app/industries/retail' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/industries/retail' },
   openGraph: {
     title: 'ERP for Retail Businesses — Samyojak',
     description: 'Manage inventory, customer relationships, and invoicing for your retail business.',
-    url: 'https://samyojak.vercel.app/industries/retail',
+    url: 'https://www.samyojak-erp.com/industries/retail',
   },
 }
 

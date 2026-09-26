@@ -9,11 +9,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Samyojak Solutions — Business Management for Every Stage',
   description: 'From small businesses and startups to growing companies, see how Samyojak\'s adaptive ERP replaces spreadsheets and disconnected tools with one centralized workspace.',
-  alternates: { canonical: 'https://samyojak.vercel.app/solutions' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/solutions' },
   openGraph: {
     title: 'Samyojak Solutions — Business Management for Every Stage',
     description: 'See how Samyojak\'s adaptive ERP fits your business, wherever you are.',
-    url: 'https://samyojak.vercel.app/solutions',
+    url: 'https://www.samyojak-erp.com/solutions',
   },
 }
 

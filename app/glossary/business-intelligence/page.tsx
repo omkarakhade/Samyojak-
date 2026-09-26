@@ -8,11 +8,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Business Intelligence Definition — Glossary',
   description: 'Business intelligence definition — analyzing business data to generate insights like revenue trends, pipeline health, and reporting.',
-  alternates: { canonical: 'https://samyojak.vercel.app/glossary/business-intelligence' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/glossary/business-intelligence' },
   openGraph: {
     title: 'Business Intelligence Definition — Glossary',
     description: 'Business intelligence definition and explanation.',
-    url: 'https://samyojak.vercel.app/glossary/business-intelligence',
+    url: 'https://www.samyojak-erp.com/glossary/business-intelligence',
   },
 }
 

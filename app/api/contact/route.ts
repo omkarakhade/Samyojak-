@@ -25,7 +25,7 @@ Message:
 ${message}
 
 ---
-Sent from samyojak.vercel.app/contact
+Sent from www.samyojak-erp.com/contact
     `.trim()
 
     const res = await fetch('https://api.resend.com/emails', {

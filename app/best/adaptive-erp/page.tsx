@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Best Adaptive ERP — Why Data Import Matters',
   description: 'What "adaptive ERP" means, why traditional ERP setup takes so long, and how to evaluate whether a platform truly adapts to your existing data.',
-  alternates: { canonical: 'https://samyojak.vercel.app/best/adaptive-erp' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/best/adaptive-erp' },
   openGraph: {
     title: 'Best Adaptive ERP — Why Data Import Matters',
     description: 'What "adaptive ERP" means and how to evaluate it.',
-    url: 'https://samyojak.vercel.app/best/adaptive-erp',
+    url: 'https://www.samyojak-erp.com/best/adaptive-erp',
   },
 }
 

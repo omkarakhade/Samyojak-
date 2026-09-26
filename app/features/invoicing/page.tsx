@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Universal Tax Invoicing — Samyojak Features',
   description: 'Create professional invoices with automatic GST, VAT, HST, and Sales Tax calculation for 15+ countries. Send invoices via WhatsApp with one click.',
-  alternates: { canonical: 'https://samyojak.vercel.app/features/invoicing' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/features/invoicing' },
   openGraph: {
     title: 'Universal Tax Invoicing — Samyojak Features',
     description: 'GST, VAT, HST, Sales Tax — 15+ countries in one click.',
-    url: 'https://samyojak.vercel.app/features/invoicing',
+    url: 'https://www.samyojak-erp.com/features/invoicing',
   },
 }
 

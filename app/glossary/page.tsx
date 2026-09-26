@@ -8,11 +8,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Glossary — ERP & Business Software Terms',
   description: 'Quick definitions of common ERP, CRM, and business software terms — ERP, CRM, SaaS, inventory management, business intelligence, and more.',
-  alternates: { canonical: 'https://samyojak.vercel.app/glossary' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/glossary' },
   openGraph: {
     title: 'Glossary — ERP & Business Software Terms',
     description: 'Quick definitions of common ERP, CRM, and business software terms.',
-    url: 'https://samyojak.vercel.app/glossary',
+    url: 'https://www.samyojak-erp.com/glossary',
   },
 }
 

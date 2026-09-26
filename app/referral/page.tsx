@@ -19,7 +19,7 @@ export default function Referral() {
     ? 'SAM-' + user.email.split('@')[0].toUpperCase().slice(0, 6)
     : 'SAM-XXXXXX'
 
-  const referralLink = `https://samyojak.vercel.app/signup?ref=${referralCode}`
+  const referralLink = `https://www.samyojak-erp.com/signup?ref=${referralCode}`
 
   const copyLink = () => {
     navigator.clipboard.writeText(referralLink)

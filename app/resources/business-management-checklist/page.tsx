@@ -4,11 +4,11 @@ import SeoTemplateChecklist from '@/components/SeoTemplateChecklist'
 export const metadata: Metadata = {
   title: 'Business Management Checklist',
   description: 'A checklist for auditing your current business operations — where data lives, what\'s manual, and where automation could help.',
-  alternates: { canonical: 'https://samyojak.vercel.app/resources/business-management-checklist' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/resources/business-management-checklist' },
   openGraph: {
     title: 'Business Management Checklist',
     description: 'A checklist for auditing your current business operations.',
-    url: 'https://samyojak.vercel.app/resources/business-management-checklist',
+    url: 'https://www.samyojak-erp.com/resources/business-management-checklist',
   },
 }
 

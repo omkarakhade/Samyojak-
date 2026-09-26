@@ -10,11 +10,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'ERP vs Spreadsheet — When to Make the Switch',
   description: 'ERP and spreadsheets compared — data integrity, collaboration, automation, and when a business outgrows spreadsheet-based management.',
-  alternates: { canonical: 'https://samyojak.vercel.app/learn/erp-vs-spreadsheet' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/learn/erp-vs-spreadsheet' },
   openGraph: {
     title: 'ERP vs Spreadsheet — When to Make the Switch',
     description: 'ERP and spreadsheets compared.',
-    url: 'https://samyojak.vercel.app/learn/erp-vs-spreadsheet',
+    url: 'https://www.samyojak-erp.com/learn/erp-vs-spreadsheet',
   },
 }
 

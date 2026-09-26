@@ -9,11 +9,11 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 export const metadata: Metadata = {
   title: 'Learn — ERP, CRM & Business Software Explained',
   description: 'Clear explanations of what ERP is, how it differs from CRM, what adaptive ERP means, and how to choose the right business management software.',
-  alternates: { canonical: 'https://samyojak.vercel.app/learn' },
+  alternates: { canonical: 'https://www.samyojak-erp.com/learn' },
   openGraph: {
     title: 'Learn — ERP, CRM & Business Software Explained',
     description: 'Clear explanations of ERP, CRM, and business management software.',
-    url: 'https://samyojak.vercel.app/learn',
+    url: 'https://www.samyojak-erp.com/learn',
   },
 }
 

@@ -323,7 +323,7 @@ export default function Home() {
                   </div>
                   <div className="flex-1 mx-4 px-4 py-1.5 rounded-full text-xs text-center"
                     style={{ background: 'white', color: '#94A3B8', border: '1px solid #E2E8F0' }}>
-                    samyojak.vercel.app/dashboard
+                    www.samyojak-erp.com/dashboard
                   </div>
                 </div>
 

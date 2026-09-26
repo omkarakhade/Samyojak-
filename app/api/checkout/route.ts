@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.DODO_PAYMENTS_API_KEY
     const dodoEnv = process.env.DODO_ENV || 'live'
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://samyojak.vercel.app'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.samyojak-erp.com'
 
     console.log('=== DODO CHECKOUT ===')
     console.log('Product ID:', productId)
