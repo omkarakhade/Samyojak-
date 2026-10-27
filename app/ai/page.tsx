@@ -1,9 +1,9 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Layout from '@/components/Layout'
 import { supabase } from '@/lib/supabase'
 import { getPlanFromMetadata } from '@/lib/planAccess'
-import { Brain, Send, Lock, Zap } from 'lucide-react'
+import { Brain, Send, Lock, Zap, Check, X, Undo2 } from 'lucide-react'
 
 const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
 const AI_PLANS = ['Complete']
@@ -19,40 +19,104 @@ const QUICK_QUESTIONS = [
   'What is my conversion rate?',
 ]
 
+type RecordData = Record<string, string | number>
+
+interface ProposedAction {
+  module: string
+  records: RecordData[]
+}
+
 interface Message {
   role: 'user' | 'ai'
   text: string
   time: string
+  actions?: ProposedAction[]
+  status?: 'pending' | 'saved' | 'cancelled' | 'undone'
+  batchId?: string
+  count?: number
+}
+
+function nowTime() {
+  return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+}
+
+function looksLikeQuestion(text: string) {
+  const t = text.trim()
+  return t.endsWith('?') && !/\d/.test(t)
+}
+
+function PreviewTable({ actions }: { actions: ProposedAction[] }) {
+  return (
+    <div className="space-y-3 mt-3">
+      {actions.map((action, i) => {
+        const keys = Array.from(new Set(action.records.flatMap(r => Object.keys(r))))
+        return (
+          <div key={i} className="rounded-xl overflow-hidden" style={{ border: '1.5px solid #E2E8F0' }}>
+            <div className="px-3 py-1.5 text-xs font-black uppercase tracking-wide"
+              style={{ background: '#EDE9FE', color: '#8B5CF6' }}>
+              {action.module} · {action.records.length} record{action.records.length > 1 ? 's' : ''}
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr style={{ background: '#F8FAFC' }}>
+                    {keys.map(k => (
+                      <th key={k} className="px-3 py-2 text-left font-bold whitespace-nowrap" style={{ color: '#64748B' }}>
+                        {k}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {action.records.map((r, ri) => (
+                    <tr key={ri} style={{ borderTop: '1px solid #F1F5F9' }}>
+                      {keys.map(k => (
+                        <td key={k} className="px-3 py-2 whitespace-nowrap" style={{ color: '#1E293B' }}>
+                          {r[k] !== undefined ? String(r[k]) : '—'}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 export default function AIAssistant() {
-  const [user, setUser] = useState<any>(null)
   const [plan, setPlan] = useState('')
-  const [isAdmin, setIsAdmin] = useState(false)
   const [userId, setUserId] = useState('')
   const [canUseAI, setCanUseAI] = useState(false)
   const [checking, setChecking] = useState(true)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [busyIndex, setBusyIndex] = useState<number | null>(null)
   const [greeting, setGreeting] = useState('')
   const [greetingLoading, setGreetingLoading] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
-      setUser(user)
       const userPlan = getPlanFromMetadata(user) || 'No Plan'
       setPlan(userPlan)
       const admin = user.email === ADMIN_EMAIL
-      setIsAdmin(admin)
       setUserId(user.id)
       const hasAI = AI_PLANS.includes(userPlan) || admin || user.user_metadata?.is_demo
-      setCanUseAI(hasAI)
+      setCanUseAI(!!hasAI)
       setChecking(false)
       if (hasAI) loadGreeting(user.id)
     })
   }, [])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, loading])
 
   const loadGreeting = async (uid: string) => {
     setGreetingLoading(true)
@@ -73,41 +137,107 @@ export default function AIAssistant() {
     setGreetingLoading(false)
   }
 
-  const sendMessage = async (text?: string) => {
+  const getToken = async () => {
+    const { data } = await supabase.auth.getSession()
+    return data.session?.access_token || ''
+  }
+
+  const callAgent = async (body: object) => {
+    const token = await getToken()
+    const res = await fetch('/api/agent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data }
+  }
+
+  const askAssistant = async (q: string) => {
+    const res = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: q, userId }),
+    })
+    const data = await res.json()
+    return data.reply || 'No response. Please try again.'
+  }
+
+  const addAiMessage = (m: Omit<Message, 'role' | 'time'>) =>
+    setMessages(prev => [...prev, { role: 'ai', time: nowTime(), ...m }])
+
+  const sendMessage = async (text?: string, questionOnly = false) => {
     const q = text || input.trim()
     if (!q || loading) return
     setInput('')
-
-    const userMsg: Message = {
-      role: 'user',
-      text: q,
-      time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-    }
-    setMessages(prev => [...prev, userMsg])
+    setMessages(prev => [...prev, { role: 'user', text: q, time: nowTime() }])
     setLoading(true)
 
     try {
-      const res = await fetch('/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: q, userId }),
-      })
-      const data = await res.json()
-      const aiMsg: Message = {
-        role: 'ai',
-        text: data.reply || 'No response. Please try again.',
-        time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+      // Questions go straight to the assistant. Everything else tries the agent first.
+      if (questionOnly || looksLikeQuestion(q)) {
+        addAiMessage({ text: await askAssistant(q) })
+      } else {
+        const { ok, data } = await callAgent({ action: 'plan', message: q })
+
+        if (!ok) {
+          addAiMessage({ text: data.error || 'Something went wrong. Please try again.' })
+        } else if (data.needsConfirm && data.actions?.length) {
+          addAiMessage({
+            text: data.reply || 'Please review and confirm.',
+            actions: data.actions,
+            status: 'pending',
+          })
+        } else {
+          addAiMessage({ text: await askAssistant(q) })
+        }
       }
-      setMessages(prev => [...prev, aiMsg])
     } catch {
-      const errMsg: Message = {
-        role: 'ai',
-        text: 'Connection error. Please check your internet and try again.',
-        time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-      }
-      setMessages(prev => [...prev, errMsg])
+      addAiMessage({ text: 'Connection error. Please check your internet and try again.' })
     }
     setLoading(false)
+  }
+
+  const updateMessage = (index: number, patch: Partial<Message>) =>
+    setMessages(prev => prev.map((m, i) => (i === index ? { ...m, ...patch } : m)))
+
+  const handleConfirm = async (index: number) => {
+    const msg = messages[index]
+    if (!msg?.actions || busyIndex !== null) return
+    setBusyIndex(index)
+    try {
+      const { ok, data } = await callAgent({ action: 'confirm', actions: msg.actions })
+      if (ok) {
+        updateMessage(index, { status: 'saved', batchId: data.batchId, count: data.count })
+      } else {
+        addAiMessage({ text: data.error || 'Could not save. Nothing was added.' })
+      }
+    } catch {
+      addAiMessage({ text: 'Connection error. Nothing was saved.' })
+    }
+    setBusyIndex(null)
+  }
+
+  const handleCancel = (index: number) => updateMessage(index, { status: 'cancelled' })
+
+  const handleUndo = async (index: number) => {
+    const msg = messages[index]
+    if (!msg?.batchId || busyIndex !== null) return
+    setBusyIndex(index)
+    try {
+      const { ok, data } = await callAgent({ action: 'undo', batchId: msg.batchId })
+      if (ok) {
+        updateMessage(index, { status: 'undone' })
+      } else {
+        addAiMessage({ text: data.error || 'Could not undo. Please try again.' })
+      }
+    } catch {
+      addAiMessage({ text: 'Connection error. Nothing was undone.' })
+    }
+    setBusyIndex(null)
   }
 
   if (checking) return (
@@ -164,8 +294,7 @@ export default function AIAssistant() {
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-4 flex-shrink-0">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: '#8B5CF6' }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#8B5CF6' }}>
             <Brain size={20} className="text-white" />
           </div>
           <div>
@@ -174,7 +303,7 @@ export default function AIAssistant() {
             </h2>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-              <p className="text-xs text-green-500">Live — reading your real business data</p>
+              <p className="text-xs text-green-500">Live — reads your data and can record it for you</p>
             </div>
           </div>
         </div>
@@ -197,16 +326,19 @@ export default function AIAssistant() {
           </div>
         )}
 
-        {/* Quick questions */}
+        {/* Quick questions + capture hint */}
         {messages.length === 0 && (
           <div className="mb-4 flex-shrink-0">
-            <p className="text-xs font-bold uppercase tracking-wide mb-2 text-gray-400">
-              Quick questions
-            </p>
+            <div className="p-3 rounded-xl mb-3 text-xs"
+              style={{ background: '#D1FAE5', border: '1.5px solid #34D399', color: '#065F46' }}>
+              <strong>Try recording something:</strong> "Invoiced Rahul Sharma 45000 for the website, due Nov 10.
+              New lead Sneha, call her Monday." You'll see a preview and nothing is saved until you confirm.
+            </div>
+            <p className="text-xs font-bold uppercase tracking-wide mb-2 text-gray-400">Quick questions</p>
             <div className="flex flex-wrap gap-2">
               {QUICK_QUESTIONS.map(q => (
                 <button key={q}
-                  onClick={() => sendMessage(q)}
+                  onClick={() => sendMessage(q, true)}
                   className="px-3 py-1.5 rounded-full text-xs font-medium hover:opacity-80 transition-opacity"
                   style={{ background: '#EDE9FE', color: '#8B5CF6', border: '1.5px solid #C4B5FD' }}>
                   {q}
@@ -226,22 +358,66 @@ export default function AIAssistant() {
                   <Brain size={14} className="text-white" />
                 </div>
               )}
-              <div className={`max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-                msg.role === 'user'
-                  ? 'text-white'
-                  : 'dark:text-gray-200 text-gray-800'
-              }`}
+              <div
+                className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                  msg.actions ? 'w-full max-w-full md:max-w-xl' : 'max-w-xs md:max-w-md lg:max-w-lg'
+                } ${msg.role === 'user' ? 'text-white' : 'dark:text-gray-200 text-gray-800'}`}
                 style={{
-                  background: msg.role === 'user'
-                    ? '#8B5CF6'
-                    : 'white',
+                  background: msg.role === 'user' ? '#8B5CF6' : 'white',
                   border: msg.role === 'ai' ? '1.5px solid #E2E8F0' : 'none',
                 }}>
                 {msg.text}
+
+                {msg.actions && msg.status !== 'cancelled' && msg.status !== 'undone' && (
+                  <PreviewTable actions={msg.actions} />
+                )}
+
+                {msg.actions && msg.status === 'pending' && (
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => handleConfirm(i)}
+                      disabled={busyIndex !== null}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black text-white disabled:opacity-50"
+                      style={{ background: '#34D399', border: '2px solid #1E293B' }}>
+                      <Check size={14} /> {busyIndex === i ? 'Saving...' : 'Confirm'}
+                    </button>
+                    <button
+                      onClick={() => handleCancel(i)}
+                      disabled={busyIndex !== null}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold disabled:opacity-50"
+                      style={{ background: 'white', color: '#64748B', border: '2px solid #E2E8F0' }}>
+                      <X size={14} /> Cancel
+                    </button>
+                  </div>
+                )}
+
+                {msg.status === 'saved' && (
+                  <div className="flex items-center gap-3 mt-3 flex-wrap">
+                    <span className="text-xs font-bold" style={{ color: '#065F46' }}>
+                      ✅ Saved {msg.count} record{msg.count && msg.count > 1 ? 's' : ''}
+                    </span>
+                    <button
+                      onClick={() => handleUndo(i)}
+                      disabled={busyIndex !== null}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold disabled:opacity-50"
+                      style={{ background: '#FEE2E2', color: '#DC2626', border: '1.5px solid #FCA5A5' }}>
+                      <Undo2 size={13} /> {busyIndex === i ? 'Undoing...' : 'Undo'}
+                    </button>
+                  </div>
+                )}
+
+                {msg.status === 'cancelled' && (
+                  <p className="text-xs mt-2 font-semibold" style={{ color: '#94A3B8' }}>Cancelled. Nothing was saved.</p>
+                )}
+                {msg.status === 'undone' && (
+                  <p className="text-xs mt-2 font-semibold" style={{ color: '#94A3B8' }}>Undone. Those records were removed.</p>
+                )}
+
                 <p className="text-xs mt-1 opacity-50">{msg.time}</p>
               </div>
             </div>
           ))}
+
           {loading && (
             <div className="flex justify-start">
               <div className="w-7 h-7 rounded-lg flex items-center justify-center mr-2 flex-shrink-0"
@@ -258,6 +434,7 @@ export default function AIAssistant() {
               </div>
             </div>
           )}
+          <div ref={bottomRef} />
         </div>
 
         {/* Input */}
@@ -266,7 +443,7 @@ export default function AIAssistant() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-            placeholder="Ask about your leads, invoices, stock, team, projects..."
+            placeholder="Ask a question, or tell me what to record..."
             className="flex-1 px-4 py-3 rounded-xl text-sm outline-none border border-gray-300 dark:border-white/20 focus:ring-2 focus:ring-violet-500 dark:bg-[#1a2740] dark:text-white"
           />
           <button
