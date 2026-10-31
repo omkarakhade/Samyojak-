@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthedUser, isAdminUser, isSafeId } from '@/lib/serverAuth'
 
 const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
 const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
@@ -35,20 +36,22 @@ async function fetchUserData(userId: string, module: string) {
   } catch { return [] }
 }
 
-async function buildContext(userId?: string) {
+async function buildContext(userId?: string, includeShared = false) {
   const [
     airtableLeads,
     airtableInvoices,
     airtableProducts,
     airtableEmployees,
     airtableProjects,
-  ] = await Promise.all([
-    fetchAirtableTable('Leads'),
-    fetchAirtableTable('Invoices'),
-    fetchAirtableTable('Products'),
-    fetchAirtableTable('Employees'),
-    fetchAirtableTable('Projects'),
-  ])
+  ] = includeShared
+    ? await Promise.all([
+        fetchAirtableTable('Leads'),
+        fetchAirtableTable('Invoices'),
+        fetchAirtableTable('Products'),
+        fetchAirtableTable('Employees'),
+        fetchAirtableTable('Projects'),
+      ])
+    : ([[], [], [], [], []] as any[][])
 
   // Also fetch from UserData if userId provided
   let userLeads: any[] = []
@@ -157,13 +160,22 @@ function getFallback(ctx: any): string {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { message, isOnboarding, userName, company, businessType, userId } = body
+    const { message, isOnboarding, userName, company, businessType } = body
+
+    // The user comes from the verified session, never from the request body.
+    const user = await getAuthedUser(req)
+    if (!user && !isOnboarding) {
+      return NextResponse.json({ reply: 'Please sign in again to use the AI assistant.' }, { status: 401 })
+    }
+    const userId = user && isSafeId(user.id) ? user.id : undefined
+    // Shared (non-per-user) tables are only included for the admin account.
+    const includeShared = isAdminUser(user)
 
     const apiKey = process.env.GROQ_API_KEY
 
     let context: any = null
     try {
-      context = await buildContext(userId)
+      context = await buildContext(userId, includeShared)
     } catch (e) {
       console.error('Context build error:', e)
     }
@@ -182,7 +194,7 @@ Be energetic and encouraging. Use 1-2 emojis. Max 60 words.`
     } else {
       systemPrompt = `You are Samyojak AI — a smart business intelligence assistant for an adaptive ERP.
 
-You have access to the user's real business data (from both Airtable and imported CSVs):
+You have access to the user's real business data (from the user's workspace):
 
 LEADS & CRM:
 - Total leads: ${context?.leads.total || 0}
@@ -208,7 +220,7 @@ PROJECTS:
 - Total: ${context?.projects.total || 0}
 - In progress: ${context?.projects.inProgress || 0}
 
-IMPORTED CSV DATA:
+RECORDS BY SOURCE:
 - CRM rows imported: ${context?.importedData?.crmRows || 0}
 - Invoice rows imported: ${context?.importedData?.invoiceRows || 0}
 - Inventory rows imported: ${context?.importedData?.inventoryRows || 0}

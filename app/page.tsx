@@ -703,7 +703,7 @@ export default function Home() {
             Built on enterprise-grade infrastructure
           </p>
           <div className="flex flex-wrap justify-center gap-10 items-center">
-            {['▲ Vercel · Hosting', '⚡ Supabase · Auth', '🤖 Groq AI · Intelligence', '📊 Airtable · Data', '💳 Dodo · Payments'].map(item => (
+            {['▲ Vercel · Hosting', '⚡ Supabase · Auth', '🤖 Groq AI · Intelligence', '📊 Cloud · Data', '💳 Dodo · Payments'].map(item => (
               <div key={item} className="text-center">
                 <p className="font-black text-gray-900 text-sm" style={{ fontFamily: 'Outfit' }}>
                   {item.split(' · ')[0]}

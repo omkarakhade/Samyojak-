@@ -43,7 +43,7 @@ const FAQS = [
   { q: 'How does geo-based pricing work?', a: 'We detect your timezone to determine your region and apply the appropriate pricing. India users get India pricing, Western users get Western pricing, others get Global pricing.' },
   { q: 'Do you charge per user?', a: 'No. All plans are flat-rate. One price for your whole team regardless of how many people use it.' },
   { q: 'What payment methods are accepted?', a: 'Cards (Visa, Mastercard), UPI for India, and other local payment methods via Dodo Payments.' },
-  { q: 'Is my data secure?', a: 'Yes. All data is encrypted in transit via SSL. Authentication is powered by Supabase — enterprise grade. Your data is stored in Airtable and never shared with third parties.' },
+  { q: 'Is my data secure?', a: 'Yes. All data is encrypted in transit via SSL. Authentication is powered by Supabase — enterprise grade. Your data is stored in a secure cloud database and never shared with third parties.' },
 ]
 
 export default function Pricing() {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthedUser, isSafeId, isSafeModule, userOwnsRecord } from '@/lib/serverAuth'
 
 const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
 const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
@@ -33,13 +34,16 @@ async function fetchAllRecords(userId: string, module: string): Promise<any[]> {
 }
 
 export async function GET(req: NextRequest) {
+  const user = await getAuthedUser(req)
+  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
+  const userId = user.id // verified session, not the query string
+
   const { searchParams } = new URL(req.url)
-  const userId = searchParams.get('userId')
   const module = searchParams.get('module')
   const importId = searchParams.get('importId')
 
-  if (!userId || !module) {
-    return NextResponse.json({ error: 'userId and module required' }, { status: 400 })
+  if (!isSafeModule(module)) {
+    return NextResponse.json({ error: 'module required' }, { status: 400 })
   }
 
   try {
@@ -108,14 +112,20 @@ export async function GET(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const user = await getAuthedUser(req)
+  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
+  const userId = user.id
+
   const { searchParams } = new URL(req.url)
   const recordId = searchParams.get('id')
   const importId = searchParams.get('importId')
-  const userId = searchParams.get('userId')
   const module = searchParams.get('module')
 
-  // Delete single record
+  // Delete single record (only if it belongs to this user)
   if (recordId) {
+    if (!(await userOwnsRecord(userId, recordId))) {
+      return NextResponse.json({ error: 'Record not found.' }, { status: 404 })
+    }
     try {
       const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData/${recordId}`, {
         method: 'DELETE',
@@ -128,7 +138,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   // Delete entire import batch
-  if (importId && userId && module) {
+  if (importId && isSafeModule(module) && /^[A-Za-z0-9_-]{1,80}$/.test(importId)) {
     try {
       const all = await fetchAllRecords(userId, module)
       const toDelete = all.filter((r: any) => {

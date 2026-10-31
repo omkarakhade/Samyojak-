@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthedUser, isSafeModule } from '@/lib/serverAuth'
 
 const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
 const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, module, record } = await req.json()
+    const user = await getAuthedUser(req)
+    if (!user) {
+      return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
+    }
+    const userId = user.id // from the verified session, never from the body
 
-    if (!userId || !module || !record) {
-      return NextResponse.json({ error: 'userId, module, and record are required' }, { status: 400 })
+    const { module, record } = await req.json()
+
+    if (!isSafeModule(module) || !record || typeof record !== 'object' || Array.isArray(record)) {
+      return NextResponse.json({ error: 'module and record are required' }, { status: 400 })
     }
 
     const importId = `manual_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
@@ -51,6 +58,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, id: data.id })
   } catch (error: any) {
     console.error('add-record error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Could not save the record.' }, { status: 500 })
   }
 }

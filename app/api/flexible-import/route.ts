@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthedUser, isSafeModule } from '@/lib/serverAuth'
 
 const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
 const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
@@ -75,13 +76,16 @@ function parseCSVText(text: string): { headers: string[]; rows: Record<string, s
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getAuthedUser(req)
+    if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
+    const userId = user.id
+
     const formData = await req.formData()
     const file = formData.get('file') as File
-    const userId = formData.get('userId') as string
     const module = formData.get('module') as string
     const source = formData.get('source') as string || 'csv_import'
 
-    if (!file || !userId || !module) {
+    if (!file || !isSafeModule(module)) {
       return NextResponse.json({ error: 'Missing file, userId, or module' }, { status: 400 })
     }
 
