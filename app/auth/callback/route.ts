@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createSupabaseServerClient } from '@/lib/supabaseServer'
 
 const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
 
@@ -8,10 +8,8 @@ export async function GET(req: NextRequest) {
   const code = searchParams.get('code')
 
   if (code) {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    // Server client reads the PKCE verifier cookie and writes session cookies
+    const supabase = await createSupabaseServerClient()
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
