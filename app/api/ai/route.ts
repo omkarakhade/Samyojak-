@@ -1,57 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthedUser, isAdminUser, isSafeId } from '@/lib/serverAuth'
+import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
+import { listRecords } from '@/lib/recordsDb'
 
-const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
-const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
 const GROQ_MODEL = 'llama-3.1-8b-instant'
-
-async function fetchAirtableTable(table: string, max = 50) {
-  try {
-    const res = await fetch(
-      `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}?maxRecords=${max}`,
-      { headers: { Authorization: `Bearer ${TOKEN}` } }
-    )
-    if (!res.ok) return []
-    const d = await res.json()
-    return d.records || []
-  } catch { return [] }
-}
 
 async function fetchUserData(userId: string, module: string) {
   try {
-    const formula = `AND({User ID}="${userId}",{Module}="${module}")`
-    const res = await fetch(
-      `https://api.airtable.com/v0/${BASE}/UserData?filterByFormula=${encodeURIComponent(formula)}&maxRecords=200`,
-      { headers: { Authorization: `Bearer ${TOKEN}` } }
-    )
-    if (!res.ok) return []
-    const d = await res.json()
-    return (d.records || []).map((r: any) => {
-      try {
-        const parsed = JSON.parse(r.fields?.['Record Data'] || '{}')
-        const { _meta, ...data } = parsed
-        return data
-      } catch { return {} }
-    })
+    const rows = await listRecords(userId, module)
+    return rows.slice(0, 200).map(r => r.data)
   } catch { return [] }
 }
 
-async function buildContext(userId?: string, includeShared = false) {
+async function buildContext(userId?: string) {
   const [
     airtableLeads,
     airtableInvoices,
     airtableProducts,
     airtableEmployees,
     airtableProjects,
-  ] = includeShared
-    ? await Promise.all([
-        fetchAirtableTable('Leads'),
-        fetchAirtableTable('Invoices'),
-        fetchAirtableTable('Products'),
-        fetchAirtableTable('Employees'),
-        fetchAirtableTable('Projects'),
-      ])
-    : ([[], [], [], [], []] as any[][])
+  ] = [[], [], [], [], []] as any[][] // legacy shared tables are no longer read
 
   // Also fetch from UserData if userId provided
   let userLeads: any[] = []
@@ -168,14 +135,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ reply: 'Please sign in again to use the AI assistant.' }, { status: 401 })
     }
     const userId = user && isSafeId(user.id) ? user.id : undefined
-    // Shared (non-per-user) tables are only included for the admin account.
-    const includeShared = isAdminUser(user)
 
     const apiKey = process.env.GROQ_API_KEY
 
     let context: any = null
     try {
-      context = await buildContext(userId, includeShared)
+      context = await buildContext(userId)
     } catch (e) {
       console.error('Context build error:', e)
     }

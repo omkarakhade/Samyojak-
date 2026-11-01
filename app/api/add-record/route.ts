@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeModule } from '@/lib/serverAuth'
-
-const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
-const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
+import { insertRecords } from '@/lib/recordsDb'
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,44 +16,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'module and record are required' }, { status: 400 })
     }
 
-    const importId = `manual_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
-
-    const payload = {
-      fields: {
-        'User ID': userId,
-        'Module': module,
-        'Record Data': JSON.stringify({
-          _meta: {
-            importId,
-            rowIndex: 0,
-            source: 'manual_entry',
-            importedAt: new Date().toISOString(),
-            originalHeaders: Object.keys(record),
-            totalColumns: Object.keys(record).length,
-          },
-          ...record,
-        }),
-        'Source': 'manual_entry',
-        'Created At': new Date().toISOString().split('T')[0],
-      }
+    // Keep keys/values tidy: no internal keys, bounded size
+    const data: Record<string, any> = {}
+    for (const [k, v] of Object.entries(record)) {
+      const key = String(k).trim().slice(0, 60)
+      if (!key || key.startsWith('_')) continue
+      if (typeof v === 'number' || typeof v === 'boolean') data[key] = v
+      else if (typeof v === 'string') data[key] = v.slice(0, 2000)
+      if (Object.keys(data).length >= 40) break
+    }
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: 'The record is empty.' }, { status: 400 })
     }
 
-    const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${TOKEN}`,
-        'Content-Type': 'application/json',
+    await insertRecords(userId, [
+      {
+        module,
+        data,
+        source: 'manual_entry',
+        batchId: null, // grouped together under "Added by hand"
+        meta: {
+          source: 'manual_entry',
+          importedAt: new Date().toISOString(),
+          originalHeaders: Object.keys(data),
+          totalColumns: Object.keys(data).length,
+        },
       },
-      body: JSON.stringify(payload),
-    })
+    ])
 
-    if (!res.ok) {
-      const err = await res.text()
-      throw new Error(`Airtable error ${res.status}: ${err}`)
-    }
-
-    const data = await res.json()
-    return NextResponse.json({ success: true, id: data.id })
+    return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error('add-record error:', error)
     return NextResponse.json({ error: 'Could not save the record.' }, { status: 500 })

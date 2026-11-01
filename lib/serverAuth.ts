@@ -48,25 +48,14 @@ export function isSafeModule(m: unknown): m is string {
   return typeof m === 'string' && /^[A-Za-z0-9 _-]{1,40}$/.test(m)
 }
 
-/** Airtable record ids look like recXXXXXXXXXXXXXX */
+/** Record ids are UUIDs */
 export function isSafeRecordId(id: unknown): id is string {
-  return typeof id === 'string' && /^rec[A-Za-z0-9]{10,20}$/.test(id)
+  return typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
 }
 
-/** True only if the UserData record exists and belongs to this user. */
+/** True only if the record exists and belongs to this user. */
 export async function userOwnsRecord(userId: string, recordId: string): Promise<boolean> {
   if (!isSafeId(userId) || !isSafeRecordId(recordId)) return false
-  const token = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
-  const base = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
-  try {
-    const res = await fetch(
-      `https://api.airtable.com/v0/${base}/UserData/${recordId}?fields%5B%5D=User%20ID`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    if (!res.ok) return false
-    const data = await res.json()
-    return data.fields?.['User ID'] === userId
-  } catch {
-    return false
-  }
+  const { getOwnedRecord } = await import('@/lib/recordsDb')
+  return !!(await getOwnedRecord(userId, recordId))
 }

@@ -1,8 +1,14 @@
 // Samyojak AI agent: planning helpers + safe data operations.
 // Every function here takes a userId that came from a VERIFIED Supabase session.
 
-const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
-const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
+import {
+  UUID_RE,
+  listRecords,
+  insertRecords,
+  getOwnedRecord,
+  updateRecord,
+  deleteBatch,
+} from '@/lib/recordsDb'
 
 export const AGENT_MODULES = [
   'CRM',
@@ -91,7 +97,7 @@ export function sanitizeActions(raw: any): AgentAction[] {
 
     if (item.type === 'update') {
       if (totalUpdates >= MAX_UPDATES_PER_REQUEST) continue
-      if (typeof item.recordId !== 'string' || !/^rec[A-Za-z0-9]{10,20}$/.test(item.recordId)) continue
+      if (typeof item.recordId !== 'string' || !UUID_RE.test(item.recordId)) continue
       const changes = sanitizeRecord(item.changes)
       if (!changes) continue
       const before = sanitizeRecord(item.before) || undefined
@@ -124,15 +130,7 @@ export function sanitizeActions(raw: any): AgentAction[] {
   return actions
 }
 
-// ───────────────────────── Airtable helpers ─────────────────────────
-
-function headers() {
-  return { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }
-}
-
-function assertSafeUserId(userId: string) {
-  if (!/^[A-Za-z0-9-]{8,64}$/.test(userId)) throw new Error('Invalid user id')
-}
+// ───────────────────────── Data helpers ─────────────────────────
 
 interface StoredRecord {
   id: string
@@ -141,58 +139,16 @@ interface StoredRecord {
   meta: Record<string, any>
 }
 
-function parseStored(r: any): StoredRecord {
-  let parsed: Record<string, any> = {}
-  try {
-    parsed = JSON.parse(r.fields?.['Record Data'] || '{}')
-  } catch {
-    parsed = {}
-  }
-  const { _meta, ...data } = parsed
-  return { id: r.id, module: r.fields?.Module || '', data, meta: _meta || {} }
-}
-
 export async function listUserRecords(userId: string, module: AgentModule): Promise<StoredRecord[]> {
-  assertSafeUserId(userId)
-  const formula = `AND({User ID}="${userId}",{Module}="${module}")`
-  const out: StoredRecord[] = []
-  let offset: string | undefined
-  do {
-    const url =
-      `https://api.airtable.com/v0/${BASE}/UserData?filterByFormula=${encodeURIComponent(formula)}` +
-      `&pageSize=100${offset ? `&offset=${offset}` : ''}`
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` } })
-    if (!res.ok) throw new Error(`Data error ${res.status}`)
-    const data = await res.json()
-    for (const r of data.records || []) out.push(parseStored(r))
-    offset = data.offset
-  } while (offset && out.length < 1000)
-  return out
+  const rows = await listRecords(userId, module)
+  return rows.map(r => ({ id: r.id, module: r.module, data: r.data, meta: r.meta }))
 }
 
 /** Fetch one record and make sure it belongs to this user. Returns null if not theirs. */
-async function getOwnedRecord(userId: string, recordId: string) {
-  assertSafeUserId(userId)
-  if (!/^rec[A-Za-z0-9]{10,20}$/.test(recordId)) return null
-  const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData/${recordId}`, {
-    headers: { Authorization: `Bearer ${TOKEN}` },
-  })
-  if (!res.ok) return null
-  const raw = await res.json()
-  if (raw.fields?.['User ID'] !== userId) return null
-  return { raw, stored: parseStored(raw) }
-}
-
-async function writeRecordData(recordId: string, data: Record<string, any>, meta: Record<string, any>) {
-  const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData/${recordId}`, {
-    method: 'PATCH',
-    headers: headers(),
-    body: JSON.stringify({ fields: { 'Record Data': JSON.stringify({ _meta: meta, ...data }) } }),
-  })
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Save error ${res.status}: ${err}`)
-  }
+async function getOwned(userId: string, recordId: string) {
+  const r = await getOwnedRecord(userId, recordId)
+  if (!r) return null
+  return { stored: { id: r.id, module: r.module, data: r.data, meta: r.meta } as StoredRecord }
 }
 
 // ───────────────────────── Finding records ─────────────────────────
@@ -258,87 +214,37 @@ export async function findRecords(
 // ───────────────────────── Writing: add ─────────────────────────
 
 export async function createAgentRecords(userId: string, actions: AddAction[]) {
-  assertSafeUserId(userId)
   const batchId = `agent_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
   const importedAt = new Date().toISOString()
-  const today = importedAt.split('T')[0]
 
-  const rows: { fields: Record<string, any> }[] = []
+  const items = []
   let rowIndex = 0
-
   for (const action of actions) {
     for (const record of action.records) {
-      rows.push({
-        fields: {
-          'User ID': userId,
-          Module: action.module,
-          'Record Data': JSON.stringify({
-            _meta: {
-              importId: batchId,
-              rowIndex: rowIndex++,
-              source: 'agent_entry',
-              importedAt,
-              originalHeaders: Object.keys(record),
-              totalColumns: Object.keys(record).length,
-            },
-            ...record,
-          }),
-          Source: 'agent_entry',
-          'Created At': today,
+      items.push({
+        module: action.module,
+        data: record as Record<string, any>,
+        source: 'agent_entry',
+        batchId,
+        meta: {
+          importId: batchId,
+          rowIndex: rowIndex++,
+          source: 'agent_entry',
+          importedAt,
+          originalHeaders: Object.keys(record),
+          totalColumns: Object.keys(record).length,
         },
       })
     }
   }
 
-  let created = 0
-  for (let i = 0; i < rows.length; i += 10) {
-    const chunk = rows.slice(i, i + 10)
-    const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData`, {
-      method: 'POST',
-      headers: headers(),
-      body: JSON.stringify({ records: chunk }),
-    })
-    if (!res.ok) {
-      const err = await res.text()
-      throw new Error(`Save error ${res.status}: ${err}`)
-    }
-    created += chunk.length
-  }
-
+  const created = await insertRecords(userId, items)
   return { batchId, created }
 }
 
 export async function undoAgentBatch(userId: string, batchId: string) {
   if (!/^agent_\d+_[a-z0-9]+$/.test(batchId)) throw new Error('Invalid batch id')
-  assertSafeUserId(userId)
-
-  const formula = `AND({User ID}="${userId}",FIND("${batchId}",{Record Data}))`
-  const ids: string[] = []
-  let offset: string | undefined
-
-  do {
-    const url =
-      `https://api.airtable.com/v0/${BASE}/UserData?filterByFormula=${encodeURIComponent(formula)}` +
-      `&fields%5B%5D=User%20ID&pageSize=100${offset ? `&offset=${offset}` : ''}`
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` } })
-    if (!res.ok) throw new Error(`Data error ${res.status}`)
-    const data = await res.json()
-    for (const r of data.records || []) ids.push(r.id)
-    offset = data.offset
-  } while (offset)
-
-  let deleted = 0
-  for (let i = 0; i < ids.length; i += 10) {
-    const chunk = ids.slice(i, i + 10)
-    const query = chunk.map(id => `records[]=${id}`).join('&')
-    const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData?${query}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${TOKEN}` },
-    })
-    if (!res.ok) throw new Error(`Delete error ${res.status}`)
-    deleted += chunk.length
-  }
-
+  const deleted = await deleteBatch(userId, batchId)
   return { deleted }
 }
 
@@ -351,7 +257,7 @@ export async function applyAgentUpdates(userId: string, updates: UpdateAction[])
   const skipped: string[] = []
 
   for (const u of updates) {
-    const owned = await getOwnedRecord(userId, u.recordId)
+    const owned = await getOwned(userId, u.recordId)
     if (!owned || owned.stored.module !== u.module) {
       skipped.push(u.label)
       continue
@@ -363,7 +269,7 @@ export async function applyAgentUpdates(userId: string, updates: UpdateAction[])
     }
     const nextData = { ...data, ...u.changes }
     const nextMeta = { ...meta, lastEditedAt: new Date().toISOString(), lastEditedBy: 'agent' }
-    await writeRecordData(u.recordId, nextData, nextMeta)
+    await updateRecord(userId, u.recordId, nextData, nextMeta)
     reverts.push({ recordId: u.recordId, previous })
     updated++
   }
@@ -375,7 +281,7 @@ export function sanitizeReverts(raw: any): Revert[] {
   if (!Array.isArray(raw)) return []
   const out: Revert[] = []
   for (const r of raw.slice(0, MAX_UPDATES_PER_REQUEST)) {
-    if (!r || typeof r.recordId !== 'string' || !/^rec[A-Za-z0-9]{10,20}$/.test(r.recordId)) continue
+    if (!r || typeof r.recordId !== 'string' || !UUID_RE.test(r.recordId)) continue
     if (!r.previous || typeof r.previous !== 'object') continue
     const previous: Revert['previous'] = {}
     for (const [k, v] of Object.entries(r.previous)) {
@@ -393,7 +299,7 @@ export function sanitizeReverts(raw: any): Revert[] {
 export async function undoAgentUpdates(userId: string, reverts: Revert[]) {
   let restored = 0
   for (const r of reverts) {
-    const owned = await getOwnedRecord(userId, r.recordId)
+    const owned = await getOwned(userId, r.recordId)
     if (!owned) continue
     const data = { ...owned.stored.data }
     for (const [key, value] of Object.entries(r.previous)) {
@@ -401,7 +307,7 @@ export async function undoAgentUpdates(userId: string, reverts: Revert[]) {
       else data[key] = value
     }
     const meta = { ...owned.stored.meta, lastEditedAt: new Date().toISOString(), lastEditedBy: 'agent_undo' }
-    await writeRecordData(r.recordId, data, meta)
+    await updateRecord(userId, r.recordId, data, meta)
     restored++
   }
   return { restored }

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeModule } from '@/lib/serverAuth'
+import { insertRecords, type NewRecord } from '@/lib/recordsDb'
 
-const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
-const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
 
 function parseCSV(text: string): { headers: string[]; rows: Record<string, string>[] } {
   const lines = text
@@ -47,58 +46,6 @@ function parseCSV(text: string): { headers: string[]; rows: Record<string, strin
   return { headers, rows }
 }
 
-async function storeOneRecord(
-  userId: string,
-  module: string,
-  source: string,
-  headers: string[],
-  rowData: Record<string, string>,
-  importId: string,
-  rowIndex: number
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const recordPayload = {
-      _meta: {
-        importId,
-        rowIndex,
-        source,
-        importedAt: new Date().toISOString(),
-        originalHeaders: headers,
-        totalColumns: headers.length,
-      },
-      ...rowData,
-    }
-
-    const body = {
-      fields: {
-        'User ID': userId,
-        'Module': module,
-        'Record Data': JSON.stringify(recordPayload),
-        'Source': source,
-        'Created At': new Date().toISOString().split('T')[0],
-      }
-    }
-
-    const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    })
-
-    if (!res.ok) {
-      const errText = await res.text()
-      return { success: false, error: `Row ${rowIndex + 1}: Airtable ${res.status} — ${errText}` }
-    }
-
-    return { success: true }
-  } catch (e: any) {
-    return { success: false, error: `Row ${rowIndex + 1}: ${e.message}` }
-  }
-}
-
 export async function POST(req: NextRequest) {
   try {
     const user = await getAuthedUser(req)
@@ -141,24 +88,36 @@ export async function POST(req: NextRequest) {
 
     const importId = `${module}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
 
+    if (rows.length > 5000) {
+      return NextResponse.json({ error: 'Please import at most 5,000 rows at a time.' }, { status: 400 })
+    }
+
+    const importedAt = new Date().toISOString()
+    const items: NewRecord[] = rows.map((row, i) => ({
+      module,
+      data: row,
+      source,
+      batchId: importId,
+      meta: {
+        importId,
+        rowIndex: i,
+        source,
+        importedAt,
+        originalHeaders: headers,
+        totalColumns: headers.length,
+      },
+    }))
+
     let successCount = 0
     let failCount = 0
     const errors: string[] = []
 
-    // Process rows with Airtable rate limiting (max 5 req/sec on free plan)
-    for (let i = 0; i < rows.length; i++) {
-      const result = await storeOneRecord(userId, module, source, headers, rows[i], importId, i)
-
-      if (result.success) {
-        successCount++
-      } else {
-        failCount++
-        if (result.error) errors.push(result.error)
-        console.error('Import row error:', result.error)
-      }
-
-      // Rate limit: 1 request per 210ms = ~4.7 req/sec (safe under 5/sec limit)
-      await new Promise(r => setTimeout(r, 210))
+    try {
+      successCount = await insertRecords(userId, items)
+    } catch (e: any) {
+      failCount = rows.length
+      errors.push('Could not save the rows. Nothing was imported.')
+      console.error('Import error:', e)
     }
 
     return NextResponse.json({

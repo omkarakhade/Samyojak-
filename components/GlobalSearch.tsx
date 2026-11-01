@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { airtable } from '@/lib/airtable'
 import { Search, X, Users, FileText, Package } from 'lucide-react'
 
 export default function GlobalSearch() {
@@ -31,11 +30,15 @@ export default function GlobalSearch() {
     const timer = setTimeout(async () => {
       setLoading(true)
       try {
-        const [l, i, p] = await Promise.all([
-          airtable.get('Leads'),
-          airtable.get('Invoices'),
-          airtable.get('Products'),
-        ])
+        // Search only the signed-in user's own records
+        const load = async (module: string) => {
+          const res = await fetch(`/api/universal-data?module=${module}`)
+          const d = await res.json()
+          return {
+            records: (d.records || []).map((r: any) => ({ id: r.id, fields: r.data || {} })),
+          }
+        }
+        const [l, i, p] = await Promise.all([load('CRM'), load('Invoices'), load('Inventory')])
         const q = query.toLowerCase()
         const all = [
           ...(l.records || [])
