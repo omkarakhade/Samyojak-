@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isAdminUser } from '@/lib/serverAuth'
 
-const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
-const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
+const TOKEN = (process.env.AIRTABLE_TOKEN || process.env.NEXT_PUBLIC_AIRTABLE_TOKEN) || ''
+const BASE = (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID) || ''
 const GROQ_KEY = process.env.GROQ_API_KEY || ''
 const DODO_KEY = process.env.DODO_PAYMENTS_API_KEY || ''
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ''

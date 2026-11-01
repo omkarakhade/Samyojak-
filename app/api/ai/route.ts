@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
 
-const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
-const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
+const TOKEN = (process.env.AIRTABLE_TOKEN || process.env.NEXT_PUBLIC_AIRTABLE_TOKEN) || ''
+const BASE = (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID) || ''
 const GROQ_MODEL = 'llama-3.1-8b-instant'
 
 // One Airtable request for all five modules (instead of ten requests per message)

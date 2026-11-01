@@ -5,8 +5,8 @@ export async function GET(req: NextRequest) {
   if (!isAdminUser(await getAuthedUser(req))) {
     return NextResponse.json({ error: 'Not allowed.' }, { status: 403 })
   }
-  const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
-  const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
+  const TOKEN = (process.env.AIRTABLE_TOKEN || process.env.NEXT_PUBLIC_AIRTABLE_TOKEN) || ''
+  const BASE = (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID) || ''
 
   const results: any = {
     config: {

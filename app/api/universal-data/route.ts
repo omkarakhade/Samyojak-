@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId, isSafeModule, userOwnsRecord } from '@/lib/serverAuth'
 
-const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
-const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
+const TOKEN = (process.env.AIRTABLE_TOKEN || process.env.NEXT_PUBLIC_AIRTABLE_TOKEN) || ''
+const BASE = (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID) || ''
 
 async function fetchAllRecords(userId: string, modules: string[]): Promise<any[]> {
   const all: any[] = []

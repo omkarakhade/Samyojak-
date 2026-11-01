@@ -1,8 +1,8 @@
 // Samyojak AI agent: planning helpers + safe data operations.
 // Every function here takes a userId that came from a VERIFIED Supabase session.
 
-const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
-const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
+const TOKEN = (process.env.AIRTABLE_TOKEN || process.env.NEXT_PUBLIC_AIRTABLE_TOKEN) || ''
+const BASE = (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID) || ''
 
 export const AGENT_MODULES = [
   'CRM',
