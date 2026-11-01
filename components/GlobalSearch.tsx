@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { airtable } from '@/lib/airtable'
+import { supabase } from '@/lib/supabase'
 import { Search, X, Users, FileText, Package } from 'lucide-react'
 
 export default function GlobalSearch() {
@@ -31,45 +31,23 @@ export default function GlobalSearch() {
     const timer = setTimeout(async () => {
       setLoading(true)
       try {
-        const [l, i, p] = await Promise.all([
-          airtable.get('Leads'),
-          airtable.get('Invoices'),
-          airtable.get('Products'),
-        ])
+        const { data: sess } = await supabase.auth.getSession()
+        const token = sess.session?.access_token
+        const res = await fetch('/api/universal-data?modules=CRM,Invoices,Inventory', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        if (!res.ok) throw new Error('search failed')
+        const mods = (await res.json()).modules || {}
         const q = query.toLowerCase()
+        const has = (v: any) => String(v ?? '').toLowerCase().includes(q)
+        const pick = (module: string, type: string, icon: any, path: string, keys: string[]) =>
+          (mods[module]?.records || [])
+            .filter((r: any) => keys.some(k => has(r.data?.[k])))
+            .map((r: any) => ({ id: r.id, fields: r.data, type, icon, path }))
         const all = [
-          ...(l.records || [])
-            .filter((r: any) =>
-              r.fields?.Name?.toLowerCase().includes(q) ||
-              r.fields?.Company?.toLowerCase().includes(q)
-            )
-            .map((r: any) => ({
-              ...r,
-              type: 'Lead',
-              icon: Users,
-              path: '/crm',
-            })),
-          ...(i.records || [])
-            .filter((r: any) =>
-              r.fields?.['Client Name']?.toLowerCase().includes(q) ||
-              r.fields?.['Invoice No']?.toLowerCase().includes(q)
-            )
-            .map((r: any) => ({
-              ...r,
-              type: 'Invoice',
-              icon: FileText,
-              path: '/invoices',
-            })),
-          ...(p.records || [])
-            .filter((r: any) =>
-              r.fields?.['Item Name']?.toLowerCase().includes(q)
-            )
-            .map((r: any) => ({
-              ...r,
-              type: 'Product',
-              icon: Package,
-              path: '/inventory',
-            })),
+          ...pick('CRM', 'Lead', Users, '/crm', ['Name', 'Company']),
+          ...pick('Invoices', 'Invoice', FileText, '/invoices', ['Client Name', 'Invoice No']),
+          ...pick('Inventory', 'Product', Package, '/inventory', ['Item Name', 'Product Name', 'Name']),
         ].slice(0, 8)
         setResults(all)
       } catch (e) {

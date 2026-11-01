@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import { supabase } from '@/lib/supabase'
-import { airtable } from '@/lib/airtable'
 import { Plus, AlertCircle, RefreshCw, Check, Mail, MessageSquare, Zap } from 'lucide-react'
 import UniversalDataView from '@/components/UniversalDataView'
 
@@ -18,6 +17,12 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   'In Progress': { bg: '#FEF3C7', color: '#92400E' },
   Resolved: { bg: '#D1FAE5', color: '#065F46' },
   Closed: { bg: '#F1F5F9', color: '#64748B' },
+}
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+  return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
 const CORRECT_EMAIL = 'hello.samyojak@gmail.com'
@@ -52,7 +57,9 @@ export default function Support() {
     setLoading(true)
     setError('')
     try {
-      const d = await airtable.get('Support_Tickets')
+      const res = await fetch('/api/support', { headers: await authHeaders() })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || 'Request failed')
       setTickets(d.records || [])
     } catch (e: any) {
       setError('Could not load tickets: ' + e.message)
@@ -70,17 +77,18 @@ export default function Support() {
     setError('')
     setSuccess('')
     try {
-      const fields: Record<string, unknown> = {
-        Subject: form.subject.trim(),
-        Description: form.description.trim(),
-        Priority: form.priority,
-        Category: form.category,
-        Status: 'Open',
-        'User Email': userEmail,
-        'User ID': userId,
-        'Created At': new Date().toISOString().split('T')[0],
-      }
-      await airtable.create('Support_Tickets', fields)
+      const res = await fetch('/api/support', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({
+          subject: form.subject,
+          description: form.description,
+          priority: form.priority,
+          category: form.category,
+        }),
+      })
+      const out = await res.json()
+      if (!res.ok) throw new Error(out.error || 'Request failed')
       setSuccess('Ticket submitted successfully! We will respond to ' + userEmail + ' within 24 hours.')
       setShowModal(false)
       setForm({ subject: '', description: '', priority: 'Medium', category: 'General' })

@@ -1,72 +1,112 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
 
-export async function POST(req: NextRequest) {
+const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
+const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
+const TABLE_URL = `https://api.airtable.com/v0/${BASE}/Support_Tickets`
+const SUPPORT_EMAIL = 'hello.samyojak@gmail.com'
+
+const PRIORITIES = ['Low', 'Medium', 'High', 'Emergency']
+const CATEGORIES = [
+  'General', 'Technical Issue', 'Billing', 'Import / Export',
+  'AI Assistant', 'Account Access', 'Feature Request', 'Bug Report',
+]
+
+const esc = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+/** GET: the signed-in user's own tickets only. */
+export async function GET(req: NextRequest) {
+  const user = await getAuthedUser(req)
+  if (!user || !isSafeId(user.id)) {
+    return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
+  }
   try {
-    const { subject, category, priority, message, userEmail, userName } = await req.json()
+    const records: any[] = []
+    let offset: string | undefined
+    do {
+      const params = new URLSearchParams()
+      params.set('filterByFormula', `{User ID}="${user.id}"`)
+      params.set('pageSize', '100')
+      if (offset) params.set('offset', offset)
+      const res = await fetch(`${TABLE_URL}?${params}`, {
+        headers: { Authorization: `Bearer ${TOKEN}` },
+      })
+      if (!res.ok) throw new Error(`Airtable ${res.status}`)
+      const data = await res.json()
+      records.push(...(data.records || []))
+      offset = data.offset
+    } while (offset)
+    return NextResponse.json({ records })
+  } catch (e: any) {
+    console.error('support GET error:', e.message)
+    return NextResponse.json({ error: 'Could not load tickets.' }, { status: 500 })
+  }
+}
 
-    const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
-    const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
+/** POST: create a ticket. Identity comes from the verified session, not the body. */
+export async function POST(req: NextRequest) {
+  const user = await getAuthedUser(req)
+  if (!user || !isSafeId(user.id)) {
+    return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
+  }
 
-    // Save to Airtable
-    const airtableRes = await fetch(`https://api.airtable.com/v0/${BASE}/Support_Tickets`, {
+  try {
+    const body = await req.json()
+    const subject = String(body.subject || '').trim().slice(0, 200)
+    const description = String(body.description || '').trim().slice(0, 5000)
+    const priority = PRIORITIES.includes(body.priority) ? body.priority : 'Medium'
+    const category = CATEGORIES.includes(body.category) ? body.category : 'General'
+    const email = user.email || ''
+
+    if (!subject) return NextResponse.json({ error: 'Subject is required' }, { status: 400 })
+    if (!description) return NextResponse.json({ error: 'Please describe your issue' }, { status: 400 })
+
+    const res = await fetch(TABLE_URL, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${TOKEN}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         fields: {
           Subject: subject,
-          Category: category,
+          Description: description,
           Priority: priority,
-          Message: message,
-          'User Email': userEmail,
-          'User Name': userName,
+          Category: category,
           Status: 'Open',
-          'Created At': new Date().toISOString(),
+          'User Email': email,
+          'User ID': user.id,
+          'Created At': new Date().toISOString().split('T')[0],
         },
       }),
     })
+    if (!res.ok) throw new Error(`Airtable ${res.status}`)
+    const saved = await res.json()
 
-    const airtableData = await airtableRes.json()
-    console.log('Ticket saved:', airtableData.id)
-
-    // Send email notification via Resend
+    // Optional email notification (only if RESEND_API_KEY is set)
     const RESEND_KEY = process.env.RESEND_API_KEY
     if (RESEND_KEY) {
-      await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${RESEND_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'Samyojak Support <onboarding@resend.dev>',
-          to: ['samyojak@gmail.com'],
-          subject: `[${priority}] New Support Ticket: ${subject}`,
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #8B5CF6;">New Support Ticket</h2>
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 8px; font-weight: bold; color: #64748B;">From</td><td style="padding: 8px;">${userName} (${userEmail})</td></tr>
-                <tr><td style="padding: 8px; font-weight: bold; color: #64748B;">Category</td><td style="padding: 8px;">${category}</td></tr>
-                <tr><td style="padding: 8px; font-weight: bold; color: #64748B;">Priority</td><td style="padding: 8px; color: ${priority === 'High' ? '#EF4444' : priority === 'Medium' ? '#FBBF24' : '#34D399'}; font-weight: bold;">${priority}</td></tr>
-                <tr><td style="padding: 8px; font-weight: bold; color: #64748B;">Subject</td><td style="padding: 8px;">${subject}</td></tr>
-              </table>
-              <div style="margin-top: 16px; padding: 16px; background: #F8FAFC; border-radius: 8px; border-left: 4px solid #8B5CF6;">
-                <p style="margin: 0; color: #1E293B;">${message}</p>
-              </div>
-              <p style="margin-top: 16px; color: #94A3B8; font-size: 12px;">Reply to this email or go to your Samyojak admin panel to respond.</p>
-            </div>
-          `,
-        }),
-      })
+      try {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: 'Samyojak Support <onboarding@resend.dev>',
+            to: [SUPPORT_EMAIL],
+            subject: `[${priority}] New Support Ticket: ${subject}`,
+            html: `<div style="font-family:sans-serif;max-width:600px">
+              <h2 style="color:#8B5CF6">New Support Ticket</h2>
+              <p><b>From:</b> ${esc(email)}<br><b>Category:</b> ${esc(category)}<br><b>Priority:</b> ${esc(priority)}<br><b>Subject:</b> ${esc(subject)}</p>
+              <div style="padding:16px;background:#F8FAFC;border-left:4px solid #8B5CF6">${esc(description).replace(/\n/g, '<br>')}</div>
+            </div>`,
+          }),
+        })
+      } catch (e: any) {
+        console.error('support email failed:', e.message)
+      }
     }
 
-    return NextResponse.json({ success: true, ticketId: airtableData.id })
-
-  } catch (error: any) {
-    console.error('Support ticket error:', error.message)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ success: true, ticketId: saved.id })
+  } catch (e: any) {
+    console.error('support POST error:', e.message)
+    return NextResponse.json({ error: 'Could not submit your ticket.' }, { status: 500 })
   }
 }
