@@ -56,8 +56,8 @@ export function isSafeRecordId(id: unknown): id is string {
 /** True only if the UserData record exists and belongs to this user. */
 export async function userOwnsRecord(userId: string, recordId: string): Promise<boolean> {
   if (!isSafeId(userId) || !isSafeRecordId(recordId)) return false
-  const token = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
-  const base = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
+  const token = (process.env.AIRTABLE_TOKEN || process.env.NEXT_PUBLIC_AIRTABLE_TOKEN) || ''
+  const base = (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID) || ''
   try {
     const res = await fetch(
       `https://api.airtable.com/v0/${base}/UserData/${recordId}?fields%5B%5D=User%20ID`,
