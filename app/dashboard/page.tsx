@@ -58,12 +58,12 @@ export default function Dashboard() {
   const loadStats = async (uid: string) => {
     try {
       const modules = ['CRM', 'Invoices', 'Inventory', 'HR', 'Projects', 'Quotations', 'Recruiting']
-      const results = await Promise.allSettled(
-        modules.map(m => fetch(`/api/universal-data?userId=${uid}&module=${m}`).then(r => r.json()))
-      )
+      // One request for all modules (keeps Airtable API usage low)
+      const all = await fetch(`/api/universal-data?modules=${modules.join(',')}`).then(r => r.json())
+      const byModule = all.modules || {}
 
-      const [crm, inv, prod, hr, proj, quot, rec] = results.map(r =>
-        r.status === 'fulfilled' ? r.value : { records: [], total: 0 }
+      const [crm, inv, prod, hr, proj, quot, rec] = modules.map(
+        m => byModule[m] || { records: [], total: 0 }
       )
 
       const crmRecords = crm.records || []

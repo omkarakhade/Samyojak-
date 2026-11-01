@@ -1,59 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthedUser, isAdminUser, isSafeId } from '@/lib/serverAuth'
+import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
 
 const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
 const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
 const GROQ_MODEL = 'llama-3.1-8b-instant'
 
-async function fetchAirtableTable(table: string, max = 50) {
+// One Airtable request for all five modules (instead of ten requests per message)
+async function fetchAllUserData(userId: string): Promise<Record<string, any[]>> {
+  const modules = ['CRM', 'Invoices', 'Inventory', 'HR', 'Projects']
+  const out: Record<string, any[]> = {}
+  for (const m of modules) out[m] = []
   try {
+    const moduleFilter = `OR(${modules.map(m => `{Module}="${m}"`).join(',')})`
+    const formula = `AND({User ID}="${userId}",${moduleFilter})`
     const res = await fetch(
-      `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}?maxRecords=${max}`,
+      `https://api.airtable.com/v0/${BASE}/UserData?filterByFormula=${encodeURIComponent(formula)}&maxRecords=500`,
       { headers: { Authorization: `Bearer ${TOKEN}` } }
     )
-    if (!res.ok) return []
+    if (!res.ok) return out
     const d = await res.json()
-    return d.records || []
-  } catch { return [] }
-}
-
-async function fetchUserData(userId: string, module: string) {
-  try {
-    const formula = `AND({User ID}="${userId}",{Module}="${module}")`
-    const res = await fetch(
-      `https://api.airtable.com/v0/${BASE}/UserData?filterByFormula=${encodeURIComponent(formula)}&maxRecords=200`,
-      { headers: { Authorization: `Bearer ${TOKEN}` } }
-    )
-    if (!res.ok) return []
-    const d = await res.json()
-    return (d.records || []).map((r: any) => {
+    for (const r of d.records || []) {
+      const mod = r.fields?.Module
+      if (!out[mod]) continue
       try {
         const parsed = JSON.parse(r.fields?.['Record Data'] || '{}')
         const { _meta, ...data } = parsed
-        return data
-      } catch { return {} }
-    })
-  } catch { return [] }
+        out[mod].push(data)
+      } catch { /* skip unreadable row */ }
+    }
+  } catch { /* fall through with what we have */ }
+  return out
 }
 
-async function buildContext(userId?: string, includeShared = false) {
-  const [
-    airtableLeads,
-    airtableInvoices,
-    airtableProducts,
-    airtableEmployees,
-    airtableProjects,
-  ] = includeShared
-    ? await Promise.all([
-        fetchAirtableTable('Leads'),
-        fetchAirtableTable('Invoices'),
-        fetchAirtableTable('Products'),
-        fetchAirtableTable('Employees'),
-        fetchAirtableTable('Projects'),
-      ])
-    : ([[], [], [], [], []] as any[][])
+async function buildContext(userId?: string) {
+  // Legacy shared tables are no longer read (they were visible to every user)
+  const airtableLeads: any[] = []
+  const airtableInvoices: any[] = []
+  const airtableProducts: any[] = []
+  const airtableEmployees: any[] = []
+  const airtableProjects: any[] = []
 
-  // Also fetch from UserData if userId provided
   let userLeads: any[] = []
   let userInvoices: any[] = []
   let userProducts: any[] = []
@@ -61,13 +47,12 @@ async function buildContext(userId?: string, includeShared = false) {
   let userProjects: any[] = []
 
   if (userId) {
-    ;[userLeads, userInvoices, userProducts, userEmployees, userProjects] = await Promise.all([
-      fetchUserData(userId, 'CRM'),
-      fetchUserData(userId, 'Invoices'),
-      fetchUserData(userId, 'Inventory'),
-      fetchUserData(userId, 'HR'),
-      fetchUserData(userId, 'Projects'),
-    ])
+    const all = await fetchAllUserData(userId)
+    userLeads = all.CRM
+    userInvoices = all.Invoices
+    userProducts = all.Inventory
+    userEmployees = all.HR
+    userProjects = all.Projects
   }
 
   // Merge airtable + userdata
@@ -168,14 +153,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ reply: 'Please sign in again to use the AI assistant.' }, { status: 401 })
     }
     const userId = user && isSafeId(user.id) ? user.id : undefined
-    // Shared (non-per-user) tables are only included for the admin account.
-    const includeShared = isAdminUser(user)
 
     const apiKey = process.env.GROQ_API_KEY
 
     let context: any = null
     try {
-      context = await buildContext(userId, includeShared)
+      context = await buildContext(userId)
     } catch (e) {
       console.error('Context build error:', e)
     }
