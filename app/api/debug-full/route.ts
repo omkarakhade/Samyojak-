@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuthedUser, isAdminUser } from '@/lib/serverAuth'
 
 const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
 const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
@@ -100,7 +101,10 @@ async function testSupabase() {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!isAdminUser(await getAuthedUser(req))) {
+    return NextResponse.json({ error: 'Not allowed.' }, { status: 403 })
+  }
   const [groq, dodo, supabase] = await Promise.all([testGroq(), testDodo(), testSupabase()])
 
   const tables = ['Leads', 'Invoices', 'Products', 'Employees', 'Projects', 'Support_Tickets', 'UserData']

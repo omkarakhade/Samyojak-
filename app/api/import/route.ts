@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthedUser, isAdminUser } from '@/lib/serverAuth'
 
 const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
 const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
@@ -87,6 +88,11 @@ async function createAirtableRecord(table: string, fields: Record<string, unknow
 
 export async function POST(req: NextRequest) {
   try {
+    const authed = await getAuthedUser(req)
+    if (!isAdminUser(authed)) {
+      return NextResponse.json({ error: 'Not allowed.' }, { status: 403 })
+    }
+
     const body = await req.json()
     const { action, module, headers, rows, mapping } = body
 

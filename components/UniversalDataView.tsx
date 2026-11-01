@@ -164,7 +164,7 @@ export default function UniversalDataView({ userId, module, color, bg }: Props) 
                   background: selectedBatch === batch.importId ? color : bg,
                   color: selectedBatch === batch.importId ? 'white' : color,
                 }}>
-                {batch.source === 'manual_entry' ? 'Manual' : batch.source} ({batch.rowCount})
+                {batch.source === 'manual_entry' ? 'Added by hand' : batch.source === 'agent_entry' ? 'AI agent' : batch.source === 'csv_import' ? 'CSV import' : batch.source} ({batch.rowCount})
               </button>
               <button
                 onClick={() => deleteBatch(batch.importId)}

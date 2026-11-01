@@ -1,6 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuthedUser, isAdminUser } from '@/lib/serverAuth'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!isAdminUser(await getAuthedUser(req))) {
+    return NextResponse.json({ error: 'Not allowed.' }, { status: 403 })
+  }
   const apiKey = process.env.DODO_PAYMENTS_API_KEY
   const dodoEnv = process.env.DODO_ENV
   const appUrl = process.env.NEXT_PUBLIC_APP_URL

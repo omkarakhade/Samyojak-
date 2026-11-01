@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthedUser, isSafeModule } from '@/lib/serverAuth'
 
 const TOKEN = process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || ''
 const BASE = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
@@ -100,15 +101,17 @@ async function storeOneRecord(
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getAuthedUser(req)
+    if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
+    const userId = user.id // verified session, not the form field
+
     const formData = await req.formData()
     const file = formData.get('file') as File | null
-    const userId = formData.get('userId') as string
     const module = formData.get('module') as string
     const source = (formData.get('source') as string) || 'csv_import'
 
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
-    if (!userId) return NextResponse.json({ error: 'userId is required' }, { status: 400 })
-    if (!module) return NextResponse.json({ error: 'module is required' }, { status: 400 })
+    if (!isSafeModule(module)) return NextResponse.json({ error: 'module is required' }, { status: 400 })
 
     if (!file.name.match(/\.(csv|txt|tsv)$/i)) {
       return NextResponse.json({

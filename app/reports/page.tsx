@@ -29,13 +29,12 @@ export default function Reports() {
   const loadAllData = async (uid: string) => {
     setLoading(true)
     try {
-      const [crm, invoices, inventory, hr, projects] = await Promise.all([
-        fetch(`/api/universal-data?userId=${uid}&module=CRM`).then(r => r.json()),
-        fetch(`/api/universal-data?userId=${uid}&module=Invoices`).then(r => r.json()),
-        fetch(`/api/universal-data?userId=${uid}&module=Inventory`).then(r => r.json()),
-        fetch(`/api/universal-data?userId=${uid}&module=HR`).then(r => r.json()),
-        fetch(`/api/universal-data?userId=${uid}&module=Projects`).then(r => r.json()),
-      ])
+      // One request for all modules (keeps Airtable API usage low)
+      const all = await fetch('/api/universal-data?modules=CRM,Invoices,Inventory,HR,Projects').then(r => r.json())
+      const m = all.modules || {}
+      const [crm, invoices, inventory, hr, projects] = [m.CRM, m.Invoices, m.Inventory, m.HR, m.Projects].map(
+        v => v || { records: [] }
+      )
       setData({
         crm: crm.records || [],
         invoices: invoices.records || [],

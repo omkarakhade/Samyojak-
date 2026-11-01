@@ -469,7 +469,7 @@ export default function ImportModal({ module, onClose, onSuccess }: Props) {
               <div className="p-3 rounded-xl mb-5"
                 style={{ background: '#EDE9FE', border: '1.5px solid #8B5CF6' }}>
                 <p className="text-xs text-violet-700">
-                  📂 Your imported data is visible in the <strong>"Imported Data"</strong> section below the main table on this page. All {result.totalColumns} original columns are preserved exactly.
+                  📂 Your records now appear in the table on this page. All {result.totalColumns} original columns are preserved exactly.
                 </p>
               </div>
 

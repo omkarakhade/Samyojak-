@@ -30,13 +30,12 @@ export default function BIDashboard() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [crm, invoices, inventory, hr, projects] = await Promise.all([
-        fetch(`/api/universal-data?userId=${userId}&module=CRM`).then(r => r.json()),
-        fetch(`/api/universal-data?userId=${userId}&module=Invoices`).then(r => r.json()),
-        fetch(`/api/universal-data?userId=${userId}&module=Inventory`).then(r => r.json()),
-        fetch(`/api/universal-data?userId=${userId}&module=HR`).then(r => r.json()),
-        fetch(`/api/universal-data?userId=${userId}&module=Projects`).then(r => r.json()),
-      ])
+      // One request for all modules (keeps Airtable API usage low)
+      const all = await fetch('/api/universal-data?modules=CRM,Invoices,Inventory,HR,Projects').then(r => r.json())
+      const m = all.modules || {}
+      const [crm, invoices, inventory, hr, projects] = [m.CRM, m.Invoices, m.Inventory, m.HR, m.Projects].map(
+        (v: any) => v || { records: [] }
+      )
       setData({
         crm: crm.records || [],
         invoices: invoices.records || [],

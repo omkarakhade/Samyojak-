@@ -22,8 +22,19 @@ const QUICK_QUESTIONS = [
 type RecordData = Record<string, string | number>
 
 interface ProposedAction {
+  type?: 'add' | 'update'
   module: string
-  records: RecordData[]
+  records?: RecordData[]
+  recordId?: string
+  label?: string
+  changes?: RecordData
+  before?: RecordData
+  kind?: 'edit' | 'mark_paid'
+}
+
+interface Revert {
+  recordId: string
+  previous: Record<string, string | number | null>
 }
 
 interface Message {
@@ -34,6 +45,8 @@ interface Message {
   status?: 'pending' | 'saved' | 'cancelled' | 'undone'
   batchId?: string
   count?: number
+  updated?: number
+  reverts?: Revert[]
 }
 
 function nowTime() {
@@ -49,12 +62,37 @@ function PreviewTable({ actions }: { actions: ProposedAction[] }) {
   return (
     <div className="space-y-3 mt-3">
       {actions.map((action, i) => {
-        const keys = Array.from(new Set(action.records.flatMap(r => Object.keys(r))))
+        if (action.type === 'update') {
+          const changes = action.changes || {}
+          return (
+            <div key={i} className="rounded-xl overflow-hidden" style={{ border: '1.5px solid #E2E8F0' }}>
+              <div className="px-3 py-1.5 text-xs font-black uppercase tracking-wide"
+                style={{ background: action.kind === 'mark_paid' ? '#D1FAE5' : '#FEF3C7',
+                  color: action.kind === 'mark_paid' ? '#065F46' : '#92400E' }}>
+                {action.kind === 'mark_paid' ? 'Mark paid' : 'Edit'} · {action.module} · {action.label}
+              </div>
+              <div className="px-3 py-2 space-y-1">
+                {Object.keys(changes).map(k => (
+                  <p key={k} className="text-xs" style={{ color: '#1E293B' }}>
+                    <span className="font-bold" style={{ color: '#64748B' }}>{k}: </span>
+                    <span style={{ color: '#94A3B8', textDecoration: 'line-through' }}>
+                      {action.before && action.before[k] !== undefined ? String(action.before[k]) : '—'}
+                    </span>
+                    {' → '}
+                    <span className="font-bold">{String(changes[k])}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
+          )
+        }
+        const recs = action.records || []
+        const keys = Array.from(new Set(recs.flatMap(r => Object.keys(r))))
         return (
           <div key={i} className="rounded-xl overflow-hidden" style={{ border: '1.5px solid #E2E8F0' }}>
             <div className="px-3 py-1.5 text-xs font-black uppercase tracking-wide"
               style={{ background: '#EDE9FE', color: '#8B5CF6' }}>
-              {action.module} · {action.records.length} record{action.records.length > 1 ? 's' : ''}
+              Add · {action.module} · {recs.length} record{recs.length > 1 ? 's' : ''}
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
@@ -68,7 +106,7 @@ function PreviewTable({ actions }: { actions: ProposedAction[] }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {action.records.map((r, ri) => (
+                  {recs.map((r, ri) => (
                     <tr key={ri} style={{ borderTop: '1px solid #F1F5F9' }}>
                       {keys.map(k => (
                         <td key={k} className="px-3 py-2 whitespace-nowrap" style={{ color: '#1E293B' }}>
@@ -121,12 +159,15 @@ export default function AIAssistant() {
   const loadGreeting = async (uid: string) => {
     setGreetingLoading(true)
     try {
+      const token = await getToken()
       const res = await fetch('/api/ai', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           message: 'Give me a brief business overview and the most important thing to focus on today. Be specific and use actual numbers from my data.',
-          userId: uid,
         }),
       })
       const data = await res.json()
@@ -157,10 +198,14 @@ export default function AIAssistant() {
   }
 
   const askAssistant = async (q: string) => {
+    const token = await getToken()
     const res = await fetch('/api/ai', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: q, userId }),
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ message: q }),
     })
     const data = await res.json()
     return data.reply || 'No response. Please try again.'
@@ -191,8 +236,16 @@ export default function AIAssistant() {
             actions: data.actions,
             status: 'pending',
           })
+        } else if (data.reply && !data.fallback) {
+          // The agent understood but could not find the record (or needs more detail)
+          addAiMessage({ text: data.reply })
         } else {
-          addAiMessage({ text: await askAssistant(q) })
+          const answer = await askAssistant(q)
+          addAiMessage({
+            text: data.degraded
+              ? `${answer}\n\n(The recording agent is unavailable right now, so I answered as a question. Nothing was saved.)`
+              : answer,
+          })
         }
       }
     } catch {
@@ -211,7 +264,16 @@ export default function AIAssistant() {
     try {
       const { ok, data } = await callAgent({ action: 'confirm', actions: msg.actions })
       if (ok) {
-        updateMessage(index, { status: 'saved', batchId: data.batchId, count: data.count })
+        updateMessage(index, {
+          status: 'saved',
+          batchId: data.batchId,
+          count: data.count || 0,
+          updated: data.updated || 0,
+          reverts: data.reverts || [],
+        })
+        if (data.skipped?.length) {
+          addAiMessage({ text: `I could not change: ${data.skipped.join(', ')}.` })
+        }
       } else {
         addAiMessage({ text: data.error || 'Could not save. Nothing was added.' })
       }
@@ -225,10 +287,14 @@ export default function AIAssistant() {
 
   const handleUndo = async (index: number) => {
     const msg = messages[index]
-    if (!msg?.batchId || busyIndex !== null) return
+    if ((!msg?.batchId && !msg?.reverts?.length) || busyIndex !== null) return
     setBusyIndex(index)
     try {
-      const { ok, data } = await callAgent({ action: 'undo', batchId: msg.batchId })
+      const { ok, data } = await callAgent({
+        action: 'undo',
+        batchId: msg.batchId,
+        reverts: msg.reverts || [],
+      })
       if (ok) {
         updateMessage(index, { status: 'undone' })
       } else {
@@ -332,7 +398,8 @@ export default function AIAssistant() {
             <div className="p-3 rounded-xl mb-3 text-xs"
               style={{ background: '#D1FAE5', border: '1.5px solid #34D399', color: '#065F46' }}>
               <strong>Try recording something:</strong> "Invoiced Rahul Sharma 45000 for the website, due Nov 10.
-              New lead Sneha, call her Monday." You'll see a preview and nothing is saved until you confirm.
+              New lead Sneha, call her Monday." You can also say "Sharma paid" or "Neha is contacted now".
+              You'll see a preview and nothing changes until you confirm.
             </div>
             <p className="text-xs font-bold uppercase tracking-wide mb-2 text-gray-400">Quick questions</p>
             <div className="flex flex-wrap gap-2">
@@ -394,7 +461,10 @@ export default function AIAssistant() {
                 {msg.status === 'saved' && (
                   <div className="flex items-center gap-3 mt-3 flex-wrap">
                     <span className="text-xs font-bold" style={{ color: '#065F46' }}>
-                      ✅ Saved {msg.count} record{msg.count && msg.count > 1 ? 's' : ''}
+                      ✅ {[
+                        msg.count ? `Added ${msg.count} record${msg.count > 1 ? 's' : ''}` : '',
+                        msg.updated ? `Updated ${msg.updated} record${msg.updated > 1 ? 's' : ''}` : '',
+                      ].filter(Boolean).join(' · ') || 'Done'}
                     </span>
                     <button
                       onClick={() => handleUndo(i)}
@@ -410,7 +480,7 @@ export default function AIAssistant() {
                   <p className="text-xs mt-2 font-semibold" style={{ color: '#94A3B8' }}>Cancelled. Nothing was saved.</p>
                 )}
                 {msg.status === 'undone' && (
-                  <p className="text-xs mt-2 font-semibold" style={{ color: '#94A3B8' }}>Undone. Those records were removed.</p>
+                  <p className="text-xs mt-2 font-semibold" style={{ color: '#94A3B8' }}>Undone. Your data is back as it was.</p>
                 )}
 
                 <p className="text-xs mt-1 opacity-50">{msg.time}</p>
