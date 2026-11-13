@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ArrowRight } from 'lucide-react'
+import { landingPath } from '@/lib/landing'
 
 export default function Signup() {
   const [form, setForm] = useState({ name: '', email: '', password: '', company: '' })
@@ -17,7 +18,7 @@ export default function Signup() {
         if (session.user.email === 'omkarakhade083@gmail.com') {
           router.push('/admin')
         } else if (session.user.user_metadata?.plan) {
-          router.push('/dashboard')
+          router.push(landingPath(session.user))
         }
       }
     })
