@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
-import { getPlanFromMetadata } from '@/lib/planAccess'
+import { canUseAI } from '@/lib/access'
 import { AGENT_MODULES } from '@/lib/agentTools'
 import { MODULE_FIELDS, exactFieldMapping } from '@/lib/moduleFields'
 import { storeCreate } from '@/lib/store'
 
 export const maxDuration = 60
 
-const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
 
 const MAX_HEADERS = 60
 const MAX_COMMIT_ROWS = 200
 
-function allowed(user: any): boolean {
-  if (user.email === ADMIN_EMAIL) return true
-  if (user.user_metadata?.is_demo) return true
-  return getPlanFromMetadata(user) === 'Complete'
-}
 
 const clean = (s: unknown, max = 200) => String(s ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max)
 
@@ -179,7 +173,7 @@ export async function POST(req: NextRequest) {
     if (!user || !isSafeId(user.id)) {
       return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
     }
-    if (!allowed(user)) {
+    if (!(await canUseAI(user))) {
       return NextResponse.json({ error: 'Guided migration is available on the Complete plan.' }, { status: 403 })
     }
 

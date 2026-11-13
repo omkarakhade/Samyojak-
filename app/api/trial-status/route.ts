@@ -14,7 +14,7 @@ export async function GET() {
   }
 
   // Admin and demo accounts are never locked
-  if (session.user.email === ADMIN_EMAIL || session.user.user_metadata?.is_demo) {
+  if (session.user.email === ADMIN_EMAIL || session.user.app_metadata?.is_demo === true) {
     return NextResponse.json({
       isLocked: false,
       daysRemaining: 0,
