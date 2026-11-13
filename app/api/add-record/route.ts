@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeModule } from '@/lib/serverAuth'
-
-const TOKEN = (process.env.AIRTABLE_TOKEN || process.env.NEXT_PUBLIC_AIRTABLE_TOKEN) || ''
-const BASE = (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID) || ''
+import { storeCreate } from '@/lib/store'
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,22 +38,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const err = await res.text()
-      throw new Error(`Airtable error ${res.status}: ${err}`)
-    }
-
-    const data = await res.json()
-    return NextResponse.json({ success: true, id: data.id })
+    const [id] = await storeCreate(userId, [payload])
+    return NextResponse.json({ success: true, id })
   } catch (error: any) {
     console.error('add-record error:', error)
     return NextResponse.json({ error: 'Could not save the record.' }, { status: 500 })

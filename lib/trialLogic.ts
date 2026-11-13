@@ -2,6 +2,9 @@
 // Weekly plans: 7 paid days + 7 bonus days = 14 days before next payment required
 // Monthly/Yearly plans: 14-day free trial before first payment
 
+/** Trial data is kept this many days after the trial STARTS (14 days trial + 16 days grace). */
+export const DATA_KEEP_DAYS = 30
+
 export type PlanType = 'weekly' | 'monthly' | 'yearly'
 export type PlanTier = 'starter' | 'basic' | 'business' | 'complete'
 export type SubscriptionStatus = 'trial' | 'active' | 'expired' | 'cancelled'
@@ -88,12 +91,17 @@ export function getTrialStatus(sub: UserSubscriptionData | null | undefined): Tr
   const msRemaining = trialEnd.getTime() - now.getTime()
 
   if (msRemaining <= 0) {
+    const deleteOn = new Date(new Date(sub.trialStartDate).getTime() + DATA_KEEP_DAYS * 24 * 60 * 60 * 1000)
+    const kept = deleteOn.getTime() > now.getTime()
+    const dateText = deleteOn.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
     return {
       isLocked: true,
       daysRemaining: 0,
       hoursRemaining: 0,
       status: 'expired',
-      message: 'Your free trial has ended. Upgrade now to keep using Samyojak.',
+      message: kept
+        ? `Your free trial has ended. Your data is kept safe until ${dateText}. Choose a plan before then and everything is restored.`
+        : 'Your free trial has ended and the trial data has been deleted. Choose a plan to start again.',
       showBanner: false,
     }
   }

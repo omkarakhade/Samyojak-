@@ -1,25 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
+import { storeList } from '@/lib/store'
 
-const TOKEN = (process.env.AIRTABLE_TOKEN || process.env.NEXT_PUBLIC_AIRTABLE_TOKEN) || ''
-const BASE = (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID) || ''
 const GROQ_MODEL = 'llama-3.1-8b-instant'
 
-// One Airtable request for all five modules (instead of ten requests per message)
+// One query for all five modules (instead of ten requests per message)
 async function fetchAllUserData(userId: string): Promise<Record<string, any[]>> {
   const modules = ['CRM', 'Invoices', 'Inventory', 'HR', 'Projects']
   const out: Record<string, any[]> = {}
   for (const m of modules) out[m] = []
   try {
-    const moduleFilter = `OR(${modules.map(m => `{Module}="${m}"`).join(',')})`
-    const formula = `AND({User ID}="${userId}",${moduleFilter})`
-    const res = await fetch(
-      `https://api.airtable.com/v0/${BASE}/UserData?filterByFormula=${encodeURIComponent(formula)}&maxRecords=500`,
-      { headers: { Authorization: `Bearer ${TOKEN}` } }
-    )
-    if (!res.ok) return out
-    const d = await res.json()
-    for (const r of d.records || []) {
+    const records = await storeList(userId, modules, { max: 500 })
+    for (const r of records) {
       const mod = r.fields?.Module
       if (!out[mod]) continue
       try {

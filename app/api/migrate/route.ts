@@ -3,11 +3,10 @@ import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
 import { getPlanFromMetadata } from '@/lib/planAccess'
 import { AGENT_MODULES } from '@/lib/agentTools'
 import { MODULE_FIELDS, exactFieldMapping } from '@/lib/moduleFields'
+import { storeCreate } from '@/lib/store'
 
 export const maxDuration = 60
 
-const TOKEN = (process.env.AIRTABLE_TOKEN || process.env.NEXT_PUBLIC_AIRTABLE_TOKEN) || ''
-const BASE = (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID) || ''
 const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
 
 const MAX_HEADERS = 60
@@ -169,23 +168,8 @@ async function commit(
     }
   })
 
-  let created = 0
-  for (let i = 0; i < payloads.length; i += 10) {
-    const chunk = payloads.slice(i, i + 10)
-    const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ records: chunk }),
-    })
-    if (!res.ok) {
-      const err = await res.text()
-      console.error('migrate commit Airtable error:', res.status, err.slice(0, 300))
-      const full = res.status === 422 && /limit|exceed|quota/i.test(err)
-      throw Object.assign(new Error(full ? 'full' : `save ${res.status}`), { created, full })
-    }
-    created += chunk.length
-    await new Promise(r => setTimeout(r, 220)) // stay under 5 requests per second
-  }
+  const ids = await storeCreate(userId, payloads)
+  const created = ids.length
   return { created }
 }
 

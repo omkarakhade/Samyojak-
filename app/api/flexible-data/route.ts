@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeModule, userOwnsRecord } from '@/lib/serverAuth'
-
-const TOKEN = (process.env.AIRTABLE_TOKEN || process.env.NEXT_PUBLIC_AIRTABLE_TOKEN) || ''
-const BASE = (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID) || ''
+import { storeList, storeDelete } from '@/lib/store'
 
 export async function GET(req: NextRequest) {
   const user = await getAuthedUser(req)
@@ -17,19 +15,8 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const filterFormula = `AND({User ID}="${userId}",{Module}="${module}")`
-    const url = `https://api.airtable.com/v0/${BASE}/UserData?filterByFormula=${encodeURIComponent(filterFormula)}&maxRecords=500`
+    const data = { records: await storeList(userId, [module], { max: 500 }) }
 
-    const res = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${TOKEN}` }
-    })
-
-    if (!res.ok) {
-      const err = await res.text()
-      throw new Error(`Airtable error ${res.status}: ${err}`)
-    }
-
-    const data = await res.json()
     const records = (data.records || []).map((r: any) => {
       try {
         return {
@@ -73,11 +60,8 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData/${recordId}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${TOKEN}` }
-    })
-    return NextResponse.json({ deleted: res.ok })
+    const deleted = await storeDelete(user.id, [recordId])
+    return NextResponse.json({ deleted: deleted > 0 })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
