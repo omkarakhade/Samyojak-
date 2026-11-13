@@ -1,36 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthedUser } from '@/lib/serverAuth'
+import { findProduct } from '@/lib/productLookup'
 
 export async function POST(req: NextRequest) {
   try {
-    const { productId, email, name, planName } = await req.json()
+    const user = await getAuthedUser(req)
+    if (!user) {
+      return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
+    }
+
+    const { productId, name } = await req.json()
+    // The plan comes from OUR price list, never from what the browser says it is buying.
+    const product = typeof productId === 'string' ? findProduct(productId) : null
+    if (!product) {
+      return NextResponse.json({ error: 'Unknown product' }, { status: 400 })
+    }
 
     const apiKey = process.env.DODO_PAYMENTS_API_KEY
     const dodoEnv = process.env.DODO_ENV || 'live'
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.samyojak-erp.com'
 
-    console.log('=== DODO CHECKOUT ===')
-    console.log('Product ID:', productId)
-    console.log('Email:', email)
-    console.log('Plan:', planName)
-    console.log('Mode:', dodoEnv)
-    console.log('Key exists:', !!apiKey)
-    console.log('Key length:', apiKey?.length)
-    console.log('Key preview:', apiKey?.substring(0, 15) + '...')
-
     if (!apiKey) {
-      return NextResponse.json({
-        error: 'DODO_PAYMENTS_API_KEY missing in Vercel environment variables'
-      }, { status: 500 })
-    }
-
-    if (!productId) {
-      return NextResponse.json({
-        error: 'No product ID'
-      }, { status: 400 })
+      return NextResponse.json({ error: 'Payments are not configured yet.' }, { status: 500 })
     }
 
     const environment = dodoEnv === 'live' ? 'live_mode' : 'test_mode'
-    console.log('Dodo environment:', environment)
 
     const DodoModule = await import('dodopayments')
     const DodoPayments = DodoModule.default || DodoModule
@@ -40,20 +34,22 @@ export async function POST(req: NextRequest) {
       environment: environment,
     })
 
-    const returnUrl = `${appUrl}/payment-success?plan=${encodeURIComponent(planName || '')}`
-    console.log('Return URL:', returnUrl)
+    const returnUrl = `${appUrl}/payment-success?plan=${encodeURIComponent(product.name)}`
 
     const session = await client.checkoutSessions.create({
       product_cart: [{ product_id: productId, quantity: 1 }],
       customer: {
-        email: email || 'customer@example.com',
-        name: name || 'Customer',
+        email: user.email || 'customer@example.com',
+        name: typeof name === 'string' && name ? name.slice(0, 100) : 'Customer',
       },
       return_url: returnUrl,
+      metadata: {
+        userId: user.id,
+        planTier: product.tier,
+        planType: product.period,
+      },
     })
 
-    console.log('SUCCESS - Session ID:', session.session_id)
-    console.log('Checkout URL:', session.checkout_url)
 
     return NextResponse.json({ url: session.checkout_url })
 

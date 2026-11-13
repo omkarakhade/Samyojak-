@@ -11,15 +11,14 @@ function PaymentSuccessContent() {
   const plan = searchParams.get('plan') || 'CRM Starter'
 
   useEffect(() => {
-    const savePlan = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        await supabase.auth.updateUser({
-          data: { plan, plan_activated_at: new Date().toISOString() }
-        })
-      }
+    // The plan is set by our server when Dodo confirms the payment. Just pick up the fresh session.
+    const refresh = async () => {
+      try {
+        await supabase.auth.refreshSession()
+        setTimeout(() => supabase.auth.refreshSession(), 6000) // webhook can take a few seconds
+      } catch { /* shown on next login */ }
     }
-    savePlan()
+    refresh()
 
     const shoot = async () => {
       const { default: confetti } = await import('canvas-confetti')

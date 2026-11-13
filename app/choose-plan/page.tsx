@@ -4,25 +4,70 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, Star } from 'lucide-react'
 import { PRODUCTS, detectRegion } from '@/lib/products'
+import { supabase } from '@/lib/supabase'
+import { landingPath } from '@/lib/landing'
 import type { BillingPeriod, Region } from '@/lib/products'
 
 export default function ChoosePlan() {
   const [billing, setBilling] = useState<BillingPeriod>('weekly')
   const [region, setRegion] = useState<Region>('global')
   const [loadingPlan, setLoadingPlan] = useState('')
+  const [hasSub, setHasSub] = useState(false)
+  const [notice, setNotice] = useState('')
   const router = useRouter()
 
   useEffect(() => {
     setRegion(detectRegion())
+    supabase.auth.getSession().then(async ({ data }) => {
+      const token = data.session?.access_token
+      if (!token) return
+      try {
+        const res = await fetch('/api/subscription/create', { headers: { Authorization: `Bearer ${token}` } })
+        if (res.ok) setHasSub(!!(await res.json()).exists)
+      } catch { /* show the trial button */ }
+    })
   }, [])
 
-  const handleSelect = (
+  const TIERS: Record<string, string> = { 'CRM Starter': 'starter', 'ERP Basic': 'basic', Business: 'business', Complete: 'complete' }
+
+  const handleSelect = async (
     productId: string,
     planName: string,
     price: string,
     period: string,
     bonus: string
   ) => {
+    setNotice('')
+    // First time: start the free 14-day trial. Returning users go on to payment.
+    if (!hasSub) {
+      setLoadingPlan(planName)
+      try {
+        const { data } = await supabase.auth.getSession()
+        const token = data.session?.access_token
+        const res = await fetch('/api/subscription/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ planType: billing, planTier: TIERS[planName] }),
+        })
+        const out = await res.json().catch(() => ({}))
+        if (res.ok && (out.started || out.switched)) {
+          await supabase.auth.refreshSession()
+          const { data: u } = await supabase.auth.getUser()
+          router.push(landingPath(u.user))
+          return
+        }
+        if (!res.ok) {
+          setNotice(out.error || 'Could not start your trial. Please try again.')
+          setLoadingPlan('')
+          return
+        }
+      } catch {
+        setNotice('Connection problem. Please try again.')
+        setLoadingPlan('')
+        return
+      }
+      setLoadingPlan('')
+    }
     router.push(
       `/checkout?plan=${encodeURIComponent(planName)}&product=${encodeURIComponent(productId)}&price=${encodeURIComponent(price)}&period=${encodeURIComponent(period)}&bonus=${encodeURIComponent(bonus)}`
     )
@@ -296,11 +341,15 @@ export default function ChoosePlan() {
                   cursor: 'pointer',
                 }}
               >
-                Select Plan <ArrowRight size={16} />
+                {loadingPlan === plan.name ? 'Starting...' : hasSub ? 'Select Plan' : 'Start 14-day free trial'} <ArrowRight size={16} />
               </button>
             </div>
           ))}
         </div>
+
+        {notice && (
+          <p className="text-center text-sm mt-6 font-bold" style={{ color: '#DC2626' }}>{notice}</p>
+        )}
 
         {/* Footer Note */}
         <p
