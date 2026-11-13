@@ -18,6 +18,8 @@ import {
   type AgentRecord,
 } from '@/lib/agentTools'
 
+export const maxDuration = 60
+
 const GROQ_AGENT_MODEL = 'llama-3.3-70b-versatile'
 
 function canUseAgent(user: any): boolean {

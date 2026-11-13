@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ArrowRight } from 'lucide-react'
+import { landingPath } from '@/lib/landing'
 
 const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
 
@@ -37,7 +38,7 @@ export default function Login() {
         if (session.user.email === ADMIN_EMAIL) {
           router.push('/admin')
         } else if (session.user.user_metadata?.plan) {
-          router.push('/dashboard')
+          router.push(landingPath(session.user))
         } else {
           router.push('/choose-plan')
         }
@@ -85,7 +86,7 @@ export default function Login() {
     // Regular user
     const plan = user?.user_metadata?.plan
     if (plan) {
-      router.push('/dashboard')
+      router.push(landingPath(user))
     } else {
       router.push('/choose-plan')
     }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabaseServer'
+import { landingPath } from '@/lib/landing'
 
 const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
 
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
       }
 
       if (user.user_metadata?.plan) {
-        return NextResponse.redirect(new URL('/dashboard', origin))
+        return NextResponse.redirect(new URL(landingPath(user), origin))
       }
 
       return NextResponse.redirect(new URL('/choose-plan', origin))
