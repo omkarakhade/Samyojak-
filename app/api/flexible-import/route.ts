@@ -1,45 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeModule } from '@/lib/serverAuth'
-
-const TOKEN = (process.env.AIRTABLE_TOKEN || process.env.NEXT_PUBLIC_AIRTABLE_TOKEN) || ''
-const BASE = (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID) || ''
+import { storeCreate } from '@/lib/store'
 
 async function saveToAirtable(userId: string, module: string, records: Record<string, unknown>[], source: string) {
-  const results = { success: 0, failed: 0 }
-
-  for (const record of records) {
-    try {
-      const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fields: {
-            'User ID': userId,
-            'Module': module,
-            'Record Data': JSON.stringify(record),
-            'Source': source,
-            'Created At': new Date().toISOString().split('T')[0],
-          }
-        })
-      })
-
-      if (res.ok) {
-        results.success++
-      } else {
-        results.failed++
-      }
-
-      // Avoid Airtable rate limit
-      await new Promise(r => setTimeout(r, 120))
-    } catch {
-      results.failed++
-    }
+  const today = new Date().toISOString().split('T')[0]
+  const items = records.map(record => ({
+    fields: {
+      'User ID': userId,
+      Module: module,
+      'Record Data': JSON.stringify(record),
+      Source: source,
+      'Created At': today,
+    },
+  }))
+  try {
+    const ids = await storeCreate(userId, items)
+    return { success: ids.length, failed: items.length - ids.length }
+  } catch (e: any) {
+    const done = e?.created || 0
+    return { success: done, failed: items.length - done }
   }
-
-  return results
 }
 
 function parseCSVText(text: string): { headers: string[]; rows: Record<string, string>[] } {

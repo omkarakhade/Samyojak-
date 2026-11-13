@@ -67,6 +67,7 @@ export async function createSubscriptionRecord(
     trial_start_date: subData.trialStartDate,
     trial_end_date: subData.trialEndDate,
     subscription_status: subData.subscriptionStatus,
+    data_store: 'supabase',
   })
 
   if (error) {

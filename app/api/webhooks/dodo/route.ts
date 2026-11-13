@@ -1,5 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { getSubscriptionByUserId, updateSubscriptionStatus } from '@/lib/subscriptionDb'
+import { migrateTrialData } from '@/lib/trialData'
+
+export const maxDuration = 60
 
 // NOTE: Confirm exact field names against Dodo's actual webhook payload
 // (Dodo Dashboard → Webhooks → Event Log) and adjust the extraction lines below.
@@ -35,6 +38,11 @@ export async function POST(req: NextRequest) {
       paymentCompletedAt: new Date().toISOString(),
       lastPaymentId: paymentId,
       dodoSubscriptionId: dodoSubscriptionId || undefined,
+    })
+
+    // Move the trial data to Airtable after the reply is sent. The daily job finishes it if it runs long.
+    after(async () => {
+      try { await migrateTrialData(userId) } catch (e) { console.error('trial data move failed:', e) }
     })
 
     return NextResponse.json({ received: true, unlocked: true })

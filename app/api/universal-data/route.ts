@@ -1,41 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId, isSafeModule, userOwnsRecord } from '@/lib/serverAuth'
+import { storeList, storeDelete } from '@/lib/store'
 
-const TOKEN = (process.env.AIRTABLE_TOKEN || process.env.NEXT_PUBLIC_AIRTABLE_TOKEN) || ''
-const BASE = (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID) || ''
+export const maxDuration = 60
 
-async function fetchAllRecords(userId: string, modules: string[]): Promise<any[]> {
-  const all: any[] = []
-  let offset: string | undefined = undefined
-
-  // Airtable returns max 100 records per page — loop through all pages
-  do {
-    const params = new URLSearchParams()
-    const moduleFilter =
-      modules.length === 1
-        ? `{Module}="${modules[0]}"`
-        : `OR(${modules.map(m => `{Module}="${m}"`).join(',')})`
-    params.set('filterByFormula', `AND({User ID}="${userId}",${moduleFilter})`)
-    params.set('pageSize', '100')
-    if (offset) params.set('offset', offset)
-
-    const res = await fetch(
-      `https://api.airtable.com/v0/${BASE}/UserData?${params.toString()}`,
-      { headers: { Authorization: `Bearer ${TOKEN}` } }
-    )
-
-    if (!res.ok) {
-      const err = await res.text()
-      throw new Error(`Airtable error ${res.status}: ${err}`)
-    }
-
-    const data = await res.json()
-    all.push(...(data.records || []))
-    offset = data.offset // undefined when no more pages
-  } while (offset)
-
-  return all
-}
+const fetchAllRecords = (userId: string, modules: string[]) => storeList(userId, modules, { max: 5000 })
 
 function toRow(r: any) {
   try {
@@ -139,11 +108,8 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Record not found.' }, { status: 404 })
     }
     try {
-      const res = await fetch(`https://api.airtable.com/v0/${BASE}/UserData/${recordId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${TOKEN}` },
-      })
-      return NextResponse.json({ deleted: res.ok })
+      const deleted = await storeDelete(userId, [recordId])
+      return NextResponse.json({ deleted: deleted > 0 })
     } catch (e: any) {
       return NextResponse.json({ error: e.message }, { status: 500 })
     }
@@ -160,15 +126,7 @@ export async function DELETE(req: NextRequest) {
         } catch { return false }
       })
 
-      let deleted = 0
-      for (const r of toDelete) {
-        await fetch(`https://api.airtable.com/v0/${BASE}/UserData/${r.id}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${TOKEN}` },
-        })
-        deleted++
-        await new Promise(resolve => setTimeout(resolve, 210))
-      }
+      const deleted = await storeDelete(userId, toDelete.map((r: any) => r.id))
       return NextResponse.json({ deleted, importId })
     } catch (e: any) {
       return NextResponse.json({ error: e.message }, { status: 500 })
