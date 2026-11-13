@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
-import { getPlanFromMetadata } from '@/lib/planAccess'
+import { canUseAI } from '@/lib/access'
 import { fetchUserRecords } from '@/lib/userData'
 import {
   INSIGHT_IDS,
@@ -10,13 +10,7 @@ import {
   pickInsightByKeywords,
 } from '@/lib/insights'
 
-const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
 
-function allowed(user: any): boolean {
-  if (user.email === ADMIN_EMAIL) return true
-  if (user.user_metadata?.is_demo) return true
-  return getPlanFromMetadata(user) === 'Complete'
-}
 
 /** Backup for questions the keywords did not catch. The AI only picks an id; code does the maths. */
 async function pickWithAI(message: string): Promise<InsightId | null> {
@@ -60,7 +54,7 @@ export async function POST(req: NextRequest) {
     if (!user || !isSafeId(user.id)) {
       return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
     }
-    if (!allowed(user)) {
+    if (!(await canUseAI(user))) {
       return NextResponse.json({ error: 'Available on the Complete plan.' }, { status: 403 })
     }
 

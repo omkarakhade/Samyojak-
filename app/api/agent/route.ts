@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPlanFromMetadata } from '@/lib/planAccess'
+import { canUseAI } from '@/lib/access'
 import { getAuthedUser, ADMIN_EMAIL } from '@/lib/serverAuth'
 import {
   AGENT_MODULES,
@@ -21,12 +21,6 @@ import {
 export const maxDuration = 60
 
 const GROQ_AGENT_MODEL = 'llama-3.3-70b-versatile'
-
-function canUseAgent(user: any): boolean {
-  if (user.email === ADMIN_EMAIL) return true
-  if (user.user_metadata?.is_demo) return true
-  return getPlanFromMetadata(user) === 'Complete'
-}
 
 function buildSystemPrompt() {
   const now = new Date()
@@ -169,7 +163,7 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
     }
-    if (!canUseAgent(user)) {
+    if (!(await canUseAI(user))) {
       return NextResponse.json(
         { error: 'The AI agent is available on the Complete plan.' },
         { status: 403 }

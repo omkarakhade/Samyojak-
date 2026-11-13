@@ -361,14 +361,18 @@ export default function AIAssistant() {
   const [pins, setPins] = useState<string[]>([])
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       const userPlan = getPlanFromMetadata(user) || 'No Plan'
       setPlan(userPlan)
-      const admin = user.email === ADMIN_EMAIL
       setUserId(user.id)
-      const hasAI = AI_PLANS.includes(userPlan) || admin || user.user_metadata?.is_demo
-      setCanUseAI(!!hasAI)
+      let hasAI = false
+      try {
+        const token = await getToken()
+        const res = await fetch('/api/entitlement', { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+        if (res.ok) hasAI = !!(await res.json()).ai
+      } catch { /* treated as no access */ }
+      setCanUseAI(hasAI)
       setChecking(false)
       if (hasAI) {
         loadGreeting(user.id)
