@@ -3,7 +3,7 @@ import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
 import { storeList } from '@/lib/store'
 import { getEntitlement } from '@/lib/access'
 
-const GROQ_MODEL = 'llama-3.1-8b-instant'
+const GROQ_MODEL = 'openai/gpt-oss-20b'
 
 // One query for all five modules (instead of ten requests per message)
 async function fetchAllUserData(userId: string, allowed: string[]): Promise<Record<string, any[]>> {
@@ -231,7 +231,8 @@ RULES:
           { role: 'system', content: systemPrompt },
           { role: 'user', content: message || 'Give me a business overview and what I should focus on today' },
         ],
-        max_tokens: 300,
+        reasoning_effort: 'low',
+        max_tokens: 1200,
         temperature: 0.7,
       }),
     })

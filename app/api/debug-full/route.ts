@@ -63,15 +63,16 @@ async function testGroq() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'openai/gpt-oss-20b',
         messages: [{ role: 'user', content: 'Reply with exactly two words: AI WORKING' }],
-        max_tokens: 10,
+        reasoning_effort: 'low',
+        max_tokens: 300,
       }),
     })
     const text = await res.text()
     if (!res.ok) return { ok: false, status: res.status, error: text }
     const data = JSON.parse(text)
-    return { ok: true, status: res.status, reply: data.choices?.[0]?.message?.content?.trim() || 'no reply', model: 'llama-3.1-8b-instant' }
+    return { ok: true, status: res.status, reply: data.choices?.[0]?.message?.content?.trim() || 'no reply', model: 'openai/gpt-oss-20b' }
   } catch (e: any) {
     return { ok: false, error: String(e.message) }
   }
@@ -163,7 +164,7 @@ export async function GET(req: NextRequest) {
     summary: {
       airtable_reads: allReadsOk ? '✅ ALL OK' : '❌ SOME FAILING (Support_Tickets needs token permission)',
       airtable_writes: allWritesOk ? '✅ ALL OK' : '❌ SOME FAILING',
-      groq_ai: (groq as any).ok ? `✅ WORKING — model: llama-3.1-8b-instant` : `❌ FAILING`,
+      groq_ai: (groq as any).ok ? `✅ WORKING — model: openai/gpt-oss-20b` : `❌ FAILING`,
       dodo_payments: (dodo as any).ok ? '✅ INITIALIZED' : '❌ FAILING',
       supabase: (supabase as any).ok ? '✅ REACHABLE' : '❌ FAILING',
     },

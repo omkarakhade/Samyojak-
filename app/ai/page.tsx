@@ -712,9 +712,12 @@ export default function AIAssistant() {
           // The agent understood but could not find the record (or needs more detail)
           addAiMessage({ text: data.reply })
         } else {
+          lockedMsg.current = ''
           const card = await fetchInsight({ message: q })
-          if (card && !data.degraded) {
+          if (card) {
             addAiMessage({ text: 'Here you go.', card })
+          } else if (lockedMsg.current) {
+            addAiMessage({ text: '🔒 ' + lockedMsg.current })
           } else {
             const answer = await askAssistant(q)
             addAiMessage({

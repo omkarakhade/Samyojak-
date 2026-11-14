@@ -54,7 +54,7 @@ async function analyze(headers: string[], sample: Record<string, string>[], file
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           messages: [
             {
               role: 'system',
@@ -71,7 +71,8 @@ async function analyze(headers: string[], sample: Record<string, string>[], file
           ],
           response_format: { type: 'json_object' },
           temperature: 0,
-          max_tokens: 900,
+          reasoning_effort: 'low',
+          max_tokens: 2500,
         }),
       })
       if (res.ok) {

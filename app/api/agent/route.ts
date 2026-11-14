@@ -20,7 +20,7 @@ import {
 
 export const maxDuration = 60
 
-const GROQ_AGENT_MODEL = 'llama-3.3-70b-versatile'
+const GROQ_AGENT_MODEL = 'openai/gpt-oss-120b'
 
 function buildSystemPrompt() {
   const now = new Date()
@@ -249,7 +249,8 @@ export async function POST(req: NextRequest) {
           ],
           response_format: { type: 'json_object' },
           temperature: 0.1,
-          max_tokens: 1200,
+          reasoning_effort: 'low',
+          max_tokens: 3500,
         }),
       })
 

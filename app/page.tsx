@@ -65,7 +65,7 @@ const PERIOD_LABEL: Record<BillingCycle, string> = {
 }
 
 const BONUS_LABEL: Record<BillingCycle, { label: string; hasTrial: boolean }> = {
-  weekly: { label: '+1 week free', hasTrial: false },
+  weekly: { label: '14-day free trial', hasTrial: true },
   monthly: { label: '14-day free trial', hasTrial: true },
   yearly: { label: '14-day free trial', hasTrial: true },
 }
@@ -86,7 +86,7 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
     emoji: '🚀',
     popular: false,
     features: ['CRM with AI lead scoring', 'Contact management', 'Follow-up reminders', 'Import & Export CSV', 'Support tickets', 'Mobile-friendly'],
-    locked: ['Invoices', 'Inventory', 'HR', 'Projects', 'AI Assistant'],
+    locked: ['Invoices', 'Inventory', 'HR', 'Projects'],
   },
   {
     key: 'basic',
@@ -94,7 +94,7 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
     emoji: '⚡',
     popular: true,
     features: ['Everything in CRM Starter', 'Universal tax invoicing', 'Inventory + free QR codes', 'WhatsApp invoice sending', 'GST Reports'],
-    locked: ['HR & Payroll', 'Projects', 'AI Assistant'],
+    locked: ['HR & Payroll', 'Projects'],
   },
   {
     key: 'business',
@@ -102,7 +102,7 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
     emoji: '🏢',
     popular: false,
     features: ['Everything in ERP Basic', 'HR & Payroll management', 'Project management Kanban', 'Team management', 'Advanced reports'],
-    locked: ['AI Assistant'],
+    locked: [],
   },
   {
     key: 'complete',
@@ -267,8 +267,8 @@ export default function Home() {
                 className={`flex flex-wrap gap-3 justify-center lg:justify-start transition-all duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}
                 style={{ transitionDelay: '500ms' }}>
                 {[
-                  { label: 'Weekly plans from $4.99', color: '#8B5CF6', bg: '#EDE9FE' },
-                  { label: '14-day trial on Monthly & Yearly', color: '#34D399', bg: '#D1FAE5' },
+                  { label: `Weekly plans from ${planPrices(region, 'weekly')['CRM Starter']}`, color: '#8B5CF6', bg: '#EDE9FE' },
+                  { label: '14-day free trial on every plan', color: '#34D399', bg: '#D1FAE5' },
                   { label: 'Cancel anytime', color: '#F472B6', bg: '#FCE7F3' },
                 ].map(t => (
                   <span key={t.label}
@@ -657,7 +657,7 @@ export default function Home() {
                   ['AI on live data', '✅ Real-time', '⚠️ Basic', '❌ No'],
                   ['India & global pricing', '✅ Geo-optimized', '⚠️ USD only', '⚠️ USD only'],
                   ['Universal tax 15+ countries', '✅ One click', '⚠️ Complex setup', '⚠️ Per-country'],
-                  ['Starting price', '$4.99/week', '$14+/month/user', '$10+/month/user'],
+                  ['Starting price', `${planPrices(region, 'weekly')['CRM Starter']}/week`, '$14+/month/user', '$10+/month/user'],
                 ].map(([feature, us, a, b]) => (
                   <tr key={feature} className="hover:bg-gray-50">
                     <td className="p-4 text-sm font-medium text-gray-700">{feature}</td>

@@ -542,7 +542,7 @@ export default function AdminPanel() {
                 { label: 'Version', value: 'Next.js 15.3.6', icon: '⚡' },
                 { label: 'Database', value: 'Airtable', icon: '🗄️' },
                 { label: 'Auth', value: 'Supabase', icon: '🔒' },
-                { label: 'AI Model', value: 'llama-3.1-8b-instant (Groq)', icon: '🤖' },
+                { label: 'AI Model', value: 'openai/gpt-oss-20b (Groq)', icon: '🤖' },
                 { label: 'Payments', value: 'Dodo Payments', icon: '💳' },
                 { label: 'Email', value: 'Resend', icon: '📧' },
                 { label: 'Deployment', value: 'Vercel', icon: '▲' },

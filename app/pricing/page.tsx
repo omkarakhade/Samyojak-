@@ -12,7 +12,7 @@ const REGION_LABELS: Record<string, string> = {
 
 // FAQ updated: added trial-specific question, removed nothing else
 const FAQS = [
-  { q: 'Is there a free trial?', a: 'Weekly plans include a 7-day bonus period — pay for 7 days, get 7 extra days free, so you get two full weeks before renewal. Monthly and yearly plans include a 14-day free trial before you\'re charged.' },
+  { q: 'Is there a free trial?', a: 'Yes. Every plan starts with a 14-day free trial and no payment. If a full plan is out of budget, weekly plans let you pay week by week and keep your data and work going.' },
   { q: 'Can I cancel anytime?', a: 'Yes. Weekly plans expire at the end of the week if you turn off auto-pay. Monthly and yearly plans expire at the end of the period. No cancellation fees ever.' },
   { q: 'What happens when I upgrade?', a: 'You immediately get access to all features in the new plan. The difference is prorated to your billing cycle.' },
   { q: 'How does geo-based pricing work?', a: 'We detect your timezone to determine your region and apply the appropriate pricing. India users get India pricing, Western users get Western pricing, others get Global pricing.' },
@@ -48,7 +48,7 @@ export default function Pricing() {
         'Support ticket system',
         'Mobile-friendly interface',
       ],
-      locked: ['Invoices & Tax', 'Inventory & QR codes', 'HR & Payroll', 'Projects & Kanban', 'AI Assistant'],
+      locked: ['Invoices & Tax', 'Inventory & QR codes', 'HR & Payroll', 'Projects & Kanban'],
     },
     {
       name: 'ERP Basic',
@@ -66,7 +66,7 @@ export default function Pricing() {
         'GST / VAT / HST tax reports',
         'Low stock alerts',
       ],
-      locked: ['HR & Payroll', 'Projects & Kanban', 'AI Assistant'],
+      locked: ['HR & Payroll', 'Projects & Kanban'],
     },
     {
       name: 'Business',
@@ -83,7 +83,7 @@ export default function Pricing() {
         'Advanced analytics',
         'Multi-department tracking',
       ],
-      locked: ['AI Business Intelligence'],
+      locked: [],
     },
     {
       name: 'Complete ERP',
@@ -110,13 +110,11 @@ export default function Pricing() {
   // ── THE FIX ──
   // Weekly: keep the existing +7 days free bonus messaging
   // Monthly / Yearly: now shows 14-day free trial, matching the homepage promise
-  const bonusLabel = billing === 'weekly'
-    ? '🎁 +7 days free'
-    : '✨ 14-day free trial'
+  const bonusLabel = '✨ 14-day free trial'
 
-  const bonusBg = billing === 'weekly' ? undefined : '#EDE9FE'
-  const bonusColorLight = billing === 'weekly' ? '#065F46' : '#5B21B6'
-  const bonusBgLight = billing === 'weekly' ? '#D1FAE5' : '#EDE9FE'
+  const bonusBg = '#EDE9FE'
+  const bonusColorLight = '#5B21B6'
+  const bonusBgLight = '#EDE9FE'
 
   const ctaLabel = billing === 'weekly' ? 'Start Trial' : 'Start 14-Day Trial'
 
@@ -153,7 +151,7 @@ export default function Pricing() {
             <span style={{ color: '#8B5CF6' }}>No surprises.</span>
           </h1>
           <p className="text-lg mb-8" style={{ color: '#64748B' }}>
-            No per-user fees. No annual lock-in. Cancel anytime. Weekly plans include a bonus week —
+            No per-user fees. No annual lock-in. Cancel anytime. Every plan starts with a 14-day free trial. Weekly plans are for tight budgets —
             monthly and yearly plans include a 14-day free trial.
           </p>
 
@@ -180,7 +178,7 @@ export default function Pricing() {
           {/* NEW — dynamic offer banner beneath billing toggle, matches homepage pattern */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mt-4 text-xs font-black"
             style={{ background: billing === 'weekly' ? '#D1FAE5' : '#EDE9FE', border: '2px solid #1E293B' }}>
-            {billing === 'weekly' ? '🎁 Pay 7 Days, Get 7 Extra Days Free' : '✨ 14-Day Free Trial — No Card Required'}
+            {billing === 'weekly' ? '✨ 14-Day Free Trial — Weekly plans for tight budgets' : '✨ 14-Day Free Trial — No Card Required'}
           </div>
         </div>
       </section>
@@ -271,7 +269,7 @@ export default function Pricing() {
           </div>
 
           <p className="text-center text-xs font-bold mt-8" style={{ color: '#64748B' }}>
-            Weekly plans: pay for 7 days, use it free for 14 total · Monthly & Yearly: try free for 14 days before you pay
+            Every plan: try free for 14 days · Short on budget? Pay week by week with a weekly plan
           </p>
 
           {/* All plans include */}
@@ -338,7 +336,7 @@ export default function Pricing() {
           Start your trial today.
         </h2>
         <p className="mb-8" style={{ color: '#94A3B8' }}>
-          Weekly plans from $4.99. Or start a 14-day free trial on Monthly or Yearly. Cancel anytime.
+          Start a 14-day free trial on any plan. Short on budget? Pay week by week. Cancel anytime.
         </p>
         <Link href="/signup" className="candy-btn px-10 py-5 text-xl inline-flex items-center gap-2">
           Start Trial <ArrowRight size={18} />
