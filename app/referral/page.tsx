@@ -65,7 +65,7 @@ export default function Referral() {
               <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ background: item.bg, border: `2px solid ${item.color}` }}>
                 <item.icon size={22} strokeWidth={2.5} style={{ color: item.color }} />
               </div>
-              <h3 className="font-black mb-1" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>{item.title}</h3>
+              <h2 className="font-black mb-1" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>{item.title}</h2>
               <p className="text-sm" style={{ color: '#64748B' }}>{item.desc}</p>
             </div>
           ))}
@@ -73,9 +73,9 @@ export default function Referral() {
 
         {/* Commission Structure */}
         <div className="bg-white rounded-2xl p-6" style={{ border: '2px solid #1E293B', boxShadow: '6px 6px 0px #FBBF24' }}>
-          <h3 className="font-black text-lg mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+          <h2 className="font-black text-lg mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
             💰 Commission Structure
-          </h3>
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               { plan: 'Any Weekly Plan', commission: '30%', example: 'Earn $1.50-$6.60 per referral', color: '#8B5CF6' },
@@ -96,9 +96,9 @@ export default function Referral() {
 
         {/* Your Referral Link */}
         <div className="bg-white rounded-2xl p-6" style={{ border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #E2E8F0' }}>
-          <h3 className="font-black text-lg mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+          <h2 className="font-black text-lg mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
             🔗 Your Referral Link
-          </h3>
+          </h2>
           <div className="flex items-center gap-3 p-4 rounded-xl mb-4" style={{ background: '#F8FAFC', border: '2px solid #E2E8F0' }}>
             <code className="flex-1 text-sm truncate" style={{ color: '#8B5CF6', fontFamily: 'monospace' }}>
               {referralLink}
