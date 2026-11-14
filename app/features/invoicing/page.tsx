@@ -73,6 +73,27 @@ export default function InvoicingFeaturePage() {
 
       <section className="px-6 pb-16">
         <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>How invoicing works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Pick customer and items</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Choose from your own records so details are never retyped.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Tax applied automatically</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>The universal tax system handles GST, VAT or sales tax for your region.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Send and track</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Mark invoices paid and see what is still outstanding at a glance.</p>
+            </div>
+          </div>
+          <p className="text-sm mt-6" style={{ color: '#475569' }}>For businesses that invoice customers in more than one tax setting.</p>
+        </div>
+      </section>
+
+      <section className="px-6 pb-16">
+        <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Frequently asked questions</h2>
           <SeoFaqAccordion faqs={faqs} />
         </div>

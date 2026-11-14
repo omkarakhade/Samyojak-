@@ -71,6 +71,27 @@ export default function AiAssistantFeaturePage() {
 
       <section className="px-6 pb-16">
         <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>How the AI assistant works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Ask in your words</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Type a question such as who has not paid this month.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>It finds the right report</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>The assistant chooses the report and the calculation runs in code, so numbers are exact.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Confirm before changes</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>When it proposes a change, you see a preview and confirm or undo it.</p>
+            </div>
+          </div>
+          <p className="text-sm mt-6" style={{ color: '#475569' }}>For owners who would rather ask than hunt through menus.</p>
+        </div>
+      </section>
+
+      <section className="px-6 pb-16">
+        <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Frequently asked questions</h2>
           <SeoFaqAccordion faqs={faqs} />
         </div>

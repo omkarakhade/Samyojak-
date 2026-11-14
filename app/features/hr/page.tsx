@@ -71,6 +71,27 @@ export default function HrFeaturePage() {
 
       <section className="px-6 pb-16">
         <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>How the HR module works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Bring your staff list</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Upload the spreadsheet you already keep. Names, roles, departments and joining dates map across without a fixed template.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Track pay and leave</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Record monthly salary and each person's leave balance in one record, so payroll questions have one answer.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Ask in plain words</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Ask the AI assistant who joined this quarter or who is low on leave. It reads your records and answers directly.</p>
+            </div>
+          </div>
+          <p className="text-sm mt-6" style={{ color: '#475569' }}>Built for owners who run payroll from a sheet and want it tidy, without buying a full HR suite.</p>
+        </div>
+      </section>
+
+      <section className="px-6 pb-16">
+        <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Frequently asked questions</h2>
           <SeoFaqAccordion faqs={faqs} />
         </div>

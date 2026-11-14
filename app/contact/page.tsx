@@ -66,6 +66,13 @@ export default function Contact() {
             <p className="text-lg" style={{ color: '#64748B' }}>
               Have questions? We respond within 24 hours on business days.
             </p>
+            <p className="text-base mt-4 max-w-2xl mx-auto" style={{ color: '#64748B' }}>
+              Write to us about plans and pricing, moving your data from spreadsheets or another ERP,
+              tax setup for your country, or help with your account. Tell us your business type and
+              the tools you use today, and we will reply with a specific answer instead of a generic
+              brochure. Every plan starts with a 14-day free trial, so you can also try Samyojak
+              with your own data before you write.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">

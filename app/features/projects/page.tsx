@@ -71,6 +71,27 @@ export default function ProjectsFeaturePage() {
 
       <section className="px-6 pb-16">
         <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>How the projects module works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Create a project</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Add the client, dates and budget. Existing project sheets import as they are.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Track the work</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Keep status, owner and deadlines on one board, so nothing lives only in someone's head.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Bill from the project</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Move from finished work to an invoice or quotation without retyping details.</p>
+            </div>
+          </div>
+          <p className="text-sm mt-6" style={{ color: '#475569' }}>Suits agencies, contractors and service firms that juggle several jobs for several clients at once.</p>
+        </div>
+      </section>
+
+      <section className="px-6 pb-16">
+        <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Frequently asked questions</h2>
           <SeoFaqAccordion faqs={faqs} />
         </div>

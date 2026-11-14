@@ -71,6 +71,27 @@ export default function ReportsFeaturePage() {
 
       <section className="px-6 pb-16">
         <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>How reporting works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Your data is the source</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Reports read the invoices, stock and customers you already keep. No separate export step.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Tax shown clearly</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Totals separate tax collected and paid under GST, VAT or sales tax, so returns are quicker to prepare.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Export when needed</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Download any report as CSV or Excel to share with your accountant.</p>
+            </div>
+          </div>
+          <p className="text-sm mt-6" style={{ color: '#475569' }}>Useful for owners who want a clear month-end view without building spreadsheets by hand.</p>
+        </div>
+      </section>
+
+      <section className="px-6 pb-16">
+        <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Frequently asked questions</h2>
           <SeoFaqAccordion faqs={faqs} />
         </div>
