@@ -34,6 +34,13 @@ export function detectRegion(): Region {
   }
 }
 
+/** Prices that marketing pages show: always read from the same table checkout charges from. */
+export function planPrices(region: Region, billing: BillingPeriod): Record<PlanName, string> {
+  const out = {} as Record<PlanName, string>
+  for (const p of PRODUCTS[region][billing]) out[p.name] = p.display_price
+  return out
+}
+
 export const MODULE_ACCESS: Record<PlanName, string[]> = {
   'CRM Starter': ['dashboard', 'crm'],
   'ERP Basic': ['dashboard', 'crm', 'invoices', 'inventory'],
