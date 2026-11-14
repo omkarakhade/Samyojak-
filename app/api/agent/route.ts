@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { canUseAI } from '@/lib/access'
+import { getEntitlement, moduleAllowed, lockedText } from '@/lib/access'
 import { getAuthedUser, ADMIN_EMAIL } from '@/lib/serverAuth'
 import {
   AGENT_MODULES,
@@ -163,11 +163,9 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
     }
-    if (!(await canUseAI(user))) {
-      return NextResponse.json(
-        { error: 'The AI agent is available on the Complete plan.' },
-        { status: 403 }
-      )
+    const ent = await getEntitlement(user)
+    if (!ent.ai) {
+      return NextResponse.json({ error: ent.message || 'Choose a plan to continue.' }, { status: 403 })
     }
 
     const body = await req.json()
@@ -178,6 +176,10 @@ export async function POST(req: NextRequest) {
       const actions = sanitizeActions(body.actions)
       if (actions.length === 0) {
         return NextResponse.json({ error: 'Nothing to save.' }, { status: 400 })
+      }
+      const lockedAction = actions.find(a => !moduleAllowed(ent, (a as any).module))
+      if (lockedAction) {
+        return NextResponse.json({ error: lockedText((lockedAction as any).module) }, { status: 403 })
       }
       const adds = actions.filter((a): a is AddAction => a.type === 'add')
       const updates = actions.filter((a): a is UpdateAction => a.type === 'update')
@@ -268,7 +270,13 @@ export async function POST(req: NextRequest) {
       const parsed = stripJson(content)
       const ops: RawOp[] = Array.isArray(parsed?.operations) ? parsed.operations : []
 
-      const { actions, notes } = await resolveOperations(user.id, ops)
+      const resolved = await resolveOperations(user.id, ops)
+      const notes = resolved.notes
+      const actions = resolved.actions.filter(a => {
+        const ok = moduleAllowed(ent, (a as any).module)
+        if (!ok) notes.push(lockedText((a as any).module))
+        return ok
+      })
 
       if (actions.length === 0) {
         if (notes.length > 0) {

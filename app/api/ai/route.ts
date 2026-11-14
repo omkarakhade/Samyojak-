@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
 import { storeList } from '@/lib/store'
+import { getEntitlement } from '@/lib/access'
 
 const GROQ_MODEL = 'llama-3.1-8b-instant'
 
 // One query for all five modules (instead of ten requests per message)
-async function fetchAllUserData(userId: string): Promise<Record<string, any[]>> {
+async function fetchAllUserData(userId: string, allowed: string[]): Promise<Record<string, any[]>> {
   const modules = ['CRM', 'Invoices', 'Inventory', 'HR', 'Projects']
   const out: Record<string, any[]> = {}
   for (const m of modules) out[m] = []
+  const readable = modules.filter(m => allowed.includes(m))
+  if (readable.length === 0) return out
   try {
-    const records = await storeList(userId, modules, { max: 500 })
+    const records = await storeList(userId, readable, { max: 500 })
     for (const r of records) {
       const mod = r.fields?.Module
       if (!out[mod]) continue
@@ -24,7 +27,7 @@ async function fetchAllUserData(userId: string): Promise<Record<string, any[]>> 
   return out
 }
 
-async function buildContext(userId?: string) {
+async function buildContext(userId?: string, allowed: string[] = []) {
   // Legacy shared tables are no longer read (they were visible to every user)
   const airtableLeads: any[] = []
   const airtableInvoices: any[] = []
@@ -39,7 +42,7 @@ async function buildContext(userId?: string) {
   let userProjects: any[] = []
 
   if (userId) {
-    const all = await fetchAllUserData(userId)
+    const all = await fetchAllUserData(userId, allowed)
     userLeads = all.CRM
     userInvoices = all.Invoices
     userProducts = all.Inventory
@@ -145,12 +148,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ reply: 'Please sign in again to use the AI assistant.' }, { status: 401 })
     }
     const userId = user && isSafeId(user.id) ? user.id : undefined
+    const ent = user ? await getEntitlement(user) : null
+    if (user && ent && !ent.ai) {
+      return NextResponse.json({ reply: ent.message || 'Choose a plan to keep using the assistant.' }, { status: 403 })
+    }
 
     const apiKey = process.env.GROQ_API_KEY
 
     let context: any = null
     try {
-      context = await buildContext(userId)
+      context = await buildContext(userId, ent?.modules || [])
     } catch (e) {
       console.error('Context build error:', e)
     }

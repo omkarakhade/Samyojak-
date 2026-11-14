@@ -14,7 +14,7 @@ const AI_PLANS = ['Complete']
 const QUICK_QUESTIONS = [
   'Who has not paid me?',
   'Sales per month',
-  'GST collected per month',
+  'Tax collected per month',
   'Leads by status',
   'Any low stock alerts?',
   'Top clients',
@@ -78,14 +78,14 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024
 const MAX_SHEET_ROWS = 3000
 const CHUNK = 200
 
-const inr = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN')
+const inr = (n: number) => Math.round(n).toLocaleString('en-US')
 
 function newBatchId() {
   return `agent_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
 function nowTime() {
-  return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+  return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 }
 
 function looksLikeQuestion(text: string) {
@@ -170,7 +170,7 @@ function BarList({ items }: { items: { label: string; value: number }[] }) {
           <div className="flex-1 h-4 rounded" style={{ background: '#F1F5F9' }}>
             <div className="h-4 rounded" style={{ width: `${Math.max(2, (i.value / max) * 100)}%`, background: '#8B5CF6' }} />
           </div>
-          <span className="w-20 font-bold" style={{ color: '#1E293B' }}>{i.value.toLocaleString('en-IN')}</span>
+          <span className="w-20 font-bold" style={{ color: '#1E293B' }}>{i.value.toLocaleString('en-US')}</span>
         </div>
       ))}
     </div>
@@ -236,7 +236,7 @@ function MigrationView({
       <div className="px-3 py-2 flex items-center gap-2 flex-wrap" style={{ background: '#EDE9FE' }}>
         <FileText size={14} style={{ color: '#8B5CF6' }} />
         <span className="text-xs font-black" style={{ color: '#8B5CF6' }}>{plan.fileName}</span>
-        <span className="text-xs" style={{ color: '#64748B' }}>· {plan.total.toLocaleString('en-IN')} rows · {plan.headers.length} columns</span>
+        <span className="text-xs" style={{ color: '#64748B' }}>· {plan.total.toLocaleString('en-US')} rows · {plan.headers.length} columns</span>
       </div>
       <div className="px-3 py-3 space-y-3">
         <div className="flex items-center gap-2 flex-wrap">
@@ -293,7 +293,7 @@ function MigrationView({
               <Check size={14} />
               {busy
                 ? `Moving... ${plan.progress ?? 0}%`
-                : `Move ${plan.total.toLocaleString('en-IN')} rows in`}
+                : `Move ${plan.total.toLocaleString('en-US')} rows in`}
             </button>
             <button onClick={onCancel} disabled={busy}
               className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold disabled:opacity-50"
@@ -310,7 +310,7 @@ function MigrationView({
 function SummaryTiles({ summary }: { summary: Summary | null }) {
   const tiles = summary
     ? [
-        { label: 'Leads', value: summary.leads.total.toLocaleString('en-IN'), sub: `${summary.leads.fresh} new` },
+        { label: 'Leads', value: summary.leads.total.toLocaleString('en-US'), sub: `${summary.leads.fresh} new` },
         { label: 'Unpaid', value: inr(summary.invoices.unpaidAmount), sub: `${summary.invoices.unpaidCount} invoice${summary.invoices.unpaidCount === 1 ? '' : 's'}${summary.invoices.overdueCount ? ` · ${summary.invoices.overdueCount} overdue` : ''}` },
         { label: 'Billed this month', value: inr(summary.invoices.billedThisMonth), sub: `${summary.invoices.count} invoices in all` },
         { label: 'Low stock', value: String(summary.inventory.low), sub: `of ${summary.inventory.items} items` },
@@ -340,13 +340,15 @@ const PIN_LABELS: Record<string, string> = {
   leads_by_status: 'Leads by status',
   low_stock: 'Low stock',
   top_clients: 'Top clients',
-  gst_summary: 'GST per month',
+  gst_summary: 'Tax per month',
 }
 
 export default function AIAssistant() {
   const [plan, setPlan] = useState('')
   const [userId, setUserId] = useState('')
   const [canUseAI, setCanUseAI] = useState(false)
+  const [ent, setEnt] = useState<{ status: string; daysRemaining: number; planName: string; modules: string[]; message: string } | null>(null)
+  const lockedMsg = useRef('')
   const [checking, setChecking] = useState(true)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -370,7 +372,7 @@ export default function AIAssistant() {
       try {
         const token = await getToken()
         const res = await fetch('/api/entitlement', { headers: token ? { Authorization: `Bearer ${token}` } : {} })
-        if (res.ok) hasAI = !!(await res.json()).ai
+        if (res.ok) { const e = await res.json(); hasAI = !!e.ai; setEnt(e) }
       } catch { /* treated as no access */ }
       setCanUseAI(hasAI)
       setChecking(false)
@@ -472,6 +474,7 @@ export default function AIAssistant() {
       })
       if (!res.ok) return null
       const data = await res.json()
+      lockedMsg.current = typeof data.locked === 'string' ? data.locked : ''
       return data.card || null
     } catch {
       return null
@@ -480,9 +483,12 @@ export default function AIAssistant() {
 
   /** Show a table or chart when one fits the question, otherwise answer in words. */
   const answerQuestion = async (q: string) => {
+    lockedMsg.current = ''
     const card = await fetchInsight({ message: q })
     if (card) {
       addAiMessage({ text: 'Here you go.', card })
+    } else if (lockedMsg.current) {
+      addAiMessage({ text: '🔒 ' + lockedMsg.current })
     } else {
       addAiMessage({ text: await askAssistant(q) })
     }
@@ -491,7 +497,9 @@ export default function AIAssistant() {
   const showPinned = async (id: string) => {
     if (loading) return
     setLoading(true)
+    lockedMsg.current = ''
     const card = await fetchInsight({ insight: id })
+    if (!card && lockedMsg.current) { addAiMessage({ text: '🔒 ' + lockedMsg.current }); setLoading(false); return }
     addAiMessage(card ? { text: PIN_LABELS[id] || 'Pinned answer', card } : { text: 'Could not load that right now.' })
     setLoading(false)
   }
@@ -548,7 +556,7 @@ export default function AIAssistant() {
       migrationRows.current[index] = rows
       addAiMessage({
         text: sheet.rows.length > MAX_SHEET_ROWS
-          ? `I read the first ${MAX_SHEET_ROWS.toLocaleString('en-IN')} of ${sheet.rows.length.toLocaleString('en-IN')} rows. Here is what I understood. Check it, then confirm.`
+          ? `I read the first ${MAX_SHEET_ROWS.toLocaleString('en-US')} of ${sheet.rows.length.toLocaleString('en-US')} rows. Here is what I understood. Check it, then confirm.`
           : 'Here is what I understood. Check it, then confirm and I will move it in.',
         migration: plan,
         status: 'pending',
@@ -609,7 +617,7 @@ export default function AIAssistant() {
         updateMessage(index, { status: 'saved', batchId, count: created, reverts: [] })
         loadSummary()
         if (created === rows.length) {
-          addAiMessage({ text: `Done. ${created.toLocaleString('en-IN')} rows are now in ${MODULE_LABELS[plan.module] || plan.module}. Ask me anything about them.` })
+          addAiMessage({ text: `Done. ${created.toLocaleString('en-US')} rows are now in ${MODULE_LABELS[plan.module] || plan.module}. Ask me anything about them.` })
         }
       } else {
         updateMessage(index, { status: 'cancelled' })
@@ -741,31 +749,19 @@ export default function AIAssistant() {
             <Lock size={28} style={{ color: '#8B5CF6' }} />
           </div>
           <h2 className="text-2xl font-black text-white mb-3" style={{ fontFamily: 'Outfit' }}>
-            AI Business Intelligence
+            {ent?.status === 'expired' ? 'Your free trial has ended' : 'Start with a plan'}
           </h2>
-          <p className="text-gray-400 mb-2">
-            Available on the <strong className="text-white">Complete ERP</strong> plan.
+          <p className="text-gray-400 mb-3">
+            {ent?.message || 'Pick a plan to start your 14-day free trial. Your assistant runs your business with you.'}
           </p>
           <p className="text-gray-500 text-sm mb-8">
-            The AI reads your live CRM, invoices, inventory, HR, and project data and gives specific actionable answers about your actual business numbers.
+            Short on budget? A weekly plan lets you pay week by week and keep your data and your work going.
           </p>
-          <div className="space-y-3 mb-8">
-            {[
-              '🔴 How are my leads — live count, conversion rate',
-              '🔴 Which invoices are overdue — exact amounts',
-              '🔴 Low stock alerts — specific products',
-              '🔴 Payroll overview — team and total cost',
-              '🔴 Project status — overdue and at risk',
-            ].map(f => (
-              <p key={f} className="text-sm text-gray-400">{f}</p>
-            ))}
-          </div>
-          <a href="/pricing"
+          <a href="/choose-plan"
             className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-black text-white hover:opacity-90 transition-opacity"
             style={{ background: '#8B5CF6', border: '2px solid rgba(139,92,246,0.5)' }}>
-            <Zap size={16} /> Upgrade to Complete Plan
+            <Zap size={16} /> Choose a plan
           </a>
-          <p className="text-xs text-gray-600 mt-3">Current plan: {plan || 'No Plan'}</p>
         </div>
       </div>
     </Layout>
@@ -791,6 +787,15 @@ export default function AIAssistant() {
             </div>
           </div>
         </div>
+
+        {ent?.status === 'trial' && (
+          <div className="mb-3 px-4 py-2 rounded-xl text-xs flex-shrink-0 flex flex-wrap items-center gap-x-3 gap-y-1"
+            style={{ background: '#FEF3C7', border: '1px solid #FBBF24', color: '#92400E' }}>
+            <span><strong>{ent.daysRemaining} day{ent.daysRemaining === 1 ? '' : 's'}</strong> left in your free trial ({ent.planName}).</span>
+            <span>Can't pay yet? A weekly plan keeps your data and work going.</span>
+            <a href="/choose-plan" className="font-bold underline">See plans</a>
+          </div>
+        )}
 
         <SummaryTiles summary={summary} />
 

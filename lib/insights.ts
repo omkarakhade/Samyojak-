@@ -55,7 +55,7 @@ export function toNumber(v: unknown): number {
 }
 
 export function inr(n: number): string {
-  return '₹' + Math.round(n).toLocaleString('en-IN')
+  return Math.round(n).toLocaleString('en-US')
 }
 
 /** First column name (in order of the patterns) that appears in the data. */
@@ -197,17 +197,17 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
 
     return {
       id,
-      title: 'GST collected per month',
+      title: 'Tax collected per month',
       kind: 'table',
-      columns: ['Month', 'Taxable value', 'GST', 'CGST + SGST (if same state)'],
+      columns: ['Month', 'Amount before tax', 'Tax collected'],
       rows: keys.map(k => {
         const v = byMonth.get(k)!
-        return [monthLabel(k), inr(v.base), inr(v.tax), `${inr(v.tax / 2)} + ${inr(v.tax / 2)}`]
+        return [monthLabel(k), inr(v.base), inr(v.tax)]
       }),
-      total: keys.length ? `GST total ${inr(keys.reduce((s, k) => s + byMonth.get(k)!.tax, 0))}` : undefined,
+      total: keys.length ? `Tax total ${inr(keys.reduce((s, k) => s + byMonth.get(k)!.tax, 0))}` : undefined,
       note: tax
-        ? 'Taxable value is the invoice amount before tax. For sales to another state the whole GST is IGST. Check against your return before filing.'
-        : 'Your invoices have no tax column yet, so GST shows as zero.',
+        ? 'Works with any tax: GST, VAT or sales tax. Amount before tax is the invoice amount. Check against your return before filing.'
+        : 'Your invoices have no tax column yet, so tax shows as zero.',
     }
   }
 
@@ -283,7 +283,7 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
 
 export function pickInsightByKeywords(q: string): InsightId | null {
   const t = q.toLowerCase()
-  if (/\bgst\b|gstr|tax (summary|collected|due)|cgst|sgst|igst/.test(t)) return 'gst_summary'
+  if (/\bgst\b|gstr|\bvat\b|sales tax|tax (summary|collected|due|report)|cgst|sgst|igst/.test(t)) return 'gst_summary'
   if (/unpaid|overdue|outstanding|pending (payment|invoice)|not paid|baki|bakaya|payment (due|pending)|who owes/.test(t)) return 'unpaid_invoices'
   if (/low stock|reorder|running out|out of stock|stock alert|kam stock/.test(t)) return 'low_stock'
   if (/top (client|customer)|best (client|customer)|biggest (client|customer)/.test(t)) return 'top_clients'
