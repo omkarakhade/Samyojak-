@@ -70,6 +70,30 @@ export default function IndustriesPage() {
         </div>
       </section>
 
+      <section className="px-6 pb-16">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Why one ERP fits so many industries</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>One system, any trade</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Every business sends quotes, raises invoices, tracks customers and watches stock or time. Samyojak covers these jobs once, so you do not buy a different tool for each trade.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Your data, your fields</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Bring the spreadsheets you already keep. Samyojak keeps your own column names instead of forcing a fixed template.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Tax that travels</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>GST, VAT and sales tax are handled by one universal tax system, so the same workspace works for local and cross-border sales.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Start small, add modules</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Begin with invoicing and customers. Switch on inventory, HR or projects when you need them, and pay only for the plan you use.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <SeoCtaSection
         heading="See Samyojak for your industry"
         subheading="Import your existing data and be running in minutes."
