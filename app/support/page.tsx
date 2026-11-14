@@ -128,9 +128,9 @@ export default function Support() {
         {/* Header */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Outfit' }}>
               Support
-            </h2>
+            </h1>
             <p className="text-gray-500 text-sm">
               {myTickets.length} ticket{myTickets.length !== 1 ? 's' : ''} · We respond within 24 hours
             </p>

@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     title: 'Samyojak — Coordinate Everything. Run Anything.',
     description: 'All-in-one AI-powered ERP. CRM, Invoicing, Inventory, HR, Projects.',
   },
-  alternates: { canonical: 'https://www.samyojak-erp.com' },
+  alternates: { canonical: './' },
   icons: { icon: '/favicon.svg', shortcut: '/favicon.svg' },
 }
 

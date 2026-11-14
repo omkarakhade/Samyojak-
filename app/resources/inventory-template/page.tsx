@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import SeoTemplateChecklist from '@/components/SeoTemplateChecklist'
 
 export const metadata: Metadata = {
-  title: 'Inventory Template — Starting Structure for Stock Tracking',
+  title: 'Inventory Template for Stock Tracking',
   description: 'A starting structure for tracking inventory — what fields to include for stock levels, reorder points, and product identification.',
   alternates: { canonical: 'https://www.samyojak-erp.com/resources/inventory-template' },
   openGraph: {

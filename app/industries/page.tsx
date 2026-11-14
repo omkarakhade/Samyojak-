@@ -11,7 +11,7 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 
 export const metadata: Metadata = {
   title: 'ERP for Every Industry — Samyojak',
-  description: 'Samyojak adapts to how your industry already works. See how manufacturing, retail, healthcare, education, services, construction, real estate, logistics, hospitality, agencies, and finance businesses use Samyojak.',
+  description: 'Samyojak adapts to how your industry already works. See how manufacturing, retail, healthcare, services, agencies and more use it.',
   alternates: { canonical: 'https://www.samyojak-erp.com/industries' },
   openGraph: {
     title: 'ERP for Every Industry — Samyojak',

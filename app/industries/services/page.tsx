@@ -10,7 +10,7 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 
 export const metadata: Metadata = {
   title: 'ERP for Service Businesses — Samyojak',
-  description: 'Manage clients, projects, and invoicing for your service business with Samyojak\'s adaptive ERP. CRM, project tracking, and tax-compliant invoicing in one workspace.',
+  description: 'Run your service business with Samyojak: CRM, project tracking and tax-compliant invoicing in one adaptive workspace.',
   alternates: { canonical: 'https://www.samyojak-erp.com/industries/services' },
   openGraph: {
     title: 'ERP for Service Businesses — Samyojak',

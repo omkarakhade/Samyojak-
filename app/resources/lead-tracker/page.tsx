@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import SeoTemplateChecklist from '@/components/SeoTemplateChecklist'
 
 export const metadata: Metadata = {
-  title: 'Lead Tracker — Framework for Prioritizing Leads',
+  title: 'Lead Tracker for Prioritizing Leads',
   description: 'A simple framework for tracking and prioritizing leads so none go cold and follow-ups happen on time.',
   alternates: { canonical: 'https://www.samyojak-erp.com/resources/lead-tracker' },
   openGraph: {

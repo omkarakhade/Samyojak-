@@ -9,7 +9,7 @@ import SeoFaqAccordion from '@/components/SeoFaqAccordion'
 import SeoCtaSection from '@/components/SeoCtaSection'
 
 export const metadata: Metadata = {
-  title: 'Samyojak vs Odoo — Which ERP Is Right for You?',
+  title: 'Samyojak vs Odoo — Which ERP Fits?',
   description: 'Compare Samyojak and Odoo across features, setup time, data import, and pricing. See how Samyojak\'s adaptive approach differs from Odoo\'s traditional ERP model.',
   alternates: { canonical: 'https://www.samyojak-erp.com/compare/samyojak-vs-odoo' },
   openGraph: {

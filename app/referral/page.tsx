@@ -45,9 +45,9 @@ export default function Referral() {
     <Layout>
       <div className="space-y-6 max-w-3xl">
         <div>
-          <h2 className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+          <h1 className="text-2xl font-black" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
             Referral Program 🎁
-          </h2>
+          </h1>
           <p className="text-gray-500 mt-1">Share Samyojak and earn commission on every paying customer you refer</p>
         </div>
 

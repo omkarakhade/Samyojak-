@@ -9,7 +9,7 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 
 export const metadata: Metadata = {
   title: 'Odoo Alternative — Samyojak Adaptive ERP',
-  description: 'Looking for an Odoo alternative? Samyojak is an adaptive ERP that imports your existing data as-is and gets CRM, invoicing, inventory, HR, and projects running in minutes.',
+  description: 'Looking for an Odoo alternative? Samyojak imports your data as-is and runs CRM, invoicing, inventory, HR and projects in minutes.',
   alternates: { canonical: 'https://www.samyojak-erp.com/alternatives/odoo' },
   openGraph: {
     title: 'Odoo Alternative — Samyojak Adaptive ERP',

@@ -7,7 +7,7 @@ import SeoBreadcrumb from '@/components/SeoBreadcrumb'
 import SeoCtaSection from '@/components/SeoCtaSection'
 
 export const metadata: Metadata = {
-  title: 'Migrate to Samyojak — Import Your Existing Data',
+  title: 'Migrate to Samyojak — Import Your Data',
   description: 'See how to migrate your business data from Excel, Odoo, Zoho, or Google Sheets into Samyojak without reformatting or losing information.',
   alternates: { canonical: 'https://www.samyojak-erp.com/migration' },
   openGraph: {

@@ -10,7 +10,7 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 
 export const metadata: Metadata = {
   title: 'ERP for Retail Businesses — Samyojak',
-  description: 'Manage inventory, customer relationships, and invoicing for your retail business with Samyojak. Free QR codes, low-stock alerts, and adaptive data import included.',
+  description: 'Run retail with Samyojak: inventory, customers and invoicing in one place, with free QR codes and low-stock alerts.',
   alternates: { canonical: 'https://www.samyojak-erp.com/industries/retail' },
   openGraph: {
     title: 'ERP for Retail Businesses — Samyojak',

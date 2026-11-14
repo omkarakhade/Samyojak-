@@ -2,6 +2,14 @@ import React from 'react'
 import Link from 'next/link'
 import { ArrowRight, Brain, Globe, Shield, Zap } from 'lucide-react'
 
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'About Samyojak — The AI-Agent ERP',
+  description: 'Samyojak is an adaptive ERP built around an AI agent that works on your behalf. Learn the story and the idea behind it.',
+  alternates: { canonical: 'https://www.samyojak-erp.com/about' },
+}
+
 export default function About() {
   return (
     <div style={{ background: '#FFFDF5', fontFamily: 'Plus Jakarta Sans' }}>

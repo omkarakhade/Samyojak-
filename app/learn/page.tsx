@@ -7,7 +7,7 @@ import SeoBreadcrumb from '@/components/SeoBreadcrumb'
 import SeoCtaSection from '@/components/SeoCtaSection'
 
 export const metadata: Metadata = {
-  title: 'Learn — ERP, CRM & Business Software Explained',
+  title: 'Learn ERP, CRM & Business Software',
   description: 'Clear explanations of what ERP is, how it differs from CRM, what adaptive ERP means, and how to choose the right business management software.',
   alternates: { canonical: 'https://www.samyojak-erp.com/learn' },
   openGraph: {

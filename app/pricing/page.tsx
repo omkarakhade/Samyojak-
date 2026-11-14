@@ -204,10 +204,10 @@ export default function Pricing() {
                 )}
 
                 <div className="text-3xl mb-3">{plan.emoji}</div>
-                <h3 className="font-black text-xl mb-1"
+                <h2 className="font-black text-xl mb-1"
                   style={{ fontFamily: 'Outfit', color: plan.popular ? 'white' : '#1E293B' }}>
                   {plan.name}
-                </h3>
+                </h2>
                 <p className="text-xs mb-4" style={{ color: plan.popular ? 'rgba(255,255,255,0.7)' : '#64748B' }}>
                   {plan.desc}
                 </p>
@@ -275,9 +275,9 @@ export default function Pricing() {
           {/* All plans include */}
           <div className="mt-12 p-8 rounded-2xl text-center"
             style={{ background: 'white', border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #F1F5F9' }}>
-            <h3 className="font-black text-lg mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+            <h2 className="font-black text-lg mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
               Every plan includes
-            </h3>
+            </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { emoji: '🔒', label: 'SSL security', desc: 'All data encrypted' },

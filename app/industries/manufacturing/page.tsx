@@ -10,7 +10,7 @@ import SeoCtaSection from '@/components/SeoCtaSection'
 
 export const metadata: Metadata = {
   title: 'ERP for Manufacturing Businesses — Samyojak',
-  description: 'Manage inventory, suppliers, invoicing, and projects for your manufacturing business with Samyojak\'s adaptive ERP. Import your existing data and get running in minutes.',
+  description: 'Run manufacturing with Samyojak: inventory, suppliers, invoicing and projects. Import your existing data and start in minutes.',
   alternates: { canonical: 'https://www.samyojak-erp.com/industries/manufacturing' },
   openGraph: {
     title: 'ERP for Manufacturing Businesses — Samyojak',

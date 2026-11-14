@@ -3,7 +3,7 @@ import FeaturesClient from './FeaturesClient'
 
 export const metadata: Metadata = {
   title: 'Features — Samyojak Adaptive ERP',
-  description: 'CRM, quotations, invoicing, recurring billing, inventory, HR, recruiting, projects, reports, BI dashboard, and AI business intelligence — 12 modules in one adaptive workspace that imports your existing data as-is.',
+  description: '12 modules in one adaptive workspace: CRM, invoicing, inventory, HR, projects, reports and AI insights. Imports your data as-is.',
   alternates: { canonical: 'https://www.samyojak-erp.com/features' },
   openGraph: {
     title: 'Features — Samyojak Adaptive ERP',

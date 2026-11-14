@@ -7,8 +7,8 @@ import SeoBreadcrumb from '@/components/SeoBreadcrumb'
 import SeoCtaSection from '@/components/SeoCtaSection'
 
 export const metadata: Metadata = {
-  title: 'Samyojak Solutions — Business Management for Every Stage',
-  description: 'From small businesses and startups to growing companies, see how Samyojak\'s adaptive ERP replaces spreadsheets and disconnected tools with one centralized workspace.',
+  title: 'Business Management Solutions for Every Stage',
+  description: 'See how Samyojak\'s adaptive ERP replaces spreadsheets and disconnected tools with one workspace, from startups to growing firms.',
   alternates: { canonical: 'https://www.samyojak-erp.com/solutions' },
   openGraph: {
     title: 'Samyojak Solutions — Business Management for Every Stage',

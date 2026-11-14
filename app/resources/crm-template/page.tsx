@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import SeoTemplateChecklist from '@/components/SeoTemplateChecklist'
 
 export const metadata: Metadata = {
-  title: 'CRM Template — Starting Structure for Lead Tracking',
+  title: 'CRM Template for Lead Tracking',
   description: 'A starting structure for tracking leads and customer relationships — what fields and pipeline stages to include.',
   alternates: { canonical: 'https://www.samyojak-erp.com/resources/crm-template' },
   openGraph: {

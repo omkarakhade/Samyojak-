@@ -22,8 +22,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/pricing',
     '/about',
     '/contact',
-    '/support',
-    '/referral',
     '/compare',
     '/compare/samyojak-vs-odoo',
     '/compare/samyojak-vs-zoho',

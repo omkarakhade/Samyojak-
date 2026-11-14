@@ -8,7 +8,7 @@ import SeoFaqAccordion from '@/components/SeoFaqAccordion'
 import SeoCtaSection from '@/components/SeoCtaSection'
 
 export const metadata: Metadata = {
-  title: 'Best ERP for Small Business — What to Look For',
+  title: 'Best ERP for Small Business',
   description: 'A guide to choosing the best ERP for small business: setup time, pricing structure, data migration, and which features actually matter at small business scale.',
   alternates: { canonical: 'https://www.samyojak-erp.com/best/erp-for-small-business' },
   openGraph: {

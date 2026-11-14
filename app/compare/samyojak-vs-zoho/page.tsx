@@ -9,8 +9,8 @@ import SeoFaqAccordion from '@/components/SeoFaqAccordion'
 import SeoCtaSection from '@/components/SeoCtaSection'
 
 export const metadata: Metadata = {
-  title: 'Samyojak vs Zoho — Which ERP Is Right for You?',
-  description: 'Compare Samyojak and Zoho across CRM, invoicing, pricing, and setup complexity. See how Samyojak\'s unified adaptive ERP compares to Zoho\'s suite of separate apps.',
+  title: 'Samyojak vs Zoho — Which ERP Fits?',
+  description: 'Compare Samyojak and Zoho on CRM, invoicing, pricing and setup. One unified adaptive ERP versus a suite of separate apps.',
   alternates: { canonical: 'https://www.samyojak-erp.com/compare/samyojak-vs-zoho' },
   openGraph: {
     title: 'Samyojak vs Zoho — Which ERP Is Right for You?',

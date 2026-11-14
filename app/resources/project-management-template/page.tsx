@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import SeoTemplateChecklist from '@/components/SeoTemplateChecklist'
 
 export const metadata: Metadata = {
-  title: 'Project Management Template — Starting Structure',
+  title: 'Project Management Template',
   description: 'A starting structure for tracking projects — what fields, stages, and deadlines to include for client work.',
   alternates: { canonical: 'https://www.samyojak-erp.com/resources/project-management-template' },
   openGraph: {

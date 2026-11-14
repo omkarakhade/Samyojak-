@@ -74,9 +74,9 @@ export default function Contact() {
             <div className="space-y-6">
               <div className="p-8 rounded-2xl"
                 style={{ background: 'white', border: '2px solid #1E293B', boxShadow: '6px 6px 0px #E2E8F0' }}>
-                <h3 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
                   Contact Information
-                </h3>
+                </h2>
                 <div className="grid grid-cols-2 gap-4 mb-6">
 
                   {/* Email */}
@@ -125,9 +125,9 @@ export default function Contact() {
               <div className="p-8 rounded-2xl"
                 style={{ background: '#8B5CF6', border: '2px solid #1E293B', boxShadow: '6px 6px 0px #FBBF24' }}>
                 <div className="text-4xl mb-4">🚀</div>
-                <h3 className="text-2xl font-black text-white mb-3" style={{ fontFamily: 'Outfit' }}>
+                <h2 className="text-2xl font-black text-white mb-3" style={{ fontFamily: 'Outfit' }}>
                   Ready to get started?
-                </h3>
+                </h2>
                 <p className="text-white/80 mb-6" style={{ fontFamily: 'Plus Jakarta Sans' }}>
                   Start your trial and see how Samyojak adapts to your business in minutes.
                 </p>
@@ -145,9 +145,9 @@ export default function Contact() {
               {sent ? (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-6">🎉</div>
-                  <h3 className="text-2xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                  <h2 className="text-2xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
                     Message Sent!
-                  </h3>
+                  </h2>
                   <p className="mb-2" style={{ color: '#64748B' }}>
                     We will get back to you within 24 hours at
                   </p>
@@ -160,9 +160,9 @@ export default function Contact() {
                 </div>
               ) : (
                 <>
-                  <h3 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+                  <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
                     Send us a message
-                  </h3>
+                  </h2>
 
                   {error && (
                     <div className="p-3 rounded-xl mb-4 text-sm"
