@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     if (file.size > MAX_BYTES) return NextResponse.json({ error: 'That PDF is over 4 MB. Please send a smaller one.' }, { status: 400 })
 
     const buf = new Uint8Array(await file.arrayBuffer())
-    if (String.fromCharCode(...buf.slice(0, 4)) !== '%PDF') {
+    if ((buf[0] !== 0x25 || buf[1] !== 0x50 || buf[2] !== 0x44 || buf[3] !== 0x46)) {
       return NextResponse.json({ error: 'That does not look like a PDF file.' }, { status: 400 })
     }
 
