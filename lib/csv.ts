@@ -90,3 +90,28 @@ export function parseSheetText(raw: string): ParsedSheet {
 
   return { headers, rows, totalRows: rows.length }
 }
+
+
+/** Turn rows from an Excel sheet (array of arrays) into the same shape as parseSheetText. First row = headers. */
+export function matrixToSheet(matrix: unknown[][]): ParsedSheet {
+  const cell = (v: unknown): string => {
+    if (v === null || v === undefined) return ''
+    if (v instanceof Date) return v.toISOString().slice(0, 10)
+    return String(v).trim()
+  }
+  const rowsRaw = matrix.filter(r => Array.isArray(r) && r.some(c => cell(c) !== ''))
+  if (rowsRaw.length < 2) return { headers: [], rows: [], totalRows: 0 }
+  const seen = new Set<string>()
+  const headers = rowsRaw[0].map((h, i) => {
+    let name = cell(h) || `Column ${i + 1}`
+    while (seen.has(name)) name = `${name} (${i + 1})`
+    seen.add(name)
+    return name
+  })
+  const rows = rowsRaw.slice(1).map(r => {
+    const o: Record<string, string> = {}
+    headers.forEach((h, i) => { o[h] = cell(r[i]) })
+    return o
+  })
+  return { headers, rows, totalRows: rows.length }
+}
