@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
-import { canUseAI } from '@/lib/access'
+import { getEntitlement, moduleAllowed, lockedText } from '@/lib/access'
 import { fetchUserRecords } from '@/lib/userData'
 import {
   INSIGHT_IDS,
@@ -29,7 +29,7 @@ async function pickWithAI(message: string): Promise<InsightId | null> {
               `Pick which report best answers a business owner's question (English, Hindi or Hinglish). ` +
               `Reply with JSON only: {"insight":"<id>"} where id is one of ${INSIGHT_IDS.join(', ')}, or "none" if no report fits. ` +
               `unpaid_invoices = who has not paid / overdue. revenue_by_month = sales trend. leads_by_status = lead pipeline. ` +
-              `low_stock = items to reorder. top_clients = best customers. gst_summary = GST/tax collected.`,
+              `low_stock = items to reorder. top_clients = best customers. gst_summary = tax collected (GST, VAT or sales tax).`,
           },
           { role: 'user', content: message.slice(0, 500) },
         ],
@@ -54,8 +54,9 @@ export async function POST(req: NextRequest) {
     if (!user || !isSafeId(user.id)) {
       return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
     }
-    if (!(await canUseAI(user))) {
-      return NextResponse.json({ error: 'Available on the Complete plan.' }, { status: 403 })
+    const ent = await getEntitlement(user)
+    if (!ent.ai) {
+      return NextResponse.json({ error: ent.message || 'Choose a plan to continue.' }, { status: 403 })
     }
 
     const body = await req.json()
@@ -64,6 +65,9 @@ export async function POST(req: NextRequest) {
     if (!id && message) id = pickInsightByKeywords(message) || (await pickWithAI(message))
 
     if (!id) return NextResponse.json({ card: null })
+
+    const blocked = INSIGHT_MODULES[id].find(m => !moduleAllowed(ent, m))
+    if (blocked) return NextResponse.json({ card: null, locked: lockedText(blocked) })
 
     const data = await fetchUserRecords(user.id, INSIGHT_MODULES[id])
     return NextResponse.json({ card: computeInsight(id, data) })

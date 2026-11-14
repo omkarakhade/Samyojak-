@@ -126,20 +126,20 @@ function noticeText(day: number, deleteOn: string) {
     const left = 14 - day
     return {
       subject: `${left} days left in your Samyojak trial`,
-      body: `Your free trial ends in ${left} days. Choose a plan any time and everything you have added moves with you automatically.`,
+      body: `Your free trial ends in ${left} days. Choose a plan any time and everything you have added moves with you automatically. Short on budget? A weekly plan lets you pay week by week and keep your data.`,
       link,
     }
   }
   if (day === 14) {
     return {
       subject: 'Your Samyojak trial has ended. Your data is safe',
-      body: `Your free trial ended today. Your data is kept safe until ${deleteOn}. Choose a plan before then and everything is restored.`,
+      body: `Your free trial ended today. Your data is kept safe until ${deleteOn}. Choose a plan before then and everything is restored. Short on budget? A weekly plan lets you keep going.`,
       link,
     }
   }
   return {
     subject: `Your Samyojak data will be deleted on ${deleteOn}`,
-    body: `Your trial data will be permanently deleted on ${deleteOn}. Choose a plan before then to keep it.`,
+    body: `Your trial data will be permanently deleted on ${deleteOn}. Choose a plan before then to keep it. Short on budget? A weekly plan is the easiest way to keep your data and your work going.`,
     link,
   }
 }

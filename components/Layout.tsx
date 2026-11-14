@@ -31,7 +31,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Main',
     items: [
-      { href: '/ai', icon: Brain, label: 'Samyojak AI', badge: '🆕', planRequired: 'Complete' },
+      { href: '/ai', icon: Brain, label: 'Samyojak AI', badge: '🆕' },
       { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
       { href: '/bi', icon: BarChart3, label: 'BI Dashboard', badge: '🆕' },
     ],

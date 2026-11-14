@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
-import { canUseAI } from '@/lib/access'
+import { getEntitlement, moduleAllowed, lockedText } from '@/lib/access'
 import { AGENT_MODULES } from '@/lib/agentTools'
 import { MODULE_FIELDS, exactFieldMapping } from '@/lib/moduleFields'
 import { storeCreate } from '@/lib/store'
@@ -173,8 +173,9 @@ export async function POST(req: NextRequest) {
     if (!user || !isSafeId(user.id)) {
       return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
     }
-    if (!(await canUseAI(user))) {
-      return NextResponse.json({ error: 'Guided migration is available on the Complete plan.' }, { status: 403 })
+    const ent = await getEntitlement(user)
+    if (!ent.ai) {
+      return NextResponse.json({ error: ent.message || 'Choose a plan to continue.' }, { status: 403 })
     }
 
     const body = await req.json()
@@ -190,13 +191,16 @@ export async function POST(req: NextRequest) {
         return o
       })
       const result = await analyze(headers, sample, clean(body.fileName, 100))
-      return NextResponse.json(result)
+      return NextResponse.json({ ...result, locked: moduleAllowed(ent, result.module) ? null : lockedText(result.module) })
     }
 
     if (body.action === 'commit') {
       const module = String(body.module || '')
       if (!(AGENT_MODULES as readonly string[]).includes(module)) {
         return NextResponse.json({ error: 'Unknown module.' }, { status: 400 })
+      }
+      if (!moduleAllowed(ent, module)) {
+        return NextResponse.json({ error: lockedText(module) }, { status: 403 })
       }
       const batchId = String(body.batchId || '')
       if (!/^agent_\d+_[a-z0-9]+$/.test(batchId)) {

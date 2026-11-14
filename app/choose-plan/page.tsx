@@ -35,11 +35,12 @@ export default function ChoosePlan() {
     planName: string,
     price: string,
     period: string,
-    bonus: string
+    bonus: string,
+    payNow = false
   ) => {
     setNotice('')
-    // First time: start the free 14-day trial. Returning users go on to payment.
-    if (!hasSub) {
+    // Free trial first (unless they chose to pay now). Returning users go on to payment.
+    if (!hasSub && !payNow) {
       setLoadingPlan(planName)
       try {
         const { data } = await supabase.auth.getSession()
@@ -119,7 +120,10 @@ export default function ChoosePlan() {
             Pick your plan. Get bonus time.
           </h1>
           <p className="text-lg mb-4" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
-            Every plan includes a bonus period — pay once, get more.
+            Try any plan free for 14 days, or pay now and get the bonus time.
+          </p>
+          <p className="text-sm mb-4" style={{ color: '#64748B', fontFamily: 'Plus Jakarta Sans' }}>
+            Short on budget? Weekly plans let you pay week by week and keep your work going.
           </p>
 
           <div
@@ -320,28 +324,42 @@ export default function ChoosePlan() {
                 </div>
               )}
 
-              {/* SELECT PLAN BUTTON */}
+              {/* PLAN BUTTONS */}
+              {!hasSub && (
+                <button
+                  onClick={() => handleSelect(plan.product_id, plan.name, plan.display_price, plan.period, plan.bonus)}
+                  className="w-full py-3 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300"
+                  style={{
+                    background: plan.popular ? 'white' : '#1E293B',
+                    color: plan.popular ? '#8B5CF6' : 'white',
+                    border: '2px solid #1E293B',
+                    fontFamily: 'Outfit',
+                    boxShadow: '3px 3px 0px ' + (plan.popular ? 'rgba(0,0,0,0.15)' : '#8B5CF6'),
+                    cursor: 'pointer',
+                  }}
+                >
+                  {loadingPlan === plan.name ? 'Starting...' : 'Start 14-day free trial'} <ArrowRight size={16} />
+                </button>
+              )}
               <button
-                onClick={() =>
-                  handleSelect(
-                    plan.product_id,
-                    plan.name,
-                    plan.display_price,
-                    plan.period,
-                    plan.bonus
-                  )
-                }
-                className="w-full py-3 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300"
-                style={{
+                onClick={() => handleSelect(plan.product_id, plan.name, plan.display_price, plan.period, plan.bonus, true)}
+                className={`w-full py-3 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300 ${hasSub ? '' : 'mt-2'}`}
+                style={hasSub ? {
                   background: plan.popular ? 'white' : '#1E293B',
                   color: plan.popular ? '#8B5CF6' : 'white',
                   border: '2px solid #1E293B',
                   fontFamily: 'Outfit',
                   boxShadow: '3px 3px 0px ' + (plan.popular ? 'rgba(0,0,0,0.15)' : '#8B5CF6'),
                   cursor: 'pointer',
+                } : {
+                  background: 'transparent',
+                  color: plan.popular ? 'white' : '#1E293B',
+                  border: '2px solid ' + (plan.popular ? 'rgba(255,255,255,0.6)' : '#1E293B'),
+                  fontFamily: 'Outfit',
+                  cursor: 'pointer',
                 }}
               >
-                {loadingPlan === plan.name ? 'Starting...' : hasSub ? 'Select Plan' : 'Start 14-day free trial'} <ArrowRight size={16} />
+                {hasSub ? 'Select Plan' : 'Pay now'} {hasSub && <ArrowRight size={16} />}
               </button>
             </div>
           ))}

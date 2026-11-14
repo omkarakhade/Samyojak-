@@ -100,7 +100,7 @@ export function getTrialStatus(sub: UserSubscriptionData | null | undefined): Tr
       hoursRemaining: 0,
       status: 'expired',
       message: kept
-        ? `Your free trial has ended. Your data is kept safe until ${dateText}. Choose a plan before then and everything is restored.`
+        ? `Your free trial has ended. Your data is kept safe until ${dateText}. Choose a plan before then and everything is restored. On a tight budget? A weekly plan lets you keep going and pay week by week.`
         : 'Your free trial has ended and the trial data has been deleted. Choose a plan to start again.',
       showBanner: false,
     }
