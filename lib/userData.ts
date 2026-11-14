@@ -4,6 +4,7 @@ import { storeList } from '@/lib/store'
 export interface UserRow {
   id: string
   data: Record<string, any>
+  meta?: Record<string, any>
 }
 
 /**
@@ -29,7 +30,7 @@ export async function fetchUserRecords(
     try {
       const parsed = JSON.parse(r.fields?.['Record Data'] || '{}')
       const { _meta, ...data } = parsed
-      out[mod].push({ id: r.id, data })
+      out[mod].push({ id: r.id, data, meta: _meta || {} })
     } catch {
       // skip unreadable rows
     }

@@ -29,7 +29,7 @@ async function pickWithAI(message: string): Promise<InsightId | null> {
               `Pick which report best answers a business owner's question (English, Hindi or Hinglish). ` +
               `Reply with JSON only: {"insight":"<id>"} where id is one of ${INSIGHT_IDS.join(', ')}, or "none" if no report fits. ` +
               `unpaid_invoices = who has not paid / overdue. revenue_by_month = sales trend. leads_by_status = lead pipeline. ` +
-              `low_stock = items to reorder. top_clients = best customers. gst_summary = tax collected (GST, VAT or sales tax). payment_reminders = draft messages to chase unpaid clients. daily_brief = what to focus on today.`,
+              `low_stock = items to reorder. top_clients = best customers. gst_summary = tax collected (GST, VAT or sales tax). payment_reminders = draft messages to chase unpaid clients. daily_brief = what to focus on today. recent_changes = what the assistant or imports added.`,
           },
           { role: 'user', content: message.slice(0, 500) },
         ],
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
 
     // The daily brief covers whatever the plan includes; other reports need all of their modules.
     let mods = INSIGHT_MODULES[id]
-    if (id === 'daily_brief') {
+    if (id === 'daily_brief' || id === 'recent_changes') {
       mods = mods.filter(m => moduleAllowed(ent, m))
       if (mods.length === 0) return NextResponse.json({ card: null, locked: lockedText('CRM') })
     } else {
