@@ -83,7 +83,7 @@ async function testDodo() {
     const DodoModule = await import('dodopayments')
     const DodoPayments = DodoModule.default || DodoModule
     new (DodoPayments as any)({ bearerToken: DODO_KEY, environment: DODO_ENV === 'live' ? 'live_mode' : 'test_mode' })
-    return { ok: true, environment: DODO_ENV || 'not set', keyPreview: DODO_KEY.substring(0, 8) + '...' }
+    return { ok: true, environment: DODO_ENV || 'not set', keyPreview: 'set' + '...' }
   } catch (e: any) {
     return { ok: false, error: String(e.message) }
   }
@@ -130,12 +130,12 @@ export async function GET(req: NextRequest) {
       APP_URL: APP_URL || 'NOT SET',
       AIRTABLE_TOKEN_EXISTS: !!TOKEN,
       AIRTABLE_TOKEN_LENGTH: TOKEN.length,
-      AIRTABLE_TOKEN_PREFIX: TOKEN.substring(0, 8),
+      AIRTABLE_TOKEN_PREFIX: TOKEN ? 'set' : 'none',
       AIRTABLE_BASE_ID: BASE,
       GROQ_KEY_EXISTS: !!GROQ_KEY,
-      GROQ_KEY_PREFIX: GROQ_KEY ? GROQ_KEY.substring(0, 8) : 'none',
+      GROQ_KEY_PREFIX: GROQ_KEY ? 'set' : 'none',
       DODO_KEY_EXISTS: !!DODO_KEY,
-      DODO_KEY_PREFIX: DODO_KEY ? DODO_KEY.substring(0, 8) : 'none',
+      DODO_KEY_PREFIX: DODO_KEY ? 'set' : 'none',
       SUPABASE_URL_EXISTS: !!SUPABASE_URL,
     },
     airtable: { reads, writes },

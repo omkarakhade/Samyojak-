@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser } from '@/lib/serverAuth'
-import { findProduct } from '@/lib/productLookup'
+import { findProduct, regionAllowed } from '@/lib/productLookup'
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +14,10 @@ export async function POST(req: NextRequest) {
     const product = typeof productId === 'string' ? findProduct(productId) : null
     if (!product) {
       return NextResponse.json({ error: 'Unknown product' }, { status: 400 })
+    }
+
+    if (!regionAllowed(product.region, req.headers.get('x-vercel-ip-country'))) {
+      return NextResponse.json({ error: 'This price is for another region. Please pick the plan shown for your country.' }, { status: 403 })
     }
 
     const apiKey = process.env.DODO_PAYMENTS_API_KEY

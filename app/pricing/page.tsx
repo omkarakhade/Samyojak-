@@ -2,32 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Check, ChevronDown, ChevronUp } from 'lucide-react'
-
-function detectRegion() {
-  if (typeof window === 'undefined') return 'global'
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-  if (tz.includes('Asia/Kolkata') || tz.includes('Asia/Calcutta')) return 'india'
-  if (tz.includes('America') || tz.includes('Europe') || tz.includes('Australia')) return 'western'
-  return 'global'
-}
-
-const REGION_PRICES: Record<string, Record<string, Record<string, string>>> = {
-  india: {
-    weekly: { crm: '$4.99', erp: '$9.99', business: '$16.99', complete: '$21.99' },
-    monthly: { crm: '$15', erp: '$29', business: '$49', complete: '$69' },
-    yearly: { crm: '$144', erp: '$279', business: '$469', complete: '$659' },
-  },
-  global: {
-    weekly: { crm: '$6.99', erp: '$13.99', business: '$22.99', complete: '$29.99' },
-    monthly: { crm: '$21', erp: '$41', business: '$69', complete: '$89' },
-    yearly: { crm: '$199', erp: '$399', business: '$659', complete: '$849' },
-  },
-  western: {
-    weekly: { crm: '$9.99', erp: '$19.99', business: '$29.99', complete: '$39.99' },
-    monthly: { crm: '$29', erp: '$59', business: '$89', complete: '$119' },
-    yearly: { crm: '$279', erp: '$569', business: '$849', complete: '$1,139' },
-  },
-}
+import { detectRegion, planPrices, type Region } from '@/lib/products'
 
 const REGION_LABELS: Record<string, string> = {
   india: '🇮🇳 India pricing detected',
@@ -48,12 +23,13 @@ const FAQS = [
 
 export default function Pricing() {
   const [billing, setBilling] = useState<'weekly' | 'monthly' | 'yearly'>('weekly')
-  const [region, setRegion] = useState<'india' | 'global' | 'western'>('global')
+  const [region, setRegion] = useState<Region>('global')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
-  useEffect(() => { setRegion(detectRegion() as any) }, [])
+  useEffect(() => { setRegion(detectRegion()) }, [])
 
-  const prices = REGION_PRICES[region][billing]
+  const pp = planPrices(region, billing)
+  const prices = { crm: pp['CRM Starter'], erp: pp['ERP Basic'], business: pp['Business'], complete: pp['Complete'] }
 
   const PLANS = [
     {

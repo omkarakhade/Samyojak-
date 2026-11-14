@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { detectRegion, planPrices, type Region } from '@/lib/products'
 import {
   ArrowRight, Check, Brain, Users, FileText, Package, UserCheck,
   FolderOpen, BarChart3, Globe, Zap, ChevronDown, ChevronUp,
@@ -48,34 +49,8 @@ const FAQS = [
   { q: 'Is my data secure?', a: 'Yes. All data is encrypted in transit. Authentication is handled by Supabase — enterprise grade security. Your data is stored securely and never shared.' },
 ]
 
-function detectRegion() {
-  if (typeof window === 'undefined') return 'global'
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-  if (tz.includes('Asia/Kolkata') || tz.includes('Asia/Calcutta')) return 'india'
-  if (tz.includes('America') || tz.includes('Europe') || tz.includes('Australia')) return 'western'
-  return 'global'
-}
-
 type BillingCycle = 'weekly' | 'monthly' | 'yearly'
-type Region = 'india' | 'global' | 'western'
 
-const PRICING_MATRIX: Record<Region, Record<BillingCycle, { starter: string; basic: string; business: string; complete: string }>> = {
-  india: {
-    weekly:  { starter: '$4.99', basic: '$9.99',  business: '$14.99', complete: '$19.99' },
-    monthly: { starter: '$15',   basic: '$29',    business: '$45',    complete: '$59'    },
-    yearly:  { starter: '$144',  basic: '$279',   business: '$432',   complete: '$566'   },
-  },
-  global: {
-    weekly:  { starter: '$6.99', basic: '$12.99', business: '$18.99', complete: '$24.99' },
-    monthly: { starter: '$21',   basic: '$39',    business: '$59',    complete: '$79'    },
-    yearly:  { starter: '$199',  basic: '$374',   business: '$566',   complete: '$758'   },
-  },
-  western: {
-    weekly:  { starter: '$9.99', basic: '$17.99', business: '$26.99', complete: '$34.99' },
-    monthly: { starter: '$29',   basic: '$54',    business: '$81',    complete: '$109'   },
-    yearly:  { starter: '$279',  basic: '$518',   business: '$778',   complete: '$1,046' },
-  },
-}
 
 const REGION_NOTES: Record<Region, string> = {
   india: 'India pricing',
@@ -147,11 +122,12 @@ export default function Home() {
   const [mobileMenu, setMobileMenu] = useState(false)
 
   useEffect(() => {
-    setRegion(detectRegion() as Region)
+    setRegion(detectRegion())
     setMounted(true)
   }, [])
 
-  const currentPrices = PRICING_MATRIX[region][billing]
+  const pp = planPrices(region, billing)
+  const currentPrices = { starter: pp['CRM Starter'], basic: pp['ERP Basic'], business: pp['Business'], complete: pp['Complete'] }
   const currentBonus = BONUS_LABEL[billing]
   const currentPeriod = PERIOD_LABEL[billing]
 

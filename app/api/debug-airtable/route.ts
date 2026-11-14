@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     config: {
       TOKEN_EXISTS: !!TOKEN,
       TOKEN_LENGTH: TOKEN.length,
-      TOKEN_PREFIX: TOKEN.substring(0, 8),
+      TOKEN_PREFIX: TOKEN ? 'set' : 'none',
       BASE_ID: BASE,
       BASE_ID_LENGTH: BASE.length,
     },
