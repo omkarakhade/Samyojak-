@@ -30,7 +30,7 @@ async function pickWithAI(message: string): Promise<InsightId | null> {
               `Pick which report best answers a business owner's question (English, Hindi or Hinglish). ` +
               `Reply with JSON only: {"insight":"<id>"} where id is one of ${INSIGHT_IDS.join(', ')}, or "none" if no report fits. ` +
               `unpaid_invoices = who has not paid / overdue. revenue_by_month = sales trend. leads_by_status = lead pipeline. ` +
-              `low_stock = items to reorder. top_clients = best customers. gst_summary = tax collected (GST, VAT or sales tax). payment_reminders = draft messages to chase unpaid clients. daily_brief = what to focus on today. recent_changes = what the assistant or imports added.`,
+              `low_stock = items to reorder. top_clients = best customers. gst_summary = tax collected (GST, VAT or sales tax). Overview questions like how is my business doing = daily_brief. payment_reminders = draft messages to chase unpaid clients. daily_brief = what to focus on today. recent_changes = what the assistant or imports added.`,
           },
           { role: 'user', content: message.slice(0, 500) },
         ],
@@ -64,7 +64,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const message = String(body.message || '').trim().slice(0, 500)
     let id: InsightId | null = INSIGHT_IDS.includes(body.insight) ? body.insight : null // used by pinned cards
-    if (!id && message) id = pickInsightByKeywords(message) || (await pickWithAI(message))
+    let viaAI = false
+    if (!id && message) {
+      id = pickInsightByKeywords(message)
+      if (!id) { id = await pickWithAI(message); viaAI = !!id }
+    }
 
     if (!id) return NextResponse.json({ card: null })
 
@@ -75,7 +79,8 @@ export async function POST(req: NextRequest) {
       if (mods.length === 0) return NextResponse.json({ card: null, locked: lockedText('CRM') })
     } else {
       const blocked = mods.find(m => !moduleAllowed(ent, m))
-      if (blocked) return NextResponse.json({ card: null, locked: lockedText(blocked) })
+      // A report the AI merely guessed at must not show a lock message: let the assistant answer in words instead.
+      if (blocked) return NextResponse.json(viaAI ? { card: null } : { card: null, locked: lockedText(blocked) })
     }
 
     const data = await fetchUserRecords(user.id, mods)
