@@ -4,7 +4,7 @@ import Layout from '@/components/Layout'
 import { supabase } from '@/lib/supabase'
 import { getPlanFromMetadata } from '@/lib/planAccess'
 import { Brain, Send, Lock, Zap, Check, X, Undo2, Paperclip, Pin, PinOff, LayoutDashboard, FileText } from 'lucide-react'
-import { parseSheetText } from '@/lib/csv'
+import { parseSheetText, matrixToSheet } from '@/lib/csv'
 import { MODULE_FIELDS, MODULE_LABELS, exactFieldMapping } from '@/lib/moduleFields'
 import type { InsightCard } from '@/lib/insights'
 
@@ -538,18 +538,46 @@ export default function AIAssistant() {
     if (!file || loading) return
     setMessages(prev => [...prev, { role: 'user', text: `📎 ${file.name}`, time: nowTime() }])
 
-    if (!/\.(csv|tsv|txt)$/i.test(file.name)) {
-      addAiMessage({ text: 'I can read CSV files right now. In Excel or Google Sheets choose File → Save as / Download → CSV, then attach it again. Your data stays as it is.' })
+    const isPdf = /\.pdf$/i.test(file.name)
+    const isXlsx = /\.xlsx$/i.test(file.name)
+    if (!isPdf && !isXlsx && !/\.(csv|tsv|txt)$/i.test(file.name)) {
+      addAiMessage({ text: /\.xls$/i.test(file.name)
+        ? 'Old .xls files are not supported. In Excel choose Save as → Excel Workbook (.xlsx) or CSV, then attach it again.'
+        : 'I can read Excel (.xlsx), CSV and PDF files. Attach one of those and I will take it from there.' })
       return
     }
-    if (file.size > MAX_FILE_BYTES) {
-      addAiMessage({ text: 'That file is over 5 MB. Please split it into smaller files and attach them one by one.' })
+    if (file.size > (isPdf ? 4 * 1024 * 1024 : MAX_FILE_BYTES)) {
+      addAiMessage({ text: isPdf ? 'That PDF is over 4 MB. Please send a smaller one.' : 'That file is over 5 MB. Please split it into smaller files and attach them one by one.' })
       return
     }
 
     setLoading(true)
     try {
-      const sheet = parseSheetText(await file.text())
+      let sheet: { headers: string[]; rows: Record<string, string>[]; totalRows: number }
+      if (isPdf) {
+        const token = await getToken()
+        const form = new FormData()
+        form.append('file', file)
+        const res = await fetch('/api/pdf-extract', {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: form,
+        })
+        const out = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          addAiMessage({ text: out.error || 'I could not read that PDF.' })
+          setLoading(false)
+          return
+        }
+        sheet = { headers: out.headers, rows: out.rows, totalRows: out.rows.length }
+      } else if (isXlsx) {
+        const mod: any = await import('read-excel-file')
+        const readXlsx = mod.default || mod
+        const matrix = await readXlsx(file)
+        sheet = matrixToSheet(matrix as unknown[][])
+      } else {
+        sheet = parseSheetText(await file.text())
+      }
       if (sheet.headers.length === 0 || sheet.rows.length === 0) {
         addAiMessage({ text: 'I could not find a header row and data rows in that file. Make sure the first row has the column names.' })
         setLoading(false)
@@ -1001,12 +1029,12 @@ export default function AIAssistant() {
 
         {/* Input */}
         <div className="flex gap-2 flex-shrink-0">
-          <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,text/csv" className="hidden" onChange={handleFile} />
+          <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,.xlsx,.pdf,text/csv,application/pdf" className="hidden" onChange={handleFile} />
           <button
             onClick={() => fileRef.current?.click()}
             disabled={loading}
-            aria-label="Attach a spreadsheet"
-            title="Attach a CSV to move your data in"
+            aria-label="Attach a file"
+            title="Attach an Excel, CSV or PDF file to move your data in"
             className="px-3 py-3 rounded-xl font-bold text-sm disabled:opacity-40 flex-shrink-0"
             style={{ background: '#EDE9FE', color: '#8B5CF6', border: '1.5px solid #C4B5FD' }}>
             <Paperclip size={18} />
