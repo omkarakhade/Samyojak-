@@ -63,8 +63,18 @@ export function toNumber(v: unknown): number {
   return Number.isFinite(n) ? n : 0
 }
 
+export const CURRENCIES = ['USD', 'EUR', 'GBP', 'INR', 'AUD', 'CAD', 'AED', 'SGD'] as const
+
+let currentCurrency = ''
+/** Set the currency used by the formatters until changed again. Unknown values mean "no symbol". */
+export function setCurrency(c: unknown) {
+  currentCurrency = typeof c === 'string' && (CURRENCIES as readonly string[]).includes(c) ? c : ''
+}
+
 export function inr(n: number): string {
-  return Math.round(n).toLocaleString('en-US')
+  const v = Math.round(n)
+  if (!currentCurrency) return v.toLocaleString('en-US')
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currentCurrency, maximumFractionDigits: 0 }).format(v)
 }
 
 /** First column name (in order of the patterns) that appears in the data. */

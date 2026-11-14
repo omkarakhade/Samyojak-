@@ -80,7 +80,14 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024
 const MAX_SHEET_ROWS = 3000
 const CHUNK = 200
 
-const inr = (n: number) => Math.round(n).toLocaleString('en-US')
+const CURRENCY_LIST = ['USD', 'EUR', 'GBP', 'INR', 'AUD', 'CAD', 'AED', 'SGD']
+let activeCurrency = ''
+const inr = (n: number) => {
+  const v = Math.round(n)
+  return activeCurrency
+    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: activeCurrency, maximumFractionDigits: 0 }).format(v)
+    : v.toLocaleString('en-US')
+}
 
 function newBatchId() {
   return `agent_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
@@ -352,6 +359,7 @@ export default function AIAssistant() {
   const [plan, setPlan] = useState('')
   const [userId, setUserId] = useState('')
   const [canUseAI, setCanUseAI] = useState(false)
+  const [currency, setCurrencyState] = useState('')
   const [ent, setEnt] = useState<{ status: string; daysRemaining: number; planName: string; modules: string[]; message: string } | null>(null)
   const lockedMsg = useRef('')
   const [checking, setChecking] = useState(true)
@@ -392,6 +400,19 @@ export default function AIAssistant() {
       }
     })
   }, [])
+
+  useEffect(() => {
+    try {
+      const c = localStorage.getItem('samyojak_currency') || ''
+      if (CURRENCY_LIST.includes(c)) { activeCurrency = c; setCurrencyState(c) }
+    } catch { /* storage unavailable */ }
+  }, [])
+
+  const chooseCurrency = (c: string) => {
+    activeCurrency = c
+    setCurrencyState(c)
+    try { localStorage.setItem('samyojak_currency', c) } catch { /* storage unavailable */ }
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -475,7 +496,7 @@ export default function AIAssistant() {
       const res = await fetch('/api/insights', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, currency }),
       })
       if (!res.ok) return null
       const data = await res.json()
@@ -791,6 +812,15 @@ export default function AIAssistant() {
               <p className="text-xs text-green-500">Ask, record, or attach a sheet. I do the rest.</p>
             </div>
           </div>
+          <select
+            value={currency}
+            onChange={e => chooseCurrency(e.target.value)}
+            aria-label="Currency"
+            className="ml-auto text-xs rounded-lg px-2 py-1 bg-transparent text-gray-600 dark:text-gray-300"
+            style={{ border: '1px solid #CBD5E1' }}>
+            <option value="">Currency</option>
+            {CURRENCY_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
         </div>
 
         {ent?.status === 'trial' && (
