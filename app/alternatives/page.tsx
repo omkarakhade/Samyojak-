@@ -69,6 +69,30 @@ export default function AlternativesPage() {
         </div>
       </section>
 
+      <section className="px-6 pb-16">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Questions to ask before you switch ERP</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Why are you leaving?</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Cost, complexity and slow setup are the usual reasons. Name yours first, so you judge each alternative on it.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Can you bring your data?</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>A good alternative loads your current customers, stock and invoices without a rebuild. Samyojak reads Excel, CSV and PDF files directly.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Will your team use it?</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Tools fail when people avoid them. Samyojak has an AI assistant that answers questions in plain language and drafts changes for you to confirm.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Can you try before you pay?</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Run a real week of work first. Every Samyojak plan starts with a 14-day free trial.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <SeoCtaSection
         heading="Try the adaptive alternative"
         subheading="Import your existing data and be running in minutes."

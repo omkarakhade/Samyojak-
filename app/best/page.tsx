@@ -59,6 +59,30 @@ export default function BestPage() {
         </div>
       </section>
 
+      <section className="px-6 pb-16">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>How to pick the right ERP for your business</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Start with your daily work</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>List the five tasks you repeat most, such as invoicing, stock checks or follow-ups. The best ERP does those well before anything else.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Match the size of the tool to the size of the business</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Large suites suit big teams. A small team needs fast setup and clear pricing more than hundreds of settings.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Check the data path</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Your first month is data migration. Prefer tools that accept the files you already have.</p>
+            </div>
+            <div className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0' }}>
+              <h3 className="font-black mb-2" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Plan for growth</h3>
+              <p className="text-sm" style={{ color: '#64748B' }}>Pick a system with modules you can switch on later, so you pay only for what you use now.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <SeoCtaSection
         heading="See if Samyojak fits what you're looking for"
         subheading="Import your existing data and be running in minutes."
