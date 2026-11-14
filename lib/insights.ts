@@ -14,6 +14,7 @@ export type InsightId =
   | 'gst_summary'
   | 'payment_reminders'
   | 'daily_brief'
+  | 'recent_changes'
 
 export const INSIGHT_IDS: InsightId[] = [
   'unpaid_invoices',
@@ -24,6 +25,7 @@ export const INSIGHT_IDS: InsightId[] = [
   'gst_summary',
   'payment_reminders',
   'daily_brief',
+  'recent_changes',
 ]
 
 export const INSIGHT_MODULES: Record<InsightId, string[]> = {
@@ -35,6 +37,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   gst_summary: ['Invoices'],
   payment_reminders: ['Invoices'],
   daily_brief: ['CRM', 'Invoices', 'Inventory'],
+  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting'],
 }
 
 export interface InsightCard {
@@ -217,6 +220,31 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'recent_changes') {
+    const batches = new Map<string, { when: string; module: string; source: string; n: number }>()
+    for (const [module, list] of Object.entries(data)) {
+      for (const r of list) {
+        const key = String(r.meta?.importId || '')
+        if (!key) continue
+        const src = String(r.meta?.source || '')
+        const at = String(r.meta?.importedAt || '')
+        const cur = batches.get(key) || { when: at, module, source: src, n: 0 }
+        cur.n += 1
+        batches.set(key, cur)
+      }
+    }
+    const list = Array.from(batches.values()).sort((a, b) => b.when.localeCompare(a.when)).slice(0, 12)
+    const label = (s: string) => (s === 'agent_entry' ? 'Added by the assistant' : s === 'csv_import' ? 'Imported from a sheet' : 'Added')
+    return {
+      id,
+      title: 'Recent changes',
+      kind: 'table',
+      columns: ['When', 'Where', 'What', 'Rows'],
+      rows: list.map(b => [b.when ? b.when.slice(0, 16).replace('T', ' ') + ' UTC' : '—', b.module, label(b.source), b.n]),
+      note: list.length === 0 ? 'Nothing added through the chat yet.' : 'Shows what was added by the assistant or by sheet imports. Use Undo on the message where it happened to reverse it.',
+    }
+  }
+
   if (id === 'payment_reminders') {
     const client = findField(invoices, CLIENT_FIELDS)
     const amount = findField(invoices, AMOUNT_FIELDS)
@@ -344,6 +372,7 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
 
 export function pickInsightByKeywords(q: string): InsightId | null {
   const t = q.toLowerCase()
+  if (/recent (change|activity)|what did you (change|add|do)|activity log|audit|history of (change|import)/.test(t)) return 'recent_changes'
   if (/remind|chase|draft.*(message|reminder)|dunning|collect.*(payment|money)/.test(t)) return 'payment_reminders'
   if (/focus on|needs? (my )?attention|today|daily brief|morning brief|priorit/.test(t)) return 'daily_brief'
   if (/\bgst\b|gstr|\bvat\b|sales tax|tax (summary|collected|due|report)|cgst|sgst|igst/.test(t)) return 'gst_summary'

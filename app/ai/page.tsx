@@ -16,6 +16,7 @@ const QUICK_QUESTIONS = [
   'Sales per month',
   'Tax collected per month',
   'Draft payment reminders',
+  'What did you change recently?',
   'Leads by status',
   'Any low stock alerts?',
   'Top clients',
@@ -344,6 +345,7 @@ const PIN_LABELS: Record<string, string> = {
   gst_summary: 'Tax per month',
   payment_reminders: 'Payment reminders',
   daily_brief: 'Today',
+  recent_changes: 'Recent changes',
 }
 
 export default function AIAssistant() {
