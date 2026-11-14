@@ -12,6 +12,8 @@ export type InsightId =
   | 'low_stock'
   | 'top_clients'
   | 'gst_summary'
+  | 'payment_reminders'
+  | 'daily_brief'
 
 export const INSIGHT_IDS: InsightId[] = [
   'unpaid_invoices',
@@ -20,6 +22,8 @@ export const INSIGHT_IDS: InsightId[] = [
   'low_stock',
   'top_clients',
   'gst_summary',
+  'payment_reminders',
+  'daily_brief',
 ]
 
 export const INSIGHT_MODULES: Record<InsightId, string[]> = {
@@ -29,6 +33,8 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   low_stock: ['Inventory'],
   top_clients: ['Invoices'],
   gst_summary: ['Invoices'],
+  payment_reminders: ['Invoices'],
+  daily_brief: ['CRM', 'Invoices', 'Inventory'],
 }
 
 export interface InsightCard {
@@ -211,6 +217,61 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'payment_reminders') {
+    const client = findField(invoices, CLIENT_FIELDS)
+    const amount = findField(invoices, AMOUNT_FIELDS)
+    const status = findField(invoices, STATUS_FIELDS)
+    const due = findField(invoices, DUE_FIELDS)
+    const num = findField(invoices, ['Invoice No', /invoice.*(no|number|#)|^inv/i])
+    const today = todayIST()
+    const pending = status ? invoices.filter(r => !isPaid(r.data[status])) : []
+    const overdue = due ? pending.filter(r => { const d = dayKey(r.data[due]); return d && d < today }) : pending
+    overdue.sort((a, b) => (due ? (dayKey(a.data[due]) || '9999') : '').localeCompare(due ? (dayKey(b.data[due]) || '9999') : ''))
+    const rows = overdue.slice(0, 10).map(r => {
+      const name = client ? String(r.data[client] ?? '').trim() : ''
+      const amt = amount ? inr(toNumber(r.data[amount])) : ''
+      const ref = num && r.data[num] ? ` ${r.data[num]}` : ''
+      const when = due && r.data[due] ? ` that was due on ${r.data[due]}` : ''
+      const draft = `Hi${name ? ' ' + name : ''}, a friendly reminder about invoice${ref}${amt ? ' for ' + amt : ''}${when}. Could you let us know when we can expect the payment? Thank you!`
+      return [name || '—', amt || '—', draft]
+    })
+    return {
+      id,
+      title: 'Payment reminders, ready to send',
+      kind: 'table',
+      columns: ['Client', 'Amount', 'Draft message'],
+      rows,
+      total: overdue.length ? `${overdue.length} reminder${overdue.length === 1 ? '' : 's'} drafted` : undefined,
+      note: !status
+        ? 'Your invoices have no payment status column, so I cannot tell who to remind.'
+        : overdue.length === 0
+          ? 'Nobody is overdue. Nothing to chase.'
+          : 'Copy a message and send it by email or chat. Nothing is sent automatically.',
+    }
+  }
+
+  if (id === 'daily_brief') {
+    const sum = computeSummary(data)
+    const items: (string | number)[][] = []
+    if (data.Invoices) {
+      items.push(['Payments', sum.invoices.overdueCount > 0 ? `${sum.invoices.overdueCount} overdue invoice${sum.invoices.overdueCount === 1 ? '' : 's'}` : 'No overdue invoices', sum.invoices.unpaidCount > 0 ? `${sum.invoices.unpaidCount} unpaid · ${inr(sum.invoices.unpaidAmount)}` : 'All paid'])
+    }
+    if (data.CRM) {
+      items.push(['Leads', sum.leads.fresh > 0 ? `${sum.leads.fresh} new lead${sum.leads.fresh === 1 ? '' : 's'} to contact` : 'No new leads waiting', `${sum.leads.total} in total`])
+    }
+    if (data.Inventory) {
+      items.push(['Stock', sum.inventory.low > 0 ? `${sum.inventory.low} item${sum.inventory.low === 1 ? '' : 's'} low` : 'Stock levels fine', `${sum.inventory.items} items tracked`])
+    }
+    return {
+      id,
+      title: 'What needs your attention today',
+      kind: 'table',
+      columns: ['Area', 'Focus', 'Detail'],
+      rows: items,
+      note: items.length === 0 ? 'Add some data first, then I can tell you what to focus on.' : 'Ask me to open any of these, for example "Who has not paid me?"',
+    }
+  }
+
   if (id === 'leads_by_status') {
     const status = findField(leads, ['Status', /status|stage/i])
     const counts = new Map<string, number>()
@@ -283,6 +344,8 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
 
 export function pickInsightByKeywords(q: string): InsightId | null {
   const t = q.toLowerCase()
+  if (/remind|chase|draft.*(message|reminder)|dunning|collect.*(payment|money)/.test(t)) return 'payment_reminders'
+  if (/focus on|needs? (my )?attention|today|daily brief|morning brief|priorit/.test(t)) return 'daily_brief'
   if (/\bgst\b|gstr|\bvat\b|sales tax|tax (summary|collected|due|report)|cgst|sgst|igst/.test(t)) return 'gst_summary'
   if (/unpaid|overdue|outstanding|pending (payment|invoice)|not paid|baki|bakaya|payment (due|pending)|who owes/.test(t)) return 'unpaid_invoices'
   if (/low stock|reorder|running out|out of stock|stock alert|kam stock/.test(t)) return 'low_stock'
