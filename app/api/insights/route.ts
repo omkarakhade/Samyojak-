@@ -7,6 +7,7 @@ import {
   INSIGHT_MODULES,
   InsightId,
   computeInsight,
+  setCurrency,
   pickInsightByKeywords,
 } from '@/lib/insights'
 
@@ -77,7 +78,12 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await fetchUserRecords(user.id, mods)
-    return NextResponse.json({ card: computeInsight(id, data) })
+    setCurrency(body.currency)
+    try {
+      return NextResponse.json({ card: computeInsight(id, data) })
+    } finally {
+      setCurrency('')
+    }
   } catch (e: any) {
     console.error('insights error:', e.message)
     return NextResponse.json({ card: null, error: 'Could not build that answer.' }, { status: 500 })
