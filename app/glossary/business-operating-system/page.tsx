@@ -6,7 +6,7 @@ import SeoGlossaryDefinition from '@/components/SeoGlossaryDefinition'
 import SeoCtaSection from '@/components/SeoCtaSection'
 
 export const metadata: Metadata = {
-  title: 'Business Operating System Definition — Glossary',
+  title: 'Business Operating System Definition',
   description: 'Business operating system definition — a single connected platform for running every core function of a business.',
   alternates: { canonical: 'https://www.samyojak-erp.com/glossary/business-operating-system' },
   openGraph: {

@@ -60,7 +60,7 @@ export default function GlossaryPage() {
 
       <section className="px-6 pb-12">
         <div className="max-w-4xl mx-auto">
-          <p className="text-base" style={{ color: '#475569' }}>Short, plain definitions of the business software terms you meet when choosing an ERP. Each entry explains what the term means, how it shows up in daily work, and one question to ask a vendor. Use them to compare tools with confidence.</p>
+          <p className="text-base" style={{ color: '#475569' }}>Short, plain definitions of the business software terms you meet when choosing an ERP. Each entry explains what the term means, how it shows up in daily work, and one question to ask a vendor. Use them to compare tools with confidence. Start with ERP and CRM if the terms are new to you, then read about adaptive ERP, lead management and business intelligence to see how the pieces connect. If you are choosing software for the first time, the entries on SaaS and inventory management explain what to check before you pay, and what to ask a vendor so there are no surprises later.</p>
         </div>
       </section>
 
