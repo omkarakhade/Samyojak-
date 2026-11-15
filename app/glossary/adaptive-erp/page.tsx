@@ -37,6 +37,13 @@ export default function GlossaryAdaptiveErpPage() {
           { label: 'SaaS', href: '/glossary/saas' },
         ]}
       />
+      <section className="px-6 pb-12">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Why it matters</h2>
+          <p className="text-base mb-3" style={{ color: '#475569' }}>Most ERPs ask you to reshape your data to fit their forms before you can start. An adaptive ERP reverses that: it reads the files you already have and keeps your own field names. For a small business this removes weeks of setup and lowers the cost of switching later.</p>
+          <p className="text-sm font-bold" style={{ color: '#8B5CF6' }}>Ask: can I import my current spreadsheet and keep my column names?</p>
+        </div>
+      </section>
       <SeoCtaSection heading="See adaptive import in action" subheading="Import your existing data and be running in minutes." />
       <MarketingFooter />
     </div>

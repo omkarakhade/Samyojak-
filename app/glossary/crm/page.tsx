@@ -37,6 +37,13 @@ export default function GlossaryCrmPage() {
           { label: 'Lead Management', href: '/glossary/lead-management' },
         ]}
       />
+      <section className="px-6 pb-12">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>A simple pipeline example</h2>
+          <p className="text-base mb-3" style={{ color: '#475569' }}>A lead enters as New, becomes Contacted after your first reply, then Converted when they accept a quotation, or Lost if they go quiet. Reviewing each stage weekly shows where leads stall and what to follow up on.</p>
+          <p className="text-sm font-bold" style={{ color: '#8B5CF6' }}>Ask: can a converted lead turn into an invoice without retyping?</p>
+        </div>
+      </section>
       <SeoCtaSection heading="See CRM lead scoring in action" subheading="Import your leads and start tracking in minutes." />
       <MarketingFooter />
     </div>

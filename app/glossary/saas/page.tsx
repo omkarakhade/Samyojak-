@@ -37,6 +37,13 @@ export default function GlossarySaasPage() {
           { label: 'Business Operating System', href: '/glossary/business-operating-system' },
         ]}
       />
+      <section className="px-6 pb-12">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>What you should check before buying</h2>
+          <p className="text-base mb-3" style={{ color: '#475569' }}>Look at pricing per user, how your data can be exported, where it is stored and what happens if you stop paying. SaaS saves you from running servers, but you still need a way out.</p>
+          <p className="text-sm font-bold" style={{ color: '#8B5CF6' }}>Ask: can I export all my data whenever I want?</p>
+        </div>
+      </section>
       <SeoCtaSection heading="Try a SaaS ERP built for you" subheading="No installation, no maintenance — just sign up." />
       <MarketingFooter />
     </div>

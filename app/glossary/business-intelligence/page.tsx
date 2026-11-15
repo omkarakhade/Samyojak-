@@ -37,6 +37,13 @@ export default function GlossaryBusinessIntelligencePage() {
           { label: 'Business Automation', href: '/glossary/business-automation' },
         ]}
       />
+      <section className="px-6 pb-12">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>What to look at first</h2>
+          <p className="text-base mb-3" style={{ color: '#475569' }}>Start with a few numbers you act on: revenue this month, unpaid invoices, top customers and slow-moving stock. A good tool updates them from the records you already keep, so you are not rebuilding a report by hand.</p>
+          <p className="text-sm font-bold" style={{ color: '#8B5CF6' }}>Ask: which decision would this number change?</p>
+        </div>
+      </section>
       <SeoCtaSection heading="See your data as clear insights" subheading="Start viewing your business intelligence in minutes." />
       <MarketingFooter />
     </div>

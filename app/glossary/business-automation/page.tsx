@@ -37,6 +37,13 @@ export default function GlossaryBusinessAutomationPage() {
           { label: 'Business Intelligence', href: '/glossary/business-intelligence' },
         ]}
       />
+      <section className="px-6 pb-12">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Where it helps most</h2>
+          <p className="text-base mb-3" style={{ color: '#475569' }}>Repeated tasks are the best place to start: recurring invoices, payment reminders, low-stock alerts and daily summaries. Each saves a few minutes, and together they save hours each week while cutting typing mistakes.</p>
+          <p className="text-sm font-bold" style={{ color: '#8B5CF6' }}>Ask: which three tasks do I repeat every week?</p>
+        </div>
+      </section>
       <SeoCtaSection heading="Let automation handle the repetitive work" subheading="Start automating in minutes." />
       <MarketingFooter />
     </div>

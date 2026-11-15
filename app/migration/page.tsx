@@ -59,6 +59,12 @@ export default function MigrationPage() {
         </div>
       </section>
 
+      <section className="px-6 pb-12">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-base" style={{ color: '#475569' }}>Moving to a new system is mostly about your data. Samyojak reads the files you already have, keeps your own column names, and shows you a preview before anything is saved. Pick the system or sheet you are leaving to see the steps. Your trial lasts 14 days, so you can test with real data first.</p>
+        </div>
+      </section>
+
       <SeoCtaSection
         heading="Bring your data with you"
         subheading="Import your existing data and be running in minutes."

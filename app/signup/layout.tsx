@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Start Your Free Trial',
   description: 'Create your Samyojak account and start a 14-day free trial on any plan. No credit card needed to begin.',
+  robots: { index: false, follow: true },
   alternates: { canonical: 'https://www.samyojak-erp.com/signup' },
 }
 

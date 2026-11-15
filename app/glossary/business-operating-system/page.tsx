@@ -37,6 +37,13 @@ export default function GlossaryBusinessOperatingSystemPage() {
           { label: 'SaaS', href: '/glossary/saas' },
         ]}
       />
+      <section className="px-6 pb-12">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>How it differs from an ERP</h2>
+          <p className="text-base mb-3" style={{ color: '#475569' }}>An ERP records what happened. A business operating system also helps decide what to do next, using an assistant that reads your data and proposes actions you can confirm. The goal is fewer tools and fewer manual steps.</p>
+          <p className="text-sm font-bold" style={{ color: '#8B5CF6' }}>Ask: does the tool only store data, or also act on it?</p>
+        </div>
+      </section>
       <SeoCtaSection heading="Run your business from one platform" subheading="Import your existing data and be running in minutes." />
       <MarketingFooter />
     </div>

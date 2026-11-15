@@ -58,6 +58,12 @@ export default function GlossaryPage() {
         </div>
       </section>
 
+      <section className="px-6 pb-12">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-base" style={{ color: '#475569' }}>Short, plain definitions of the business software terms you meet when choosing an ERP. Each entry explains what the term means, how it shows up in daily work, and one question to ask a vendor. Use them to compare tools with confidence.</p>
+        </div>
+      </section>
+
       <SeoCtaSection
         heading="See these concepts in practice"
         subheading="Import your existing data and be running in minutes."

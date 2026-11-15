@@ -37,6 +37,13 @@ export default function GlossaryLeadManagementPage() {
           { label: 'ERP', href: '/glossary/erp' },
         ]}
       />
+      <section className="px-6 pb-12">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>From first contact to sale</h2>
+          <p className="text-base mb-3" style={{ color: '#475569' }}>Capture every lead in one place, note the source, set a next step with a date and review the list weekly. Leads that have no next step are the ones most likely to be lost.</p>
+          <p className="text-sm font-bold" style={{ color: '#8B5CF6' }}>Ask: where did my best customers come from?</p>
+        </div>
+      </section>
       <SeoCtaSection heading="Never lose track of a lead" subheading="Start tracking your pipeline in minutes." />
       <MarketingFooter />
     </div>

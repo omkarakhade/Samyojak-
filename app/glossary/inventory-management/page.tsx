@@ -37,6 +37,13 @@ export default function GlossaryInventoryManagementPage() {
           { label: 'Business Automation', href: '/glossary/business-automation' },
         ]}
       />
+      <section className="px-6 pb-12">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>Basic habits that work</h2>
+          <p className="text-base mb-3" style={{ color: '#475569' }}>Count stock on a fixed schedule, set a reorder level for each item and label items with QR codes so a scan finds the record. These three habits prevent most stock-outs and over-ordering.</p>
+          <p className="text-sm font-bold" style={{ color: '#8B5CF6' }}>Ask: will I be warned before an item runs out?</p>
+        </div>
+      </section>
       <SeoCtaSection heading="See inventory tracking in action" subheading="Import your product data and be running in minutes." />
       <MarketingFooter />
     </div>

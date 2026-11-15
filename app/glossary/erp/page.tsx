@@ -38,6 +38,13 @@ export default function GlossaryErpPage() {
           { label: 'Business Operating System', href: '/glossary/business-operating-system' },
         ]}
       />
+      <section className="px-6 pb-12">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>What an ERP usually covers</h2>
+          <p className="text-base mb-3" style={{ color: '#475569' }}>Typical modules are customers, quotations, invoicing, inventory, HR and projects, all sharing one set of records. The benefit is a single version of the truth: a sale updates stock and revenue together.</p>
+          <p className="text-sm font-bold" style={{ color: '#8B5CF6' }}>Ask: how long until my first real invoice?</p>
+        </div>
+      </section>
       <SeoCtaSection heading="See ERP in action" subheading="Import your existing data and be running in minutes." />
       <MarketingFooter />
     </div>
