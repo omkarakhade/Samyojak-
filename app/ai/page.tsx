@@ -353,6 +353,8 @@ const PIN_LABELS: Record<string, string> = {
   payment_reminders: 'Payment reminders',
   daily_brief: 'Today',
   recent_changes: 'Recent changes',
+  profit_loss: 'Profit and loss',
+  bills_due: 'Bills to pay',
 }
 
 export default function AIAssistant() {

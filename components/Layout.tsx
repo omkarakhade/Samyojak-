@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, FileText, Package, UserCheck,
   FolderOpen, BarChart3, Brain, Settings, LogOut,
   ChevronLeft, ChevronRight, Menu, X, FileCheck,
-  RefreshCw, UserPlus, TrendingUp, Ticket, Bug
+  RefreshCw, UserPlus, TrendingUp, Ticket, Bug, Wallet
 } from 'lucide-react'
 
 const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
@@ -48,6 +48,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Operations',
     items: [
       { href: '/inventory', icon: Package, label: 'Inventory' },
+      { href: '/expenses', icon: Wallet, label: 'Expenses & Bills', badge: '🆕' },
       { href: '/projects', icon: FolderOpen, label: 'Projects' },
     ],
   },

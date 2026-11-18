@@ -49,6 +49,7 @@ Field names to use:
 - Inventory: Item Name, SKU, Category, Current Stock, Reorder Level, Unit Price
 - HR: Name, Role, Department, Salary, Joining Date
 - Projects: Project Name, Client, Status (Planning, In Progress, Review, Done), Start Date, Deadline, Description
+- Expenses: Vendor, Category, Amount, Date, Type (Expense, Bill), Status (Paid, Unpaid), Due Date, Notes. "Paid rent 20k" is an Expense with Status Paid; "bill from Sharma Traders 15k due 30th" is a Bill with Status Unpaid.
 - Recruiting: Candidate Name, Role, Department, Stage (Applied, Screening, Interview, Offer, Hired, Rejected), Email, Phone, Interview Date
 
 RULES:

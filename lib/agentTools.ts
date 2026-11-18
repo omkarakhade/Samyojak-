@@ -11,6 +11,7 @@ export const AGENT_MODULES = [
   'HR',
   'Projects',
   'Recruiting',
+  'Expenses',
 ] as const
 
 export type AgentModule = (typeof AGENT_MODULES)[number]

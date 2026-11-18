@@ -15,6 +15,8 @@ export type InsightId =
   | 'payment_reminders'
   | 'daily_brief'
   | 'recent_changes'
+  | 'profit_loss'
+  | 'bills_due'
 
 export const INSIGHT_IDS: InsightId[] = [
   'unpaid_invoices',
@@ -26,6 +28,8 @@ export const INSIGHT_IDS: InsightId[] = [
   'payment_reminders',
   'daily_brief',
   'recent_changes',
+  'profit_loss',
+  'bills_due',
 ]
 
 export const INSIGHT_MODULES: Record<InsightId, string[]> = {
@@ -37,7 +41,9 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   gst_summary: ['Invoices'],
   payment_reminders: ['Invoices'],
   daily_brief: ['CRM', 'Invoices', 'Inventory'],
-  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting'],
+  profit_loss: ['Invoices', 'Expenses'],
+  bills_due: ['Expenses'],
+  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses'],
 }
 
 export interface InsightCard {
@@ -230,6 +236,67 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'profit_loss') {
+    const exp = data.Expenses || []
+    const iAmount = findField(invoices, AMOUNT_FIELDS)
+    const iIssue = findField(invoices, ISSUE_FIELDS)
+    const eAmount = findField(exp, ['Amount', /^amount/i])
+    const eDate = findField(exp, ['Date', /^date$|bill.*date|expense.*date/i])
+    const by = new Map<string, { inc: number; out: number }>()
+    for (const r of invoices) {
+      const k = iIssue ? monthKey(r.data[iIssue]) : ''
+      if (!k) continue
+      const c = by.get(k) || { inc: 0, out: 0 }
+      c.inc += iAmount ? toNumber(r.data[iAmount]) : 0
+      by.set(k, c)
+    }
+    for (const r of exp) {
+      const k = eDate ? monthKey(r.data[eDate]) : ''
+      if (!k) continue
+      const c = by.get(k) || { inc: 0, out: 0 }
+      c.out += eAmount ? toNumber(r.data[eAmount]) : 0
+      by.set(k, c)
+    }
+    const keys = Array.from(by.keys()).sort().slice(-6)
+    const profit = (k: string) => by.get(k)!.inc - by.get(k)!.out
+    const tot = keys.reduce((s, k) => s + profit(k), 0)
+    return {
+      id,
+      title: 'Profit and loss per month',
+      kind: 'bar',
+      columns: ['Month', 'Billed', 'Spent', 'Profit'],
+      rows: keys.map(k => [monthLabel(k), inr(by.get(k)!.inc), inr(by.get(k)!.out), inr(profit(k))]),
+      bar: keys.map(k => ({ label: monthLabel(k), value: Math.round(profit(k)) })),
+      total: keys.length ? `Profit ${inr(tot)}` : undefined,
+      note: keys.length
+        ? 'Billed is invoice amount before tax, whether or not it is paid yet. Spent is your recorded expenses and bills. This is a simple view, not a tax-ready statement.'
+        : 'Add invoices and expenses with dates and I can show your profit.',
+    }
+  }
+
+  if (id === 'bills_due') {
+    const exp = data.Expenses || []
+    const vendor = findField(exp, ['Vendor', /vendor|supplier|payee/i])
+    const amount = findField(exp, ['Amount', /^amount/i])
+    const status = findField(exp, ['Status', /status|paid/i])
+    const due = findField(exp, ['Due Date', /due/i])
+    const today = todayIST()
+    const open = status ? exp.filter(r => !isPaid(r.data[status])) : []
+    open.sort((a, b) => (due ? dayKey(a.data[due]) || '9999' : '').localeCompare(due ? dayKey(b.data[due]) || '9999' : ''))
+    const sum = open.reduce((s, r) => s + (amount ? toNumber(r.data[amount]) : 0), 0)
+    const late = due ? open.filter(r => { const d = dayKey(r.data[due]); return d && d < today }).length : 0
+    return {
+      id,
+      title: 'Bills to pay',
+      kind: 'table',
+      columns: ['Vendor', 'Amount', 'Due'],
+      rows: open.slice(0, 15).map(r => [vendor ? String(r.data[vendor] ?? '') : '—', amount ? inr(toNumber(r.data[amount])) : '—', due ? String(r.data[due] ?? '—') : '—']),
+      total: open.length ? `${open.length} unpaid · ${inr(sum)}` : undefined,
+      note: !status ? 'Your expenses have no status column, so I cannot tell which bills are unpaid.'
+        : open.length === 0 ? 'No unpaid bills.' : late ? `${late} ${late === 1 ? 'is' : 'are'} past the due date.` : undefined,
+    }
+  }
+
   if (id === 'recent_changes') {
     const batches = new Map<string, { when: string; module: string; source: string; n: number }>()
     for (const [module, list] of Object.entries(data)) {
@@ -383,6 +450,8 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
 export function pickInsightByKeywords(q: string): InsightId | null {
   const t = q.toLowerCase()
   if (/recent (change|activity)|what did you (change|add|do)|activity log|audit|history of (change|import)/.test(t)) return 'recent_changes'
+  if (/profit|loss|p&l|p and l|net income|earn(ed|ing)s?\b|kitna (bacha|kamaya)|margin/.test(t)) return 'profit_loss'
+  if (/bills? (to pay|due)|what do i owe|i owe|payables?|unpaid bills|vendor.*(due|pay)/.test(t)) return 'bills_due'
   if (/remind|chase|draft.*(message|reminder)|dunning|collect.*(payment|money)/.test(t)) return 'payment_reminders'
   if (/focus on|needs? (my )?attention|today|daily brief|morning brief|priorit/.test(t)) return 'daily_brief'
   if (/\bgst\b|gstr|\bvat\b|sales tax|tax (summary|collected|due|report)|cgst|sgst|igst/.test(t)) return 'gst_summary'
