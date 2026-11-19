@@ -319,7 +319,7 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
         batches.set(key, cur)
       }
     }
-    for (const bt of batches.values()) {
+    for (const bt of Array.from(batches.values())) {
       const what = bt.source === 'agent_entry' ? 'Added' : bt.source === 'csv_import' ? 'Imported' : 'Added'
       rows.push({ when: bt.when, cells: [bt.when ? bt.when.slice(0, 16).replace('T', ' ') + ' UTC' : '—', what, bt.module, `${bt.n} row${bt.n === 1 ? '' : 's'}${bt.source === 'csv_import' ? ' from a sheet' : bt.source === 'agent_entry' ? ' by the assistant' : ''}`, bt.source === 'csv_import' ? 'Import' : 'Earlier entry'] })
     }
