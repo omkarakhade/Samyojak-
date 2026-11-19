@@ -299,7 +299,9 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
 
   if (id === 'recent_changes') {
     const log = (data.Activity || []).slice().sort((x, y) => String(y.data.When || '').localeCompare(String(x.data.When || '')))
-    const firstLog = log.length ? String(log[log.length - 1].data.When || '') : '9999'
+    // Rows are saved a moment before their log line, so look back two minutes when matching them.
+    const firstLogAt = log.length ? Date.parse(String(log[log.length - 1].data.When || '')) : NaN
+    const firstLog = Number.isFinite(firstLogAt) ? new Date(firstLogAt - 120000).toISOString() : '9999'
     const rows: { when: string; cells: (string | number)[] }[] = log.map(r => ({
       when: String(r.data.When || ''),
       cells: [String(r.data.When || '').slice(0, 16).replace('T', ' ') + ' UTC', String(r.data.Action || ''), String(r.data.Where || ''), String(r.data.Summary || ''), String(r.data.By || '')],

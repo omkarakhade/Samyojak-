@@ -1,13 +1,15 @@
 import { storeCreate } from '@/lib/store'
 import type { AgentAction, AddAction, UpdateAction } from '@/lib/agentTools'
 
-const NAME_FIELDS = ['Name', 'Client Name', 'Item Name', 'Project Name', 'Candidate Name', 'Vendor Name', 'Vendor', 'PO Number', 'Customer Name', 'Product Name', 'SKU']
+const NAME_FIELDS = ['Name', 'Client Name', 'Item Name', 'Project Name', 'Candidate Name', 'Vendor Name', 'Vendor', 'PO Number', 'Customer Name', 'Product Name', 'SKU', 'Item', 'Category', 'Description', 'Title']
 
 function labelOf(rec: Record<string, any>): string {
   for (const f of NAME_FIELDS) {
     const v = rec[f]
     if (v !== undefined && String(v).trim()) return String(v).slice(0, 40)
   }
+  const first = Object.values(rec).find(v => typeof v === 'string' && v.trim())
+  if (first) return String(first).slice(0, 40)
   return 'a record'
 }
 
@@ -23,7 +25,7 @@ export function describeApproved(actions: AgentAction[]): ActivityEntry[] {
   for (const a of actions) {
     if (a.type === 'add') {
       const add = a as AddAction
-      const names = add.records.slice(0, 3).map(labelOf).join(', ')
+      const names = add.records.slice(0, 3).map(r => labelOf(r) + (r['Amount'] !== undefined ? ` (${r['Amount']})` : '')).join(', ')
       const more = add.records.length > 3 ? ` and ${add.records.length - 3} more` : ''
       out.push({ action: 'Added', where: add.module, summary: `${add.records.length} record${add.records.length === 1 ? '' : 's'}: ${names}${more}` })
     } else {
