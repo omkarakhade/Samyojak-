@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeModule } from '@/lib/serverAuth'
 import { storeCreate } from '@/lib/store'
+import { lockedModules, lockedText } from '@/lib/access'
 
 export const maxDuration = 60
 
@@ -60,6 +61,8 @@ export async function POST(req: NextRequest) {
 
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     if (!isSafeModule(module)) return NextResponse.json({ error: 'module is required' }, { status: 400 })
+    const locked = await lockedModules(user, [module])
+    if (locked.length) return NextResponse.json({ error: lockedText(locked[0]) }, { status: 403 })
 
     if (!file.name.match(/\.(csv|txt|tsv)$/i)) {
       return NextResponse.json({

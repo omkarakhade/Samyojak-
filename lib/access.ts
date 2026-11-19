@@ -66,6 +66,14 @@ export function lockedText(module: string): string {
   return need ? `${module} is part of the ${TIER_NAME[need]} plan and above. Upgrade to unlock it.` : `${module} is not available on your plan.`
 }
 
+/** Modules from the list that this plan does not include (modules we do not gate, like Activity, are ignored). */
+export async function lockedModules(user: { id: string; email?: string | null; app_metadata?: any }, modules: string[]): Promise<string[]> {
+  const gated = modules.filter(m => NEEDS[m])
+  if (gated.length === 0) return []
+  const ent = await getEntitlement(user)
+  return gated.filter(m => !moduleAllowed(ent, m))
+}
+
 /** Can this user use the chat home? Any running trial or paid plan can; the plan decides which modules. */
 export async function canUseAI(user: { id: string; email?: string | null; app_metadata?: any }): Promise<boolean> {
   return (await getEntitlement(user)).ai

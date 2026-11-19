@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId, isSafeModule, userOwnsRecord } from '@/lib/serverAuth'
 import { storeList, storeDelete } from '@/lib/store'
+import { lockedModules, lockedText } from '@/lib/access'
 
 export const maxDuration = 60
 
@@ -65,9 +66,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'modules invalid' }, { status: 400 })
     }
     try {
-      const raw = await fetchAllRecords(userId, modules)
+      // Modules outside the plan come back empty instead of failing the whole request.
+      const locked = await lockedModules(user, modules)
+      const open = modules.filter(m => !locked.includes(m))
+      const raw = open.length ? await fetchAllRecords(userId, open) : []
       const byModule: Record<string, any> = {}
       for (const m of modules) {
+        if (locked.includes(m)) { byModule[m] = buildView([], null); continue }
         const rows = raw.filter((r: any) => r.fields?.Module === m).map(toRow)
         byModule[m] = buildView(rows, null)
       }
@@ -82,6 +87,8 @@ export async function GET(req: NextRequest) {
   if (!isSafeModule(module)) {
     return NextResponse.json({ error: 'module required' }, { status: 400 })
   }
+  const lockedOne = await lockedModules(user, [module])
+  if (lockedOne.length) return NextResponse.json({ error: lockedText(lockedOne[0]) }, { status: 403 })
 
   try {
     const rows = (await fetchAllRecords(userId, [module])).map(toRow)

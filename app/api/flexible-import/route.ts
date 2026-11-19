@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeModule } from '@/lib/serverAuth'
 import { storeCreate } from '@/lib/store'
+import { lockedModules, lockedText } from '@/lib/access'
 
 async function saveToAirtable(userId: string, module: string, records: Record<string, unknown>[], source: string) {
   const today = new Date().toISOString().split('T')[0]
@@ -68,6 +69,8 @@ export async function POST(req: NextRequest) {
     if (!file || !isSafeModule(module)) {
       return NextResponse.json({ error: 'Missing file, userId, or module' }, { status: 400 })
     }
+    const locked = await lockedModules(user, [module])
+    if (locked.length) return NextResponse.json({ error: lockedText(locked[0]) }, { status: 403 })
 
     const text = await file.text()
     const { headers, rows } = parseCSVText(text)

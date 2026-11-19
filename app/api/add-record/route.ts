@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeModule } from '@/lib/serverAuth'
 import { storeCreate } from '@/lib/store'
+import { lockedModules, lockedText } from '@/lib/access'
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,6 +16,9 @@ export async function POST(req: NextRequest) {
     if (!isSafeModule(module) || !record || typeof record !== 'object' || Array.isArray(record)) {
       return NextResponse.json({ error: 'module and record are required' }, { status: 400 })
     }
+
+    const locked = await lockedModules(user, [module])
+    if (locked.length) return NextResponse.json({ error: lockedText(locked[0]) }, { status: 403 })
 
     const importId = `manual_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
 
