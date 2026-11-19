@@ -18,7 +18,7 @@ const NEEDS: Record<string, PlanTier> = {
   CRM: 'starter',
   Invoices: 'basic', Quotations: 'basic', Inventory: 'basic',
   HR: 'business', Recruiting: 'business', Projects: 'business',
-  Expenses: 'basic',
+  Expenses: 'basic', Vendors: 'basic', 'Purchase Orders': 'basic',
 }
 const RANK: Record<PlanTier, number> = { starter: 0, basic: 1, business: 2, complete: 3 }
 const TIER_NAME: Record<PlanTier, string> = { starter: 'CRM Starter', basic: 'ERP Basic', business: 'Business', complete: 'Complete' }

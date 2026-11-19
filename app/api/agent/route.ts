@@ -50,6 +50,8 @@ Field names to use:
 - HR: Name, Role, Department, Salary, Joining Date
 - Projects: Project Name, Client, Status (Planning, In Progress, Review, Done), Start Date, Deadline, Description
 - Expenses: Vendor, Category, Amount, Date, Type (Expense, Bill), Status (Paid, Unpaid), Due Date, Notes. "Paid rent 20k" is an Expense with Status Paid; "bill from Sharma Traders 15k due 30th" is a Bill with Status Unpaid.
+- Vendors: Vendor Name, Email, Phone, Category, Notes
+- Purchase Orders: PO Number, Vendor, Item, Quantity, Amount, Order Date, Expected Date, Status (Draft, Ordered, Received, Cancelled), Notes
 - Recruiting: Candidate Name, Role, Department, Stage (Applied, Screening, Interview, Offer, Hired, Rejected), Email, Phone, Interview Date
 
 RULES:

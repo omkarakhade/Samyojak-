@@ -43,13 +43,13 @@ export function planPrices(region: Region, billing: BillingPeriod): Record<PlanN
 
 export const MODULE_ACCESS: Record<PlanName, string[]> = {
   'CRM Starter': ['dashboard', 'crm'],
-  'ERP Basic': ['dashboard', 'crm', 'invoices', 'inventory', 'expenses'],
-  'Business': ['dashboard', 'crm', 'invoices', 'inventory', 'expenses', 'hr', 'projects', 'reports'],
-  'Complete': ['dashboard', 'crm', 'invoices', 'inventory', 'expenses', 'hr', 'projects', 'reports', 'ai', 'settings', 'referral', 'admin'],
+  'ERP Basic': ['dashboard', 'crm', 'invoices', 'inventory', 'expenses', 'vendors', 'purchase-orders'],
+  'Business': ['dashboard', 'crm', 'invoices', 'inventory', 'expenses', 'vendors', 'purchase-orders', 'hr', 'projects', 'reports'],
+  'Complete': ['dashboard', 'crm', 'invoices', 'inventory', 'expenses', 'vendors', 'purchase-orders', 'hr', 'projects', 'reports', 'ai', 'settings', 'referral', 'admin'],
 }
 
 const LOCKED_BY_PLAN: Record<PlanName, string[]> = {
-  'CRM Starter': ['invoices', 'inventory', 'expenses', 'hr', 'projects', 'reports'],
+  'CRM Starter': ['invoices', 'inventory', 'expenses', 'vendors', 'purchase-orders', 'hr', 'projects', 'reports'],
   'ERP Basic': ['hr', 'projects', 'reports'],
   'Business': [],
   'Complete': [],

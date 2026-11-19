@@ -25,6 +25,8 @@ function guessModule(headers: string[]): string {
     CRM: (/lead|phone|mobile|email|follow|source/.test(h) ? 2 : 0),
     Projects: (/project|deadline|milestone/.test(h) ? 3 : 0),
     Recruiting: (/candidate|interview|resume|applied/.test(h) ? 3 : 0),
+    Vendors: (/vendor name|supplier name/.test(h) && !/amount/.test(h) ? 3 : 0),
+    'Purchase Orders': (/po number|purchase order|expected date/.test(h) ? 4 : 0),
     Expenses: (/vendor|expense|bill from|supplier/.test(h) ? 3 : 0),
     Quotations: (/quotation|quote|estimate/.test(h) ? 3 : 0),
   }
