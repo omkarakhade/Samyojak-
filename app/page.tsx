@@ -407,7 +407,7 @@ export default function Home() {
               <div className="text-3xl mb-4">🚀</div>
               <h3 className="text-xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>Samyojak Adaptive ERP</h3>
               <ul className="space-y-3">
-                {['Import any CSV — columns stay exactly as yours', 'No setup that feels like a second job', 'AI adapts to your business automatically', 'Data migration in one upload — no consultants', 'Familiar structure — zero learning curve'].map(p => (
+                {['Import any CSV — columns stay exactly as yours', 'Set up from a spreadsheet, not a long project', 'The assistant works with your own column names', 'Bring your data in with one upload', 'Ask in plain words, like a chat'].map(p => (
                   <li key={p} className="flex items-start gap-3 text-sm" style={{ color: '#C4B5FD' }}>
                     <span className="text-green-400 flex-shrink-0 mt-0.5">✓</span>{p}
                   </li>
@@ -593,27 +593,25 @@ export default function Home() {
                 <tr style={{ background: '#1E293B' }}>
                   <th className="p-4 text-left text-sm font-bold text-white">Feature</th>
                   <th className="p-4 text-center text-sm font-bold" style={{ color: '#8B5CF6' }}>Samyojak</th>
-                  <th className="p-4 text-center text-sm font-bold text-white/60">Legacy ERP A</th>
-                  <th className="p-4 text-center text-sm font-bold text-white/60">Legacy ERP B</th>
+                  <th className="p-4 text-center text-sm font-bold text-white/60">Typical traditional ERP</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {[
-                  ['Setup time', 'Minutes, not months', '2–4 weeks', '1–3 months'],
-                  ['Import any CSV format', '✅ Yes', '❌ Strict format only', '❌ Strict format only'],
-                  ['Weekly billing option', '✅ Yes', '❌ No', '❌ No'],
-                  ['Free QR codes', '✅ Included', '❌ Paid add-on', '❌ Not available'],
-                  ['WhatsApp invoicing', '✅ Built-in', '❌ No', '❌ No'],
-                  ['AI on live data', '✅ Real-time', '⚠️ Basic', '❌ No'],
-                  ['India & global pricing', '✅ Geo-optimized', '⚠️ USD only', '⚠️ USD only'],
-                  ['Universal tax 15+ countries', '✅ One click', '⚠️ Complex setup', '⚠️ Per-country'],
-                  ['Starting price', `${planPrices(region, 'weekly')['CRM Starter']}/week`, '$14+/month/user', '$10+/month/user'],
-                ].map(([feature, us, a, b]) => (
+                  ['Getting started', 'Upload a spreadsheet and ask', 'Often a setup project'],
+                  ['Import your own file', '✅ Excel, CSV, PDF', 'Often a fixed template'],
+                  ['Weekly billing option', '✅ Yes', 'Usually monthly or yearly'],
+                  ['Free QR codes', '✅ Included', 'Varies'],
+                  ['WhatsApp invoicing', '✅ Send with one tap', 'Varies'],
+                  ['Ask questions in chat', '✅ On supported plans', 'Varies'],
+                  ['India & global pricing', '✅ Priced by region', 'Varies'],
+                  ['Tax for many countries', '✅ One tax system', 'Often set up per country'],
+                  ['Starting price', `${planPrices(region, 'weekly')['CRM Starter']}/week`, 'Often per user, per month'],
+                ].map(([feature, us, a]) => (
                   <tr key={feature} className="hover:bg-gray-50">
                     <td className="p-4 text-sm font-medium text-gray-700">{feature}</td>
                     <td className="p-4 text-center text-sm font-bold" style={{ color: '#8B5CF6' }}>{us}</td>
                     <td className="p-4 text-center text-sm text-gray-500">{a}</td>
-                    <td className="p-4 text-center text-sm text-gray-500">{b}</td>
                   </tr>
                 ))}
               </tbody>
@@ -626,7 +624,7 @@ export default function Home() {
       <section className="px-6 py-16" style={{ background: '#F8FAFC' }}>
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-sm font-bold uppercase tracking-wide mb-8" style={{ color: '#94A3B8' }}>
-            Built on enterprise-grade infrastructure
+            Built on trusted cloud services
           </p>
           <div className="flex flex-wrap justify-center gap-10 items-center">
             {['▲ Vercel · Hosting', '⚡ Supabase · Auth', '🤖 Groq AI · Intelligence', '📊 Cloud · Data', '💳 Dodo · Payments'].map(item => (

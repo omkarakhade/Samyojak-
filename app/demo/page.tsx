@@ -286,8 +286,8 @@ function DemoContent() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              { icon: '📥', title: 'Import any CSV', desc: 'From Zoho, Salesforce, Tally, Excel — zero field mapping, zero data loss' },
-              { icon: '⚡', title: '5-minute setup', desc: 'No configuration, no consultants, no training required' },
+              { icon: '📥', title: 'Import any CSV', desc: 'Upload Excel, CSV or PDF exports (from Zoho, Tally and others). Your columns stay as they are' },
+              { icon: '⚡', title: 'Quick start', desc: 'Upload a spreadsheet and start asking. No long setup project' },
               { icon: '🌍', title: '15+ tax systems', desc: 'GST India, VAT UK, HST Canada, Sales Tax USA and more' },
               { icon: '💳', title: 'Weekly plans from $4.99', desc: 'No annual lock-in. Cancel anytime. Pay only for what you use' },
             ].map(d => (
