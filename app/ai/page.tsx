@@ -208,6 +208,7 @@ function InsightView({ card, pinned, onTogglePin }: { card: InsightCard; pinned:
                   {card.columns.map(c => (
                     <th key={c} className="px-2 py-1.5 text-left font-bold whitespace-nowrap" style={{ color: '#64748B' }}>{c}</th>
                   ))}
+                  {card.id === 'payment_reminders' && <th className="px-2 py-1.5 text-left font-bold" style={{ color: '#64748B' }}>Send</th>}
                 </tr>
               </thead>
               <tbody>
@@ -216,6 +217,16 @@ function InsightView({ card, pinned, onTogglePin }: { card: InsightCard; pinned:
                     {r.map((v, vi) => (
                       <td key={vi} className="px-2 py-1.5 whitespace-nowrap" style={{ color: '#1E293B' }}>{String(v)}</td>
                     ))}
+                    {card.id === 'payment_reminders' && (
+                      <td className="px-2 py-1.5 whitespace-nowrap">
+                        <a href={`https://wa.me/?text=${encodeURIComponent(String(r[2] ?? ''))}`}
+                          target="_blank" rel="noopener noreferrer"
+                          className="font-bold px-2 py-1 rounded-full"
+                          style={{ background: '#D1FAE5', color: '#065F46', border: '1.5px solid #34D399' }}>
+                          WhatsApp
+                        </a>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

@@ -351,7 +351,7 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
         ? 'Your invoices have no payment status column, so I cannot tell who to remind.'
         : overdue.length === 0
           ? 'Nobody is overdue. Nothing to chase.'
-          : 'Copy a message and send it by email or chat. Nothing is sent automatically.',
+          : 'Tap WhatsApp to open the message ready to send, then pick the customer. You can also copy it for email. Nothing is sent automatically.',
     }
   }
 
