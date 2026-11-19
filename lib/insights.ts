@@ -10,6 +10,8 @@ export type InsightId =
   | 'revenue_by_month'
   | 'leads_by_status'
   | 'low_stock'
+  | 'stock_abc'
+  | 'reorder_plan'
   | 'top_clients'
   | 'gst_summary'
   | 'payment_reminders'
@@ -23,6 +25,8 @@ export const INSIGHT_IDS: InsightId[] = [
   'revenue_by_month',
   'leads_by_status',
   'low_stock',
+  'stock_abc',
+  'reorder_plan',
   'top_clients',
   'gst_summary',
   'payment_reminders',
@@ -37,6 +41,8 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   revenue_by_month: ['Invoices'],
   leads_by_status: ['CRM'],
   low_stock: ['Inventory'],
+  stock_abc: ['Inventory'],
+  reorder_plan: ['Inventory'],
   top_clients: ['Invoices'],
   gst_summary: ['Invoices'],
   payment_reminders: ['Invoices'],
@@ -440,6 +446,73 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'stock_abc' || id === 'reorder_plan') {
+    const name = findField(stock, ['Item Name', /item|product|name/i])
+    const qty = findField(stock, ['Current Stock', /current.*stock|^stock$|quantity|qty/i])
+    const min = findField(stock, ['Reorder Level', /reorder|minimum|min.*stock/i])
+    const price = findField(stock, ['Unit Price', /unit.*price|^price$|cost|rate/i])
+    const items = stock.map(r => ({
+      name: name ? String(r.data[name] ?? '').trim() || '—' : '—',
+      q: qty ? toNumber(r.data[qty]) : 0,
+      m: min ? toNumber(r.data[min]) : 0,
+      p: price ? toNumber(r.data[price]) : 0,
+    }))
+
+    if (id === 'stock_abc') {
+      // Rank by money tied up in stock. A = the items making up the first 80%, B = next 15%, C = the rest.
+      const ranked = items.map(i => ({ ...i, value: i.q * i.p })).filter(i => i.value > 0).sort((a, b) => b.value - a.value)
+      const totalValue = ranked.reduce((t, i) => t + i.value, 0)
+      let running = 0
+      const classed = ranked.map(i => {
+        const before = running
+        running += i.value
+        const cls = before < totalValue * 0.8 ? 'A' : before < totalValue * 0.95 ? 'B' : 'C'
+        return { ...i, cls }
+      })
+      const counts = { A: 0, B: 0, C: 0 } as Record<string, number>
+      classed.forEach(i => { counts[i.cls]++ })
+      return {
+        id,
+        title: 'Stock value ranking (ABC)',
+        kind: 'table',
+        columns: ['Item', 'Stock value', 'Class'],
+        rows: classed.slice(0, 20).map(i => [i.name, inr(i.value), i.cls]),
+        total: classed.length ? `${inr(totalValue)} in stock: ${counts.A} A, ${counts.B} B, ${counts.C} C items` : undefined,
+        note: !qty || !price
+          ? 'I need both a stock column and a price column to rank items by value.'
+          : classed.length === 0
+            ? 'No items with both stock and price yet.'
+            : 'A items hold about 80% of your stock value, so count and protect those first. C items are the long tail.',
+      }
+    }
+
+    // reorder_plan: for items at or below their reorder level, suggest ordering back up to twice that level.
+    const toOrder = items
+      .filter(i => (min ? i.q <= i.m : i.q <= 0))
+      .map(i => {
+        const target = Math.max(i.m * 2, 1)
+        const suggested = Math.max(Math.ceil(target - i.q), 1)
+        return { ...i, suggested, cost: suggested * i.p }
+      })
+      .sort((a, b) => (a.q - a.m) - (b.q - b.m))
+    const totalCost = toOrder.reduce((t, i) => t + i.cost, 0)
+    return {
+      id,
+      title: 'Reorder plan',
+      kind: 'table',
+      columns: ['Item', 'In stock', 'Order qty', 'Est. cost'],
+      rows: toOrder.slice(0, 20).map(i => [i.name, i.q, i.suggested, price ? inr(i.cost) : '—']),
+      total: toOrder.length
+        ? `${toOrder.length} item${toOrder.length === 1 ? '' : 's'} to order${price ? `, about ${inr(totalCost)}` : ''}`
+        : undefined,
+      note: !qty
+        ? 'Your inventory has no stock column, so I cannot plan reorders.'
+        : toOrder.length === 0
+          ? 'Nothing is below its reorder level.'
+          : 'Order quantities bring each item back up to twice its reorder level. This is a starting point, not a sales forecast.',
+    }
+  }
+
   // top_clients
   const client = findField(invoices, CLIENT_FIELDS)
   const amount = findField(invoices, AMOUNT_FIELDS)
@@ -472,6 +545,8 @@ export function pickInsightByKeywords(q: string): InsightId | null {
   if (/focus on|needs? (my )?attention|today|daily brief|morning brief|priorit/.test(t)) return 'daily_brief'
   if (/\bgst\b|gstr|\bvat\b|sales tax|tax (summary|collected|due|report)|cgst|sgst|igst/.test(t)) return 'gst_summary'
   if (/unpaid|overdue|outstanding|pending (payment|invoice)|not paid|baki|bakaya|payment (due|pending)|who owes/.test(t)) return 'unpaid_invoices'
+  if (/abc (analysis|class)|stock value|inventory value|which (items?|products?) (matter|hold)|value of (my )?(stock|inventory)/.test(t)) return 'stock_abc'
+  if (/reorder (plan|list|quantit)|what (should|do) i (order|reorder|buy)|how (much|many) (to )?(order|reorder)|purchase suggestion|restock plan|order kitna/.test(t)) return 'reorder_plan'
   if (/low stock|reorder|running out|out of stock|stock alert|kam stock/.test(t)) return 'low_stock'
   if (/top (client|customer)|best (client|customer)|biggest (client|customer)/.test(t)) return 'top_clients'
   if (/(revenue|sales|billing|billed|income|kamai).*(month|trend|chart|graph)|monthly (revenue|sales)|month.?wise/.test(t)) return 'revenue_by_month'
