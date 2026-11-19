@@ -9,17 +9,22 @@ import {
   Building2, Stethoscope, ShoppingBag, Factory,
   GraduationCap, Truck, Code, UtensilsCrossed, Menu, X,
   Scissors, HomeIcon, Briefcase, Car, Dumbbell, Camera,
+  Wallet, ShieldCheck, MessageCircle, Upload,
 } from 'lucide-react'
 
 const FEATURES = [
-  { icon: Users, title: 'AI-Powered CRM', desc: 'Smart lead scoring, follow-up reminders, pipeline tracking', color: '#8B5CF6', bg: '#EDE9FE' },
-  { icon: FileText, title: 'Universal Tax Invoicing', desc: 'GST, VAT, HST, Sales Tax — 15+ countries in one click', color: '#F472B6', bg: '#FCE7F3' },
-  { icon: Package, title: 'Inventory + Free QR Codes', desc: 'Stock tracking with auto-generated QR codes, low stock alerts', color: '#FBBF24', bg: '#FEF3C7' },
-  { icon: UserCheck, title: 'HR & Payroll', desc: 'Employee management, salary tracking, leave balance', color: '#34D399', bg: '#D1FAE5' },
-  { icon: FolderOpen, title: 'Project Management', desc: 'Kanban board, deadlines, progress tracking, client projects', color: '#8B5CF6', bg: '#EDE9FE' },
-  { icon: BarChart3, title: 'Tax Reports', desc: 'GSTR-1 format, monthly summaries, revenue analytics', color: '#F472B6', bg: '#FCE7F3' },
-  { icon: Brain, title: 'AI Business Intelligence', desc: 'Ask AI anything about your business. Get real answers from your live data.', color: '#FBBF24', bg: '#FEF3C7' },
-  { icon: Globe, title: 'WhatsApp Invoicing', desc: 'Send invoices directly via WhatsApp with one click', color: '#34D399', bg: '#D1FAE5' },
+  { icon: Brain, title: 'A chat that does the work', desc: 'Ask who has not paid, add a lead, mark an invoice paid. You see a preview and approve every change.', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: Upload, title: 'Bring any spreadsheet', desc: 'Excel, CSV or PDF imported with your own column names. Preview first, nothing saves until you say so.', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: FileText, title: 'Universal Tax Invoicing', desc: 'GST, VAT, HST, Sales Tax — 15+ countries in one click', color: '#FBBF24', bg: '#FEF3C7' },
+  { icon: Wallet, title: 'Expenses, bills and profit', desc: 'Record what you spend, track bills to pay, and ask for profit by month.', color: '#34D399', bg: '#D1FAE5' },
+  { icon: Users, title: 'CRM', desc: 'Leads, follow-ups and pipeline in one list, with the next step on every lead', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: Package, title: 'Inventory + Free QR Codes', desc: 'Stock tracking with auto-generated QR codes, low stock alerts', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: Truck, title: 'Vendors and purchase orders', desc: 'Keep your suppliers and the orders you place with them, with expected dates', color: '#FBBF24', bg: '#FEF3C7' },
+  { icon: UserCheck, title: 'HR and recruiting', desc: 'Employees, salary records, leave balance, and candidates by stage', color: '#34D399', bg: '#D1FAE5' },
+  { icon: FolderOpen, title: 'Projects', desc: 'Client projects with status and deadlines', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: BarChart3, title: 'Reports and tax summaries', desc: 'Monthly revenue charts and tax collected, for GST, VAT or sales tax', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: MessageCircle, title: 'Payment reminders on WhatsApp', desc: 'Overdue invoices come with a ready message. One tap opens it in WhatsApp.', color: '#FBBF24', bg: '#FEF3C7' },
+  { icon: ShieldCheck, title: 'Activity log and undo', desc: 'See everything the assistant added or changed, who approved it, and undo it.', color: '#34D399', bg: '#D1FAE5' },
 ]
 
 const BUSINESS_TYPES = [
@@ -44,8 +49,9 @@ const FAQS = [
   { q: 'Can I import my data from any existing ERP or spreadsheet?', a: 'Yes. Upload any CSV file from any ERP system. Samyojak reads your column names as-is and stores everything without forcing you to rename or restructure your data.' },
   { q: 'Does it support GST, VAT, and other taxes?', a: 'Yes. Universal tax engine supports GST for India, VAT for UK, Germany, UAE, HST for Canada, Sales Tax for US, and 10+ more countries. Switch between them per invoice.' },
   { q: 'Can I cancel anytime?', a: 'Yes. Weekly plans expire at the end of the week if you turn off auto-pay. No cancellation fees. No lock-in ever.' },
-  { q: 'Do you charge per user?', a: 'No. All plans are flat-rate. One price for your whole team regardless of how many people use it.' },
-  { q: 'Does the AI actually read my real data?', a: 'Yes. The AI assistant on the Complete plan reads your live leads, invoices, inventory, HR, and projects in real time before every response. It knows your actual numbers.' },
+  { q: 'Do you charge per user?', a: 'No per-user fees. Each plan is a flat price and includes a set number of team members, shown on the pricing page.' },
+  { q: 'Does the AI actually read my real data?', a: 'Yes. The assistant reads your live records for the modules in your plan, and the numbers in its answers are calculated from your data, not guessed. When it wants to add or change something, it shows a preview and waits for your approval, and you can undo it.' },
+  { q: 'Can the assistant change my data without asking?', a: 'No. It shows what it is about to add or change and waits for you to confirm. Every confirmed change goes into an activity log, and you can undo it from the chat.' },
   { q: 'Is my data secure?', a: 'Yes. All data is encrypted in transit. Authentication is handled by Supabase — enterprise grade security. Your data is stored securely and never shared.' },
 ]
 
@@ -223,13 +229,13 @@ export default function Home() {
                 className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full mb-6 text-sm font-semibold transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                 style={{ background: 'white', border: '2px solid #8B5CF6', color: '#8B5CF6', boxShadow: '3px 3px 0px #8B5CF6', transitionDelay: '100ms' }}>
                 <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-                AI-Powered · Universal · Adaptive ERP
+                AI assistant · Any spreadsheet · Any country
               </div>
 
               <h1
                 className={`font-black leading-tight mb-6 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
                 style={{ fontFamily: 'Outfit', fontSize: 'clamp(2.4rem, 5.5vw, 4rem)', color: '#1E293B', transitionDelay: '200ms' }}>
-                Skip the Setup Hell.
+                Ask your business.
                 <br />
                 <span style={{
                   background: 'linear-gradient(135deg, #8B5CF6 0%, #F472B6 50%, #FBBF24 100%)',
@@ -237,15 +243,15 @@ export default function Home() {
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                 }}>
-                  Samyojak Doesn't Make You Suffer First.
+                  Samyojak Does the Work.
                 </span>
               </h1>
 
               <p
                 className={`text-lg md:text-xl mb-8 max-w-xl mx-auto lg:mx-0 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
                 style={{ color: '#64748B', lineHeight: 1.6, transitionDelay: '300ms' }}>
-                No weeks lost reformatting data. No setup that feels like a second job.
-                Your business, running — the way it should have worked from day one.
+                Bring your spreadsheets as they are. Ask questions in plain words, add records by
+                typing them, and approve every change before it happens. Undo anything.
               </p>
 
               <div
@@ -299,107 +305,51 @@ export default function Home() {
                   </div>
                   <div className="flex-1 mx-4 px-4 py-1.5 rounded-full text-xs text-center"
                     style={{ background: 'white', color: '#94A3B8', border: '1px solid #E2E8F0' }}>
-                    www.samyojak-erp.com/dashboard
+                    www.samyojak-erp.com/ai
                   </div>
                 </div>
 
-                <div className="flex" style={{ background: '#FAFBFF' }}>
+                <div className="p-5 space-y-3" style={{ background: '#FAFBFF' }}>
+                  <p className="text-xs font-bold uppercase tracking-wide" style={{ color: '#94A3B8' }}>Example conversation</p>
 
-                  <div className="hidden sm:flex flex-col w-40 shrink-0 p-3" style={{ background: '#0F172A' }}>
-                    <div className="flex items-center gap-2 px-2 mb-4">
-                      <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white font-black text-xs"
-                        style={{ background: '#8B5CF6' }}>S</div>
-                      <span className="text-white font-black text-xs" style={{ fontFamily: 'Outfit' }}>Samyojak</span>
-                    </div>
-                    <div className="space-y-1">
-                      {[
-                        { label: 'Dashboard', active: true },
-                        { label: 'CRM' },
-                        { label: 'Invoices' },
-                        { label: 'Inventory' },
-                        { label: 'HR' },
-                        { label: 'Projects' },
-                        { label: 'AI Assistant' },
-                      ].map(item => (
-                        <div key={item.label}
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-medium"
-                          style={{
-                            background: item.active ? '#8B5CF6' : 'transparent',
-                            color: item.active ? 'white' : '#94A3B8',
-                          }}>
-                          {item.label}
-                        </div>
-                      ))}
-                    </div>
+                  <div className="flex justify-end">
+                    <div className="px-4 py-2 rounded-2xl text-sm" style={{ background: '#8B5CF6', color: 'white' }}>Who has not paid me?</div>
                   </div>
 
-                  <div className="flex-1 p-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <p className="font-black text-sm" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-                          Good morning, Omkar 👋
-                        </p>
-                        <p className="text-xs" style={{ color: '#94A3B8' }}>Wednesday, June 18, 2026</p>
-                      </div>
-                      <span className="px-3 py-1 rounded-full text-xs font-black"
-                        style={{ background: '#EDE9FE', color: '#8B5CF6' }}>Complete ERP</span>
-                    </div>
-
-                    <div className="p-4 rounded-xl mb-4"
-                      style={{ background: '#0F172A', border: '1.5px solid rgba(139,92,246,0.4)' }}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: '#8B5CF6' }}>
-                          <Brain size={12} className="text-white" />
-                        </div>
-                        <span className="text-xs font-bold" style={{ color: '#C4B5FD' }}>Samyojak AI</span>
-                        <div className="ml-auto flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
-                          <span className="text-xs text-green-400">Live</span>
-                        </div>
-                      </div>
-                      <p className="text-xs text-left leading-relaxed" style={{ color: '#8B5CF6' }}>
-                        💡 You have 8 hot leads this week. 3 invoices overdue — follow up today to protect cash flow.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-4 gap-3 mb-4">
+                  <div className="p-4 rounded-xl" style={{ background: 'white', border: '1.5px solid #E2E8F0' }}>
+                    <p className="text-xs font-black uppercase tracking-wide mb-2" style={{ color: '#8B5CF6' }}>Unpaid invoices</p>
+                    <div className="space-y-1.5">
                       {[
-                        { label: 'Leads', value: '48', color: '#8B5CF6', bg: '#EDE9FE' },
-                        { label: 'Invoices', value: '23', color: '#F472B6', bg: '#FCE7F3' },
-                        { label: 'Products', value: '156', color: '#FBBF24', bg: '#FEF3C7' },
-                        { label: 'Team', value: '12', color: '#34D399', bg: '#D1FAE5' },
-                      ].map(s => (
-                        <div key={s.label} className="p-3 rounded-xl"
-                          style={{ background: 'white', border: `1.5px solid ${s.color}30`, boxShadow: '2px 2px 0px #E2E8F0' }}>
-                          <p className="text-xs mb-1" style={{ color: '#94A3B8' }}>{s.label}</p>
-                          <p className="text-xl font-black" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>{s.value}</p>
-                          <div className="w-full h-1 rounded-full mt-2" style={{ background: s.bg }}>
-                            <div className="h-1 rounded-full w-3/4" style={{ background: s.color }} />
-                          </div>
+                        { c: 'Sharma Traders', a: '45,000', d: 'Due 12 Nov' },
+                        { c: 'Brightline Studio', a: '18,500', d: 'Due 20 Nov' },
+                      ].map(r => (
+                        <div key={r.c} className="grid grid-cols-3 text-xs" style={{ color: '#1E293B' }}>
+                          <span className="font-semibold truncate">{r.c}</span>
+                          <span>{r.a}</span>
+                          <span style={{ color: '#64748B' }}>{r.d}</span>
                         </div>
                       ))}
                     </div>
+                    <p className="text-xs mt-2 font-bold" style={{ color: '#1E293B' }}>2 unpaid · 63,500</p>
+                  </div>
 
-                    <div className="rounded-xl overflow-hidden" style={{ border: '1.5px solid #E2E8F0', background: 'white' }}>
-                      <div className="grid grid-cols-4 px-4 py-2 border-b" style={{ borderColor: '#F1F5F9', background: '#F8FAFC' }}>
-                        {['Name', 'Status', 'Value', 'Score'].map(h => (
-                          <span key={h} className="text-xs font-bold uppercase" style={{ color: '#94A3B8' }}>{h}</span>
-                        ))}
+                  <div className="flex justify-end">
+                    <div className="px-4 py-2 rounded-2xl text-sm" style={{ background: '#8B5CF6', color: 'white' }}>Paid rent 20k today</div>
+                  </div>
+
+                  <div className="p-4 rounded-xl" style={{ background: '#0F172A', border: '1.5px solid rgba(139,92,246,0.4)' }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: '#8B5CF6' }}>
+                        <Brain size={12} className="text-white" />
                       </div>
-                      {[
-                        { name: 'Rahul Sharma', status: 'Contacted', statusColor: '#FBBF24', statusBg: '#FEF3C7', value: '₹85K', score: '92', scoreColor: '#34D399' },
-                        { name: 'Priya Mehta', status: 'Converted', statusColor: '#34D399', statusBg: '#D1FAE5', value: '₹45K', score: '88', scoreColor: '#34D399' },
-                      ].map(row => (
-                        <div key={row.name} className="grid grid-cols-4 px-4 py-2.5 border-b last:border-0" style={{ borderColor: '#F8FAFC' }}>
-                          <span className="text-xs font-semibold truncate" style={{ color: '#1E293B' }}>{row.name}</span>
-                          <span className="text-xs px-2 py-0.5 rounded-full font-medium w-fit"
-                            style={{ background: row.statusBg, color: row.statusColor }}>
-                            {row.status}
-                          </span>
-                          <span className="text-xs font-medium" style={{ color: '#64748B' }}>{row.value}</span>
-                          <span className="text-xs font-black" style={{ color: row.scoreColor }}>{row.score}</span>
-                        </div>
-                      ))}
+                      <span className="text-xs font-bold" style={{ color: '#C4B5FD' }}>Samyojak</span>
+                    </div>
+                    <p className="text-xs mb-3" style={{ color: '#C4B5FD' }}>
+                      I am ready to add 1 record to Expenses: Rent, 20,000, Paid. Please review and confirm.
+                    </p>
+                    <div className="flex gap-2">
+                      <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: '#34D399', color: '#064E3B' }}>Confirm</span>
+                      <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: '#1E293B', color: '#94A3B8', border: '1px solid #334155' }}>Cancel</span>
                     </div>
                   </div>
                 </div>
@@ -416,7 +366,7 @@ export default function Home() {
       <div className="overflow-hidden py-4" style={{ background: '#1E293B' }}>
         <div className="flex gap-8 marquee-track whitespace-nowrap">
           {[...Array(3)].map((_, i) =>
-            ['CRM', 'Invoicing', 'Inventory + QR', 'HR & Payroll', 'Projects', 'AI Assistant', 'GST Reports', 'WhatsApp Send', 'Universal Tax', 'Import Any CSV'].map(f => (
+            ['Ask in plain words', 'Approve every change', 'Undo anything', 'Import Excel, CSV or PDF', 'CRM', 'Invoicing', 'Expenses and profit', 'Purchase orders', 'Inventory + QR', 'HR and recruiting', 'Universal tax'].map(f => (
               <span key={`${i}-${f}`} className="text-white/70 text-sm font-medium px-4">⚡ {f}</span>
             ))
           )}
@@ -488,7 +438,7 @@ export default function Home() {
             <Brain size={40} className="mx-auto mb-4" style={{ color: '#8B5CF6' }} />
             <h3 className="text-2xl font-black text-white mb-4" style={{ fontFamily: 'Outfit' }}>Our Vision</h3>
             <p className="text-lg max-w-3xl mx-auto leading-relaxed" style={{ color: '#C4B5FD' }}>
-              We are building the world's first truly universal ERP — one that intelligently generates the right structure, fields, and workflows for any business automatically. All without configuration.
+              We are building a business system you talk to. It reads the data you already have, answers in plain words, does the repetitive admin, and always asks before it changes anything. Setup should take minutes, not months.
             </p>
             <p className="mt-4 text-sm font-bold" style={{ color: '#8B5CF6' }}>
               The ERP that adapts to you. Not the other way around.
@@ -504,7 +454,7 @@ export default function Home() {
             <h2 className="text-4xl font-black mb-4" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
               Everything your business needs
             </h2>
-            <p className="text-lg" style={{ color: '#64748B' }}>Eight powerful modules unified in one workspace</p>
+            <p className="text-lg" style={{ color: '#64748B' }}>Everything in one workspace, run from a chat</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {FEATURES.map(f => (

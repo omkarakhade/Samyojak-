@@ -49,7 +49,7 @@ export default function About() {
             <span style={{ color: '#8B5CF6' }}>Not the other way around.</span>
           </h1>
           <p className="text-xl leading-relaxed" style={{ color: '#64748B' }}>
-            Samyojak was built on a simple belief — every business deserves powerful software that fits how they already work, not software that forces them to change.
+            Samyojak is a business system you talk to. Bring the spreadsheets you already keep, ask questions in plain words, and let the assistant do the repetitive admin, with your approval on every change.
           </p>
         </div>
       </section>
@@ -67,13 +67,13 @@ export default function About() {
             <p>
               The name Samyojak comes from Sanskrit — meaning{' '}
               <em style={{ color: '#C4B5FD' }}>"the one who coordinates and connects."</em>{' '}
-              That is exactly what the product does: connects your CRM, invoicing, inventory, HR, projects, and AI intelligence into one unified workspace.
+              That is exactly what the product does: connects your CRM, invoicing, expenses, purchasing, inventory, HR, projects, and an AI assistant into one workspace.
             </p>
             <p>
               We watched small and medium businesses struggle with ERP software that was built for enterprises. They were forced to spend weeks configuring systems, hire consultants to migrate their data, and retrain their teams on entirely new workflows. The result? Most gave up and stayed on spreadsheets.
             </p>
             <p>
-              We built Samyojak to change that. A business should be able to sign up, import their existing data in whatever format it is already in, and be running in under 5 minutes. The AI should understand their data structure — not force them to restructure it.
+              We built Samyojak to change that. A business should be able to sign up, import the Excel, CSV or PDF files it already has, and start asking questions the same day. The software should understand their data, not force them to restructure it.
             </p>
           </div>
         </div>
@@ -89,7 +89,7 @@ export default function About() {
             style={{ background: '#EDE9FE', border: '2px solid #8B5CF6', boxShadow: '6px 6px 0px #8B5CF6' }}>
             <Brain size={36} className="mb-4" style={{ color: '#8B5CF6' }} />
             <p className="text-xl font-bold leading-relaxed" style={{ color: '#1E293B', fontFamily: 'Outfit' }}>
-              "We are building the world's first truly universal ERP — one that intelligently generates the right structure, fields, and workflows for any business type automatically. Every business is different. Every business deserves software that understands that."
+              "We are building a business system that works the way an owner thinks: ask, see the answer, approve the change. Every business is different, and every business deserves software that adapts to it."
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -97,7 +97,7 @@ export default function About() {
               {
                 icon: Brain,
                 title: 'AI-First',
-                desc: 'AI that reads your real data and gives you specific, actionable business insights — not generic advice.',
+                desc: 'An assistant that reads your real data. Numbers are calculated from your records, and it asks before it changes anything.',
                 color: '#8B5CF6',
                 bg: '#EDE9FE',
               },
@@ -111,7 +111,7 @@ export default function About() {
               {
                 icon: Zap,
                 title: 'Instant Setup',
-                desc: 'From signup to fully running ERP in 5 minutes. Import your existing data in any format. Zero configuration.',
+                desc: 'Import your existing Excel, CSV or PDF files with your own column names. Preview first, and undo if you change your mind.',
                 color: '#FBBF24',
                 bg: '#FEF3C7',
               },
