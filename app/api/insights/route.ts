@@ -83,6 +83,7 @@ export async function POST(req: NextRequest) {
       if (blocked) return NextResponse.json(viaAI ? { card: null } : { card: null, locked: lockedText(blocked) })
     }
 
+    if (id === 'recent_changes') mods = [...mods, 'Activity']
     const data = await fetchUserRecords(user.id, mods)
     setCurrency(body.currency)
     try {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { logActivity, describeApproved } from '@/lib/activityLog'
 import { getEntitlement, moduleAllowed, lockedText } from '@/lib/access'
 import { getAuthedUser, ADMIN_EMAIL } from '@/lib/serverAuth'
 import {
@@ -205,6 +206,7 @@ export async function POST(req: NextRequest) {
         skipped = r.skipped
       }
 
+      await logActivity(user.id, describeApproved(actions))
       return NextResponse.json({ success: true, batchId, count, updated, reverts, skipped })
     }
 
@@ -222,6 +224,7 @@ export async function POST(req: NextRequest) {
       if (!body.batchId && reverts.length === 0) {
         return NextResponse.json({ error: 'Nothing to undo.' }, { status: 400 })
       }
+      await logActivity(user.id, [{ action: 'Undid', where: 'Assistant', summary: `${deleted ? deleted + ' added record' + (deleted === 1 ? '' : 's') + ' removed' : ''}${deleted && restored ? ', ' : ''}${restored ? restored + ' edit' + (restored === 1 ? '' : 's') + ' reversed' : ''}` || 'Last change reversed' }])
       return NextResponse.json({ success: true, deleted, restored })
     }
 

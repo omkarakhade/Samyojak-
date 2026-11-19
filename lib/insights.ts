@@ -298,27 +298,41 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
   }
 
   if (id === 'recent_changes') {
+    const log = (data.Activity || []).slice().sort((x, y) => String(y.data.When || '').localeCompare(String(x.data.When || '')))
+    const firstLog = log.length ? String(log[log.length - 1].data.When || '') : '9999'
+    const rows: { when: string; cells: (string | number)[] }[] = log.map(r => ({
+      when: String(r.data.When || ''),
+      cells: [String(r.data.When || '').slice(0, 16).replace('T', ' ') + ' UTC', String(r.data.Action || ''), String(r.data.Where || ''), String(r.data.Summary || ''), String(r.data.By || '')],
+    }))
+    // Earlier changes from before the log existed, and sheet imports, come from the import markers.
     const batches = new Map<string, { when: string; module: string; source: string; n: number }>()
     for (const [module, list] of Object.entries(data)) {
+      if (module === 'Activity') continue
       for (const r of list) {
         const key = String(r.meta?.importId || '')
         if (!key) continue
         const src = String(r.meta?.source || '')
         const at = String(r.meta?.importedAt || '')
+        if (src === 'agent_entry' && at >= firstLog) continue // already in the log
         const cur = batches.get(key) || { when: at, module, source: src, n: 0 }
         cur.n += 1
         batches.set(key, cur)
       }
     }
-    const list = Array.from(batches.values()).sort((a, b) => b.when.localeCompare(a.when)).slice(0, 12)
-    const label = (s: string) => (s === 'agent_entry' ? 'Added by the assistant' : s === 'csv_import' ? 'Imported from a sheet' : 'Added')
+    for (const bt of batches.values()) {
+      const what = bt.source === 'agent_entry' ? 'Added' : bt.source === 'csv_import' ? 'Imported' : 'Added'
+      rows.push({ when: bt.when, cells: [bt.when ? bt.when.slice(0, 16).replace('T', ' ') + ' UTC' : '—', what, bt.module, `${bt.n} row${bt.n === 1 ? '' : 's'}${bt.source === 'csv_import' ? ' from a sheet' : bt.source === 'agent_entry' ? ' by the assistant' : ''}`, bt.source === 'csv_import' ? 'Import' : 'Earlier entry']] })
+    }
+    rows.sort((x, y) => y.when.localeCompare(x.when))
+    const shown = rows.slice(0, 20)
     return {
       id,
-      title: 'Recent changes',
+      title: 'What the assistant did',
       kind: 'table',
-      columns: ['When', 'Where', 'What', 'Rows'],
-      rows: list.map(b => [b.when ? b.when.slice(0, 16).replace('T', ' ') + ' UTC' : '—', b.module, label(b.source), b.n]),
-      note: list.length === 0 ? 'Nothing added through the chat yet.' : 'Shows what was added by the assistant or by sheet imports. Use Undo on the message where it happened to reverse it.',
+      columns: ['When', 'What', 'Where', 'Details', 'Approved by'],
+      rows: shown.map(r => r.cells),
+      total: shown.length ? `${shown.length} most recent` : undefined,
+      note: shown.length === 0 ? 'Nothing has been added or changed through the chat yet.' : 'Every change the assistant makes needs your approval first. Use Undo on the chat message where it happened to reverse it.',
     }
   }
 
