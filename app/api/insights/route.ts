@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
+import { AI_MODELS, checkAiLimit, logAiUsage } from '@/lib/aiGuard'
 import { getEntitlement, moduleAllowed, lockedText } from '@/lib/access'
 import { fetchUserRecords } from '@/lib/userData'
 import {
@@ -22,7 +23,7 @@ async function pickWithAI(message: string): Promise<InsightId | null> {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-120b',
+        model: AI_MODELS.fast,
         messages: [
           {
             role: 'system',
@@ -37,11 +38,12 @@ async function pickWithAI(message: string): Promise<InsightId | null> {
         response_format: { type: 'json_object' },
         temperature: 0,
         reasoning_effort: 'low',
-        max_tokens: 400,
+        max_tokens: 150,
       }),
     })
     if (!res.ok) return null
     const data = await res.json()
+    logAiUsage('insight', AI_MODELS.fast, data.usage)
     const parsed = JSON.parse(data.choices?.[0]?.message?.content || '{}')
     const id = parsed?.insight
     return INSIGHT_IDS.includes(id) ? (id as InsightId) : null
@@ -67,7 +69,7 @@ export async function POST(req: NextRequest) {
     let viaAI = false
     if (!id && message) {
       id = pickInsightByKeywords(message)
-      if (!id) { id = await pickWithAI(message); viaAI = !!id }
+      if (!id && checkAiLimit(user, 'insight').ok) { id = await pickWithAI(message); viaAI = !!id }
     }
 
     if (!id) return NextResponse.json({ card: null })

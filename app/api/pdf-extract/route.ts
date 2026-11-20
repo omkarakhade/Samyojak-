@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
 import { getEntitlement } from '@/lib/access'
+import { checkAiLimit, logAiUsage } from '@/lib/aiGuard'
 
 export const maxDuration = 60
 
@@ -55,6 +56,10 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.GROQ_API_KEY
     if (!apiKey) return NextResponse.json({ error: 'Reading PDFs is not available right now.' }, { status: 503 })
+    const limit = checkAiLimit(user, 'pdf')
+    if (!limit.ok) {
+      return NextResponse.json({ error: limit.message }, { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } })
+    }
 
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -84,6 +89,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: res.status === 429 ? 'Busy right now. Please try again in a minute.' : 'I could not read that PDF right now.' }, { status: 502 })
     }
     const data = await res.json()
+    logAiUsage('pdf', 'openai/gpt-oss-120b', data.usage)
     const parsed = stripJson(data.choices?.[0]?.message?.content || '')
     const headers: string[] = Array.isArray(parsed?.headers)
       ? Array.from(new Set(parsed.headers.map((h: unknown) => clean(h, 60)).filter(Boolean))).slice(0, MAX_COLS) as string[]

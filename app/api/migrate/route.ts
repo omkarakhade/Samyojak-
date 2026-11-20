@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
+import { checkAiLimit, logAiUsage } from '@/lib/aiGuard'
 import { getEntitlement, moduleAllowed, lockedText } from '@/lib/access'
 import { AGENT_MODULES } from '@/lib/agentTools'
 import { MODULE_FIELDS, exactFieldMapping } from '@/lib/moduleFields'
@@ -80,6 +81,7 @@ async function analyze(headers: string[], sample: Record<string, string>[], file
       })
       if (res.ok) {
         const data = await res.json()
+        logAiUsage('import', 'openai/gpt-oss-120b', data.usage)
         const parsed = stripJson(data.choices?.[0]?.message?.content || '')
         const m = parsed?.module
         if (typeof m === 'string' && (AGENT_MODULES as readonly string[]).includes(m)) {
@@ -189,6 +191,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (body.action === 'analyze') {
+      const limit = checkAiLimit(user, 'import')
+      if (!limit.ok) {
+        return NextResponse.json({ error: limit.message }, { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } })
+      }
       const sample = (Array.isArray(body.sample) ? body.sample : []).slice(0, 8).map((r: any) => {
         const o: Record<string, string> = {}
         headers.forEach(h => { o[h] = clean(r?.[h], 60) })
