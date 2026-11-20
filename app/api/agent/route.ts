@@ -64,6 +64,7 @@ RULES:
 - Only use values the user actually stated. If a value is missing, leave that field out. Never invent amounts, emails or phone numbers.
 - Amounts are plain numbers without currency symbols or commas. "45k" is 45000, "1.5 lakh" is 150000.
 - Phone numbers are strings of digits.
+- For a new Invoice, set Issue Date to today's date unless the user gives another date.
 - Use "update" when the user wants to change something that already exists (status, stock, phone, deadline). Put only the changed fields in "changes".
 - Use "mark_paid" when the user says an invoice or client has paid.
 - If the message is a question, a greeting, or has nothing to record or change, return {"operations":[],"reply":""}.
@@ -197,10 +198,12 @@ export async function POST(req: NextRequest) {
 
       let batchId: string | undefined
       let count = 0
+      let stockNotes: string[] = []
       if (adds.length > 0) {
         const r = await createAgentRecords(user.id, adds)
         batchId = r.batchId
         count = r.created
+        stockNotes = r.stockNotes
       }
 
       let updated = 0
@@ -214,15 +217,18 @@ export async function POST(req: NextRequest) {
       }
 
       await logActivity(user.id, describeApproved(actions))
-      return NextResponse.json({ success: true, batchId, count, updated, reverts, skipped })
+      return NextResponse.json({ success: true, batchId, count, updated, reverts, skipped, stockNotes })
     }
 
     // ── UNDO: remove added records and/or restore edited ones ──
     if (action === 'undo') {
       let deleted = 0
       let restored = 0
+      let stockRestored = 0
       if (typeof body.batchId === 'string' && body.batchId) {
-        deleted = (await undoAgentBatch(user.id, body.batchId)).deleted
+        const u = await undoAgentBatch(user.id, body.batchId)
+        deleted = u.deleted
+        stockRestored = u.stockRestored
       }
       const reverts = sanitizeReverts(body.reverts)
       if (reverts.length > 0) {
@@ -232,7 +238,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Nothing to undo.' }, { status: 400 })
       }
       await logActivity(user.id, [{ action: 'Undid', where: 'Assistant', summary: `${deleted ? deleted + ' added record' + (deleted === 1 ? '' : 's') + ' removed' : ''}${deleted && restored ? ', ' : ''}${restored ? restored + ' edit' + (restored === 1 ? '' : 's') + ' reversed' : ''}` || 'Last change reversed' }])
-      return NextResponse.json({ success: true, deleted, restored })
+      return NextResponse.json({ success: true, deleted, restored, stockRestored })
     }
 
     // ── PLAN: ask the model what to do. Nothing is saved here. ──
@@ -310,12 +316,13 @@ export async function POST(req: NextRequest) {
       const parts: string[] = []
       if (addCount > 0) parts.push(`add ${addCount} record${addCount > 1 ? 's' : ''}`)
       if (updates.length > 0) parts.push(`change ${updates.length} record${updates.length > 1 ? 's' : ''}`)
+      const reducesStock = adds.some(a => a.module === 'Invoices' && a.records.some(r => typeof r['Line Items'] === 'string' && String(r['Line Items']).trim()))
 
       return NextResponse.json({
         actions,
         notes,
         needsConfirm: true,
-        reply: `I'm ready to ${parts.join(' and ')}. Please review and confirm.${notes.length ? ' ' + notes.join(' ') : ''}`,
+        reply: `I'm ready to ${parts.join(' and ')}. Please review and confirm.${reducesStock ? ' Saving will also reduce Inventory stock for the items sold (undo puts it back).' : ''}${notes.length ? ' ' + notes.join(' ') : ''}`,
       })
     }
 

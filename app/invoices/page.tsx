@@ -36,6 +36,8 @@ export default function Invoices() {
   const [taxCountry, setTaxCountry] = useState('IN')
   const [taxRate, setTaxRate] = useState(18)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [deductStockFlag, setDeductStockFlag] = useState(true)
+  const [notice, setNotice] = useState('')
   const [form, setForm] = useState({
     clientName: '',
     clientEmail: '',
@@ -90,12 +92,13 @@ export default function Invoices() {
       const res = await fetch('/api/add-record', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, module: 'Invoices', record }),
+        body: JSON.stringify({ userId, module: 'Invoices', record, deductStock: deductStockFlag }),
       })
       const data = await res.json()
       if (!res.ok || data.error) throw new Error(data.error || 'Failed to save')
 
       setShowModal(false)
+      setNotice(Array.isArray(data.stockNotes) ? data.stockNotes.join(' ') : '')
       setForm({ clientName: '', clientEmail: '', clientPhone: '', lineItems: '', amount: '', dueDate: '', extraNotes: '' })
       setRefreshKey(k => k + 1)
     } catch (e: any) {
@@ -118,6 +121,13 @@ export default function Invoices() {
   return (
     <Layout>
       <div className="space-y-4">
+
+        {notice && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-800 text-sm flex items-center gap-2">
+            <span className="flex-1">{notice}</span>
+            <button onClick={() => setNotice('')}>✕</button>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm flex items-center gap-2">
@@ -238,6 +248,12 @@ export default function Invoices() {
                     ))}
                   </select>
                 </div>
+                {parsedItems.length > 0 && (
+                  <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <input type="checkbox" checked={deductStockFlag} onChange={e => setDeductStockFlag(e.target.checked)} />
+                    Reduce these items from Inventory stock
+                  </label>
+                )}
                 {amount > 0 && (
                   <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-3 space-y-1">
                     <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">

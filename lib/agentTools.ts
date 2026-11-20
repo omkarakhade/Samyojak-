@@ -2,6 +2,7 @@
 // Every function here takes a userId that came from a VERIFIED Supabase session.
 
 import { storeList, storeGet, storeCreate, storeWrite, storeFindBatch, storeDelete, isStoreRecordId } from '@/lib/store'
+import { deductStock, restoreStock, formatDeducted, describeStock } from '@/lib/stockSync'
 
 export const AGENT_MODULES = [
   'CRM',
@@ -246,9 +247,31 @@ export async function createAgentRecords(userId: string, actions: AddAction[]) {
 
   const rows: { fields: Record<string, any> }[] = []
   let rowIndex = 0
+  const stockNotes: string[] = []
+  const deducted: string[] = [] // what was taken off, in case saving fails
 
   for (const action of actions) {
-    for (const record of action.records) {
+    for (const original of action.records) {
+      let record = original
+      // New invoices with items take them off Inventory. 'Stock Deducted' is only written here.
+      if (action.module === 'Invoices') {
+        const { 'Stock Deducted': _ignored, ...rest } = record as Record<string, any>
+        record = rest as AgentRecord
+        if (typeof rest['Line Items'] === 'string' && rest['Line Items'].trim()) {
+          try {
+            const result = await deductStock(userId, rest['Line Items'])
+            const text = formatDeducted(result)
+            stockNotes.push(...describeStock(result))
+            if (text) {
+              deducted.push(text)
+              record = { ...record, 'Stock Deducted': text }
+            }
+          } catch (e: any) {
+            console.error('agent stock deduct failed:', e?.message)
+            stockNotes.push('I could not update stock for one invoice. Please check Inventory.')
+          }
+        }
+      }
       rows.push({
         fields: {
           'User ID': userId,
@@ -271,18 +294,43 @@ export async function createAgentRecords(userId: string, actions: AddAction[]) {
     }
   }
 
-  const ids = await storeCreate(userId, rows)
+  let ids: string[]
+  try {
+    ids = await storeCreate(userId, rows)
+  } catch (e) {
+    for (const text of deducted) await restoreStock(userId, text).catch(() => {})
+    throw e
+  }
   const created = ids.length
 
-  return { batchId, created }
+  return { batchId, created, stockNotes }
 }
 
 export async function undoAgentBatch(userId: string, batchId: string) {
   if (!/^agent_\d+_[a-z0-9]+$/.test(batchId)) throw new Error('Invalid batch id')
   assertSafeUserId(userId)
   const ids = await storeFindBatch(userId, batchId)
+
+  // Remember what each invoice took off Inventory before the invoices are deleted.
+  const toRestore: string[] = []
+  for (const id of ids) {
+    try {
+      const raw = await storeGet(userId, id)
+      if (!raw) continue
+      const stored = parseStored(raw)
+      if (stored.module === 'Invoices' && typeof stored.data['Stock Deducted'] === 'string') {
+        toRestore.push(stored.data['Stock Deducted'])
+      }
+    } catch { /* an unreadable row just has nothing to restore */ }
+  }
+
   const deleted = await storeDelete(userId, ids)
-  return { deleted }
+
+  let stockRestored = 0
+  for (const text of toRestore) {
+    try { stockRestored += await restoreStock(userId, text) } catch (e: any) { console.error('stock restore failed:', e?.message) }
+  }
+  return { deleted, stockRestored }
 }
 
 // ───────────────────────── Writing: edit / mark paid ─────────────────────────

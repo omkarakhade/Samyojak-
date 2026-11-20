@@ -6,6 +6,7 @@ import { getPlanFromMetadata } from '@/lib/planAccess'
 import { Brain, Send, Lock, Zap, Check, X, Undo2, Paperclip, Pin, PinOff, LayoutDashboard, FileText } from 'lucide-react'
 import { parseSheetText, matrixToSheet } from '@/lib/csv'
 import { MODULE_FIELDS, MODULE_LABELS, exactFieldMapping } from '@/lib/moduleFields'
+import { pickInsightByKeywords } from '@/lib/insights'
 import type { InsightCard } from '@/lib/insights'
 
 const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
@@ -100,6 +101,19 @@ function nowTime() {
 function looksLikeQuestion(text: string) {
   const t = text.trim()
   return t.endsWith('?') && !/\d/.test(t)
+}
+
+/**
+ * "show low stock", "which jobs are late", "list returns by reason": a plain request for a report.
+ * It goes straight to the report cards and skips the (more expensive) agent that records changes.
+ * Kept strict on purpose: it must start like a request, contain no numbers, and match a report,
+ * so a sentence like "Sharma returned 2 chairs" still goes to the agent and gets recorded.
+ */
+function looksLikeReportRequest(text: string) {
+  const t = text.trim()
+  if (/\d/.test(t)) return false
+  if (!/^(show|what|what's|whats|which|who|how|list|give|tell|any|check|view|see|display|open|summary|summarize|report)\b/i.test(t)) return false
+  return pickInsightByKeywords(t) !== null
 }
 
 function PreviewTable({ actions }: { actions: ProposedAction[] }) {
@@ -716,7 +730,7 @@ export default function AIAssistant() {
 
     try {
       // Questions go straight to the assistant. Everything else tries the agent first.
-      if (questionOnly || looksLikeQuestion(q)) {
+      if (questionOnly || looksLikeQuestion(q) || looksLikeReportRequest(q)) {
         await answerQuestion(q)
       } else {
         const { ok, data } = await callAgent({ action: 'plan', message: q })
@@ -773,6 +787,9 @@ export default function AIAssistant() {
           reverts: data.reverts || [],
         })
         loadSummary()
+        if (data.stockNotes?.length) {
+          addAiMessage({ text: data.stockNotes.join(' ') })
+        }
         if (data.skipped?.length) {
           addAiMessage({ text: `I could not change: ${data.skipped.join(', ')}.` })
         }
@@ -800,6 +817,9 @@ export default function AIAssistant() {
       if (ok) {
         updateMessage(index, { status: 'undone' })
         loadSummary()
+        if (data.stockRestored) {
+          addAiMessage({ text: `Stock for ${data.stockRestored} item${data.stockRestored === 1 ? '' : 's'} was put back.` })
+        }
       } else {
         addAiMessage({ text: data.error || 'Could not undo. Please try again.' })
       }
