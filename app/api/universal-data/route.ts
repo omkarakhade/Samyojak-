@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId, isSafeModule, userOwnsRecord } from '@/lib/serverAuth'
-import { storeList, storeDelete } from '@/lib/store'
+import { storeList, storeGet, storeDelete } from '@/lib/store'
+import { restoreStock } from '@/lib/stockSync'
 import { lockedModules, lockedText } from '@/lib/access'
 
 export const maxDuration = 60
@@ -115,10 +116,23 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Record not found.' }, { status: 404 })
     }
     try {
+      // An invoice that took items off Inventory gives them back when it is deleted.
+      let deductedText = ''
+      try {
+        const raw = await storeGet(userId, recordId)
+        const parsed = JSON.parse(raw?.fields?.['Record Data'] || '{}')
+        if (raw?.fields?.Module === 'Invoices' && typeof parsed['Stock Deducted'] === 'string') deductedText = parsed['Stock Deducted']
+      } catch { /* nothing to restore */ }
+
       const deleted = await storeDelete(userId, [recordId])
-      return NextResponse.json({ deleted: deleted > 0 })
+      let stockRestored = 0
+      if (deleted > 0 && deductedText) {
+        try { stockRestored = await restoreStock(userId, deductedText) } catch (e: any) { console.error('stock restore failed:', e?.message) }
+      }
+      return NextResponse.json({ deleted: deleted > 0, stockRestored })
     } catch (e: any) {
-      return NextResponse.json({ error: e.message }, { status: 500 })
+      console.error('universal-data DELETE error:', e?.message)
+      return NextResponse.json({ error: 'Could not delete that record.' }, { status: 500 })
     }
   }
 
@@ -136,9 +150,10 @@ export async function DELETE(req: NextRequest) {
       const deleted = await storeDelete(userId, toDelete.map((r: any) => r.id))
       return NextResponse.json({ deleted, importId })
     } catch (e: any) {
-      return NextResponse.json({ error: e.message }, { status: 500 })
+      console.error('universal-data batch DELETE error:', e?.message)
+      return NextResponse.json({ error: 'Could not delete that import.' }, { status: 500 })
     }
   }
 
-  return NextResponse.json({ error: 'id or importId+userId+module required' }, { status: 400 })
+  return NextResponse.json({ error: 'id, or importId and module, required' }, { status: 400 })
 }

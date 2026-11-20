@@ -99,3 +99,31 @@ export function logAiUsage(route: string, model: string, usage: any) {
     // logging must never break a request
   }
 }
+
+// ───────────── public routes (no signed-in user) ─────────────
+
+const publicHits = new Map<string, number[]>()
+
+/** Best-effort caller address from the proxy headers. Used only to slow down abuse, never to identify a person. */
+export function clientIp(headers: Headers): string {
+  const forwarded = headers.get('x-forwarded-for') || ''
+  return forwarded.split(',')[0].trim() || headers.get('x-real-ip') || 'unknown'
+}
+
+/** True while the caller is under `max` requests in the last `windowMs`. Per server instance, like the user limits above. */
+export function checkPublicLimit(key: string, max: number, windowMs: number): boolean {
+  const now = Date.now()
+  const recent = (publicHits.get(key) || []).filter(t => now - t < windowMs)
+  if (recent.length >= max) {
+    publicHits.set(key, recent)
+    return false
+  }
+  recent.push(now)
+  publicHits.set(key, recent)
+  if (publicHits.size > 5000) {
+    publicHits.forEach((list, k) => {
+      if (list.every(t => now - t >= windowMs)) publicHits.delete(k)
+    })
+  }
+  return true
+}

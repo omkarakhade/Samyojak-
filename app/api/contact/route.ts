@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkPublicLimit, clientIp } from '@/lib/aiGuard'
 
 export async function POST(req: NextRequest) {
   try {
+    // 5 messages per hour per visitor keeps a script from flooding the inbox.
+    if (!checkPublicLimit(`contact:${clientIp(req.headers)}`, 5, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Too many messages. Please try again in an hour.' }, { status: 429 })
+    }
     const body = await req.json()
     const t = (v: unknown, max: number) => String(v ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max)
     const name = t(body.name, 100)

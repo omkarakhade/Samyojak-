@@ -141,8 +141,6 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Universal import route error:', error)
-    return NextResponse.json({
-      error: 'Import failed: ' + (error.message || 'Unknown error')
-    }, { status: 500 })
+    return NextResponse.json({ error: 'Import failed. Please check your file and try again.' }, { status: 500 })
   }
 }
