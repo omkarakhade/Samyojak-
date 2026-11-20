@@ -54,6 +54,8 @@ async function adjustStock(
   if (wanted.size === 0) return result
 
   const records = await storeList(userId, ['Inventory'], { max: 2000 })
+  // No Inventory yet (a new account, or a service business): there is no stock to move, so say nothing.
+  if (records.length === 0) return result
   const handled = new Set<string>()
 
   for (const r of records) {
