@@ -13,6 +13,8 @@ export type InsightId =
   | 'stock_abc'
   | 'reorder_plan'
   | 'top_clients'
+  | 'receivables_aging'
+  | 'client_concentration'
   | 'gst_summary'
   | 'payment_reminders'
   | 'daily_brief'
@@ -28,6 +30,8 @@ export const INSIGHT_IDS: InsightId[] = [
   'stock_abc',
   'reorder_plan',
   'top_clients',
+  'receivables_aging',
+  'client_concentration',
   'gst_summary',
   'payment_reminders',
   'daily_brief',
@@ -44,6 +48,8 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   stock_abc: ['Inventory'],
   reorder_plan: ['Inventory'],
   top_clients: ['Invoices'],
+  receivables_aging: ['Invoices'],
+  client_concentration: ['Invoices'],
   gst_summary: ['Invoices'],
   payment_reminders: ['Invoices'],
   daily_brief: ['CRM', 'Invoices', 'Inventory'],
@@ -132,6 +138,13 @@ function monthLabel(key: string): string {
   const [y, m] = key.split('-')
   const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   return `${names[Math.max(0, Math.min(11, parseInt(m, 10) - 1))]} ${y}`
+}
+
+/** Whole days from date a to date b (both YYYY-MM-DD). Positive when b is later. */
+function daysBetween(a: string, b: string): number {
+  const [ay, am, ad] = a.split('-').map(Number)
+  const [by, bm, bd] = b.split('-').map(Number)
+  return Math.round((Date.UTC(by, bm - 1, bd) - Date.UTC(ay, am - 1, ad)) / 86_400_000)
 }
 
 function todayIST(): string {
@@ -513,6 +526,99 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'receivables_aging') {
+    // Unpaid money grouped by how late it is, so the owner sees what is slipping from "late" to "probably lost".
+    const amount = findField(invoices, AMOUNT_FIELDS)
+    const status = findField(invoices, STATUS_FIELDS)
+    const due = findField(invoices, DUE_FIELDS)
+    const issued = findField(invoices, ISSUE_FIELDS)
+    const today = todayIST()
+    const buckets = [
+      { label: 'Not due yet', count: 0, sum: 0 },
+      { label: '1-30 days late', count: 0, sum: 0 },
+      { label: '31-60 days late', count: 0, sum: 0 },
+      { label: '61-90 days late', count: 0, sum: 0 },
+      { label: 'Over 90 days late', count: 0, sum: 0 },
+      { label: 'No date', count: 0, sum: 0 },
+    ]
+    const pending = status ? invoices.filter(r => !isPaid(r.data[status])) : []
+    for (const r of pending) {
+      const amt = amount ? toNumber(r.data[amount]) : 0
+      // No due date: assume payment is due 30 days after the issue date.
+      let dueDay = due ? dayKey(r.data[due]) : ''
+      if (!dueDay && issued) {
+        const issueDay = dayKey(r.data[issued])
+        if (issueDay) {
+          const t = new Date(`${issueDay}T00:00:00Z`)
+          t.setUTCDate(t.getUTCDate() + 30)
+          dueDay = t.toISOString().slice(0, 10)
+        }
+      }
+      let b = 5
+      if (dueDay) {
+        const late = daysBetween(dueDay, today)
+        b = late <= 0 ? 0 : late <= 30 ? 1 : late <= 60 ? 2 : late <= 90 ? 3 : 4
+      }
+      buckets[b].count++
+      buckets[b].sum += amt
+    }
+    const shown = buckets.filter(b => b.count > 0)
+    const total = shown.reduce((t, b) => t + b.sum, 0)
+    const oldMoney = buckets[3].sum + buckets[4].sum
+    return {
+      id,
+      title: 'Unpaid invoices by age',
+      kind: 'bar',
+      columns: ['Age', 'Invoices', 'Amount'],
+      rows: shown.map(b => [b.label, b.count, inr(b.sum)]),
+      bar: shown.map(b => ({ label: b.label, value: Math.round(b.sum) })),
+      total: pending.length ? `${pending.length} unpaid · ${inr(total)}` : undefined,
+      note: !status
+        ? 'Your invoices have no payment status column, so I cannot tell which are unpaid.'
+        : pending.length === 0
+          ? 'Nothing unpaid. All invoices are marked paid.'
+          : oldMoney > 0
+            ? `${inr(oldMoney)} is more than 60 days late. The older money gets, the harder it is to collect, so call these clients first.`
+            : 'Nothing is more than 60 days late.',
+    }
+  }
+
+  if (id === 'client_concentration') {
+    // How much of your billing depends on a few clients. A large share in one client is a business risk.
+    const client = findField(invoices, CLIENT_FIELDS)
+    const amount = findField(invoices, AMOUNT_FIELDS)
+    const totals = new Map<string, number>()
+    for (const r of invoices) {
+      const c = client ? String(r.data[client] ?? '').trim() : ''
+      if (!c) continue
+      totals.set(c, (totals.get(c) || 0) + (amount ? toNumber(r.data[amount]) : 0))
+    }
+    const ranked = Array.from(totals.entries()).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1])
+    const all = ranked.reduce((t, [, v]) => t + v, 0)
+    const share = (v: number) => (all > 0 ? Math.round((v / all) * 100) : 0)
+    const top1 = ranked.length ? share(ranked[0][1]) : 0
+    const top3 = share(ranked.slice(0, 3).reduce((t, [, v]) => t + v, 0))
+    const risk = ranked.length < 3 ? 'few clients' : top1 >= 40 || top3 >= 75 ? 'high' : top1 >= 25 || top3 >= 60 ? 'medium' : 'low'
+    return {
+      id,
+      title: 'How much you depend on top clients',
+      kind: 'bar',
+      columns: ['Client', 'Billed', 'Share'],
+      rows: ranked.slice(0, 8).map(([c, v]) => [c, inr(v), `${share(v)}%`]),
+      bar: ranked.slice(0, 8).map(([c, v]) => ({ label: c, value: share(v) })),
+      total: ranked.length ? `Top client ${top1}% · top 3 clients ${top3}%` : undefined,
+      note: ranked.length === 0
+        ? 'No invoices with a client name and amount yet.'
+        : risk === 'high'
+          ? 'High dependence: losing one of these clients would hurt badly. Try to win more clients so no single one is above about 25-30%.'
+          : risk === 'medium'
+            ? 'Moderate dependence on a few clients. Keep growing the rest of your client base.'
+            : risk === 'few clients'
+              ? 'You have very few billed clients so far, so every client is a large share. This will spread out as you add more.'
+              : 'Your billing is well spread across clients.',
+    }
+  }
+
   // top_clients
   const client = findField(invoices, CLIENT_FIELDS)
   const amount = findField(invoices, AMOUNT_FIELDS)
@@ -544,6 +650,8 @@ export function pickInsightByKeywords(q: string): InsightId | null {
   if (/remind|chase|draft.*(message|reminder)|dunning|collect.*(payment|money)/.test(t)) return 'payment_reminders'
   if (/focus on|needs? (my )?attention|today|daily brief|morning brief|priorit/.test(t)) return 'daily_brief'
   if (/\bgst\b|gstr|\bvat\b|sales tax|tax (summary|collected|due|report)|cgst|sgst|igst/.test(t)) return 'gst_summary'
+  if (/aging|ageing|receivables?|how (old|late) (are|is)|overdue (by|bucket)|\b(30|60|90) days (late|overdue)|older than \d+ days/.test(t)) return 'receivables_aging'
+  if (/concentration|depend(s|ent|ence)? on|too (much|many).*(one|single) client|(share|percent|%).*(top|biggest|best) (client|customer)|(top|biggest|best) (client|customer).*(share|percent|%)|client risk/.test(t)) return 'client_concentration'
   if (/unpaid|overdue|outstanding|pending (payment|invoice)|not paid|baki|bakaya|payment (due|pending)|who owes/.test(t)) return 'unpaid_invoices'
   if (/abc (analysis|class)|stock value|inventory value|which (items?|products?) (matter|hold)|value of (my )?(stock|inventory)/.test(t)) return 'stock_abc'
   if (/reorder (plan|list|quantit)|what (should|do) i (order|reorder|buy)|how (much|many) (to )?(order|reorder)|purchase suggestion|restock plan|order kitna/.test(t)) return 'reorder_plan'
