@@ -13,10 +13,25 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [attempts, setAttempts] = useState(0)
   const [locked, setLocked] = useState(false)
   const [lockTimer, setLockTimer] = useState(0)
   const router = useRouter()
+
+  const forgotPassword = async () => {
+    setError('')
+    setNotice('')
+    if (!email.trim()) {
+      setError('Type your email above first, then press "Forgot password?".')
+      return
+    }
+    await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    })
+    // Same message whether or not the email has an account, so nobody can use this to find out who is registered.
+    setNotice('If that email has an account, a reset link is on its way. Check your inbox.')
+  }
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -146,6 +161,9 @@ export default function Login() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 mb-4 text-sm">{error}</div>
           )}
+          {notice && (
+            <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl p-3 mb-4 text-sm">{notice}</div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
@@ -163,6 +181,11 @@ export default function Login() {
                 required disabled={locked} placeholder="••••••••"
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-violet-500 outline-none disabled:bg-gray-50"
               />
+            </div>
+            <div className="text-right -mt-2">
+              <button type="button" onClick={forgotPassword} className="text-xs font-bold hover:underline" style={{ color: '#8B5CF6' }}>
+                Forgot password?
+              </button>
             </div>
             <button
               type="submit" disabled={loading || locked}

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ArrowRight } from 'lucide-react'
 import { landingPath } from '@/lib/landing'
+import { checkPassword } from '@/lib/passwordClient'
+import { checkPasswordRules } from '@/lib/passwordRules'
 
 export default function Signup() {
   const [form, setForm] = useState({ name: '', email: '', password: '', company: '' })
@@ -26,12 +28,14 @@ export default function Signup() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (form.password.length < 8) {
-      setError('Password must be at least 8 characters.')
-      return
-    }
     setLoading(true)
     setError('')
+    const verdict = await checkPassword(form.password, { email: form.email, name: form.name, company: form.company })
+    if (!verdict.ok) {
+      setError(verdict.problems[0])
+      setLoading(false)
+      return
+    }
     const { error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
@@ -73,7 +77,7 @@ export default function Signup() {
             {[
               { key: 'name', label: 'Full Name', type: 'text', placeholder: 'Your full name' },
               { key: 'email', label: 'Email', type: 'email', placeholder: 'you@company.com' },
-              { key: 'password', label: 'Password', type: 'password', placeholder: 'Min 8 characters' },
+              { key: 'password', label: 'Password', type: 'password', placeholder: 'At least 10 characters' },
               { key: 'company', label: 'Company Name', type: 'text', placeholder: 'Your business name' },
             ].map(f => (
               <div key={f.key}>
@@ -89,6 +93,16 @@ export default function Signup() {
                   onFocus={e => { e.target.style.borderColor = '#8B5CF6'; e.target.style.boxShadow = '4px 4px 0px #8B5CF6' }}
                   onBlur={e => { e.target.style.borderColor = '#CBD5E1'; e.target.style.boxShadow = 'none' }}
                 />
+                {f.key === 'password' && form.password.length > 0 && (() => {
+                  const c = checkPasswordRules(form.password, { email: form.email, name: form.name, company: form.company })
+                  const colors = ['#DC2626', '#DC2626', '#F59E0B', '#16A34A', '#16A34A']
+                  const labels = ['Too weak', 'Weak', 'Okay', 'Good', 'Strong']
+                  return (
+                    <p className="text-xs mt-1 font-medium" style={{ color: colors[c.score] }}>
+                      {labels[c.score]}{c.problems[0] ? ` — ${c.problems[0]}` : ''}
+                    </p>
+                  )
+                })()}
               </div>
             ))}
             <button type="submit" disabled={loading}
