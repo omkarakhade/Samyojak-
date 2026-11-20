@@ -17,6 +17,11 @@ export async function GET(req: NextRequest) {
     if (!error && data?.user) {
       const user = data.user
 
+      // Password reset emails come back here; only this one fixed page is allowed as a next step.
+      if (searchParams.get('next') === '/reset-password') {
+        return NextResponse.redirect(new URL('/reset-password', origin))
+      }
+
       if (user.email === ADMIN_EMAIL) {
         await supabase.auth.updateUser({
           data: { plan: 'Complete', is_admin: true }
