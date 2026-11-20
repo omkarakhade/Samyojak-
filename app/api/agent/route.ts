@@ -55,6 +55,7 @@ Field names to use:
 - Vendors: Vendor Name, Email, Phone, Category, Notes
 - Purchase Orders: PO Number, Vendor, Item, Quantity, Amount, Order Date, Expected Date, Status (Draft, Ordered, Received, Cancelled), Notes
 - Recruiting: Candidate Name, Role, Department, Stage (Applied, Screening, Interview, Offer, Hired, Rejected), Email, Phone, Interview Date
+- Returns: Return No, Customer, Item, Quantity, Refund Amount, Reason (Damaged, Defective, Wrong item, Not as described, Late delivery, Changed mind, Other), Condition (New, Opened, Used, Damaged), Decision (Restock, Refurbish, Discard, Return to vendor), Status (Requested, Approved, Received, Refunded, Rejected), Return Date, Notes. "Sharma returned 2 damaged chairs" is a Returns record with Reason Damaged and Status Requested.
 
 RULES:
 - "New lead Neha phone 98000021, call her Monday" means: add to CRM with Name, Phone, Next Follow-up Date set to the coming Monday, and Notes "Call her".

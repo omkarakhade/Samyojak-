@@ -11,6 +11,7 @@ export type InsightId =
   | 'leads_by_status'
   | 'low_stock'
   | 'stock_abc'
+  | 'returns_analysis'
   | 'reorder_plan'
   | 'top_clients'
   | 'receivables_aging'
@@ -28,6 +29,7 @@ export const INSIGHT_IDS: InsightId[] = [
   'leads_by_status',
   'low_stock',
   'stock_abc',
+  'returns_analysis',
   'reorder_plan',
   'top_clients',
   'receivables_aging',
@@ -46,6 +48,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   leads_by_status: ['CRM'],
   low_stock: ['Inventory'],
   stock_abc: ['Inventory'],
+  returns_analysis: ['Returns'],
   reorder_plan: ['Inventory'],
   top_clients: ['Invoices'],
   receivables_aging: ['Invoices'],
@@ -55,7 +58,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   daily_brief: ['CRM', 'Invoices', 'Inventory'],
   profit_loss: ['Invoices', 'Expenses'],
   bills_due: ['Expenses'],
-  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders'],
+  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns'],
 }
 
 export interface InsightCard {
@@ -168,6 +171,7 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
   const invoices = data.Invoices || []
   const leads = data.CRM || []
   const stock = data.Inventory || []
+  const returns = data.Returns || []
 
   if (id === 'unpaid_invoices') {
     const client = findField(invoices, CLIENT_FIELDS)
@@ -459,6 +463,53 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'returns_analysis') {
+    // Why things come back, what it costs, and the patterns worth a closer look.
+    const reasonF = findField(returns, ['Reason', /reason|cause/i])
+    const refundF = findField(returns, ['Refund Amount', /refund|amount|value/i])
+    const custF = findField(returns, ['Customer', /customer|client|name/i])
+    const itemF = findField(returns, ['Item', /item|product|sku/i])
+    const statusF = findField(returns, ['Status', /status|stage/i])
+    const qtyF = findField(returns, ['Quantity', /^qty$|quantity/i])
+
+    const byReason = new Map<string, { n: number; refund: number }>()
+    const byItem = new Map<string, number>()
+    const byCust = new Map<string, number>()
+    let totalRefund = 0
+    let waiting = 0
+    for (const r of returns) {
+      const reason = (reasonF ? String(r.data[reasonF] ?? '').trim() : '') || 'Not recorded'
+      const refund = refundF ? toNumber(r.data[refundF]) : 0
+      const cur = byReason.get(reason) || { n: 0, refund: 0 }
+      cur.n++
+      cur.refund += refund
+      byReason.set(reason, cur)
+      totalRefund += refund
+      const item = itemF ? String(r.data[itemF] ?? '').trim() : ''
+      if (item) byItem.set(item, (byItem.get(item) || 0) + (qtyF ? Math.max(1, toNumber(r.data[qtyF])) : 1))
+      const cust = custF ? String(r.data[custF] ?? '').trim() : ''
+      if (cust) byCust.set(cust, (byCust.get(cust) || 0) + 1)
+      if (statusF && /^(requested|approved|received|pending|open)$/i.test(String(r.data[statusF] ?? '').trim())) waiting++
+    }
+    const reasons = Array.from(byReason.entries()).sort((a, b) => b[1].n - a[1].n)
+    const topItem = Array.from(byItem.entries()).sort((a, b) => b[1] - a[1])[0]
+    const repeat = Array.from(byCust.entries()).filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    const notes: string[] = []
+    if (topItem) notes.push(`${topItem[0]} comes back most (${topItem[1]} unit${topItem[1] === 1 ? '' : 's'}).`)
+    if (repeat.length) notes.push(`Repeat returners worth a look: ${repeat.map(([c, n]) => `${c} (${n})`).join(', ')}.`)
+    if (waiting) notes.push(`${waiting} return${waiting === 1 ? ' is' : 's are'} still waiting for a decision or refund.`)
+    return {
+      id,
+      title: 'Returns by reason',
+      kind: 'bar',
+      columns: ['Reason', 'Returns', 'Refunded'],
+      rows: reasons.map(([k, v]) => [k, v.n, inr(v.refund)]),
+      bar: reasons.map(([k, v]) => ({ label: k, value: v.n })),
+      total: returns.length ? `${returns.length} return${returns.length === 1 ? '' : 's'} · ${inr(totalRefund)} refunded` : undefined,
+      note: returns.length === 0 ? 'No returns recorded yet.' : notes.join(' ') || undefined,
+    }
+  }
+
   if (id === 'stock_abc' || id === 'reorder_plan') {
     const name = findField(stock, ['Item Name', /item|product|name/i])
     const qty = findField(stock, ['Current Stock', /current.*stock|^stock$|quantity|qty/i])
@@ -653,6 +704,7 @@ export function pickInsightByKeywords(q: string): InsightId | null {
   if (/aging|ageing|receivables?|how (old|late) (are|is)|overdue (by|bucket)|\b(30|60|90) days (late|overdue)|older than \d+ days/.test(t)) return 'receivables_aging'
   if (/concentration|depend(s|ent|ence)? on|too (much|many).*(one|single) client|(share|percent|%).*(top|biggest|best) (client|customer)|(top|biggest|best) (client|customer).*(share|percent|%)|client risk/.test(t)) return 'client_concentration'
   if (/unpaid|overdue|outstanding|pending (payment|invoice)|not paid|baki|bakaya|payment (due|pending)|who owes/.test(t)) return 'unpaid_invoices'
+  if (/return(s|ed)?\b|refund|rma\b|warranty|wapas/.test(t) && !/return on|returns? policy/.test(t)) return 'returns_analysis'
   if (/abc (analysis|class)|stock value|inventory value|which (items?|products?) (matter|hold)|value of (my )?(stock|inventory)/.test(t)) return 'stock_abc'
   if (/reorder (plan|list|quantit)|what (should|do) i (order|reorder|buy)|how (much|many) (to )?(order|reorder)|purchase suggestion|restock plan|order kitna/.test(t)) return 'reorder_plan'
   if (/low stock|reorder|running out|out of stock|stock alert|kam stock/.test(t)) return 'low_stock'

@@ -360,6 +360,7 @@ const PIN_LABELS: Record<string, string> = {
   leads_by_status: 'Leads by status',
   low_stock: 'Low stock',
   stock_abc: 'Stock value (ABC)',
+  returns_analysis: 'Returns by reason',
   reorder_plan: 'Reorder plan',
   top_clients: 'Top clients',
   receivables_aging: 'Unpaid by age',

@@ -30,6 +30,7 @@ function guessModule(headers: string[]): string {
     'Purchase Orders': (/po number|purchase order|expected date/.test(h) ? 4 : 0),
     Expenses: (/vendor|expense|bill from|supplier/.test(h) ? 3 : 0),
     Quotations: (/quotation|quote|estimate/.test(h) ? 3 : 0),
+    Returns: (/return no|refund amount|\brma\b|return date|return reason|disposition/.test(h) ? 4 : 0),
   }
   return Object.entries(score).sort((a, b) => b[1] - a[1])[0][0] || 'CRM'
 }
