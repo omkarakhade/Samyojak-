@@ -12,6 +12,8 @@ export type InsightId =
   | 'low_stock'
   | 'stock_abc'
   | 'returns_analysis'
+  | 'production_status'
+  | 'quality_summary'
   | 'reorder_plan'
   | 'top_clients'
   | 'receivables_aging'
@@ -30,6 +32,8 @@ export const INSIGHT_IDS: InsightId[] = [
   'low_stock',
   'stock_abc',
   'returns_analysis',
+  'production_status',
+  'quality_summary',
   'reorder_plan',
   'top_clients',
   'receivables_aging',
@@ -49,6 +53,8 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   low_stock: ['Inventory'],
   stock_abc: ['Inventory'],
   returns_analysis: ['Returns'],
+  production_status: ['Production Jobs'],
+  quality_summary: ['Quality Issues', 'Production Jobs'],
   reorder_plan: ['Inventory'],
   top_clients: ['Invoices'],
   receivables_aging: ['Invoices'],
@@ -58,7 +64,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   daily_brief: ['CRM', 'Invoices', 'Inventory'],
   profit_loss: ['Invoices', 'Expenses'],
   bills_due: ['Expenses'],
-  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns'],
+  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues'],
 }
 
 export interface InsightCard {
@@ -172,6 +178,8 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
   const leads = data.CRM || []
   const stock = data.Inventory || []
   const returns = data.Returns || []
+  const jobs = data['Production Jobs'] || []
+  const issues = data['Quality Issues'] || []
 
   if (id === 'unpaid_invoices') {
     const client = findField(invoices, CLIENT_FIELDS)
@@ -463,6 +471,115 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'production_status') {
+    // Where every job stands, how far along the running ones are, and which are past their due date.
+    const jobF = findField(jobs, ['Job No', /job|order|^name$/i])
+    const prodF = findField(jobs, ['Product', /product|item/i])
+    const planF = findField(jobs, ['Quantity Planned', /planned|target|^qty$|quantity/i])
+    const madeF = findField(jobs, ['Quantity Made', /made|produced|completed|done qty/i])
+    const dueF = findField(jobs, ['Due Date', /due|deadline/i])
+    const statusF = findField(jobs, ['Status', /status|stage/i])
+    const today = todayIST()
+
+    const order = ['Planned', 'In Progress', 'On Hold', 'Done']
+    const groups = new Map<string, { n: number; planned: number; made: number }>()
+    const late: string[] = []
+    let activePlanned = 0
+    let activeMade = 0
+    for (const r of jobs) {
+      const raw = statusF ? String(r.data[statusF] ?? '').trim() : ''
+      const st = order.find(o => o.toLowerCase() === raw.toLowerCase()) || raw || 'No status'
+      const planned = planF ? toNumber(r.data[planF]) : 0
+      const made = madeF ? toNumber(r.data[madeF]) : 0
+      const g = groups.get(st) || { n: 0, planned: 0, made: 0 }
+      g.n++; g.planned += planned; g.made += made
+      groups.set(st, g)
+      if (st !== 'Done') {
+        activePlanned += planned
+        activeMade += made
+        const d = dueF ? dayKey(r.data[dueF]) : ''
+        if (d && d < today) {
+          const name = (jobF ? String(r.data[jobF] ?? '').trim() : '') || (prodF ? String(r.data[prodF] ?? '').trim() : '') || 'a job'
+          late.push(name)
+        }
+      }
+    }
+    const entries = Array.from(groups.entries()).sort((a, b) => {
+      const ia = order.indexOf(a[0]); const ib = order.indexOf(b[0])
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
+    })
+    const pct = activePlanned > 0 ? Math.min(100, Math.round((activeMade / activePlanned) * 100)) : 0
+    const onHold = groups.get('On Hold')?.n || 0
+    const notes: string[] = []
+    if (late.length) notes.push(`${late.length} job${late.length === 1 ? ' is' : 's are'} past the due date: ${late.slice(0, 4).join(', ')}${late.length > 4 ? '...' : ''}.`)
+    if (onHold) notes.push(`${onHold} job${onHold === 1 ? ' is' : 's are'} on hold.`)
+    return {
+      id,
+      title: 'Production jobs by status',
+      kind: 'bar',
+      columns: ['Status', 'Jobs', 'Made / planned'],
+      rows: entries.map(([k, v]) => [k, v.n, `${v.made} / ${v.planned}`]),
+      bar: entries.map(([k, v]) => ({ label: k, value: v.n })),
+      total: jobs.length ? `${jobs.length} job${jobs.length === 1 ? '' : 's'} · open jobs ${pct}% made` : undefined,
+      note: jobs.length === 0 ? 'No production jobs yet.' : notes.join(' ') || 'Nothing is late.',
+    }
+  }
+
+  if (id === 'quality_summary') {
+    // Open problems by seriousness, whether each has a fix recorded, and how much of what you make is affected.
+    const defectF = findField(issues, ['Defect', /defect|problem|issue|description/i])
+    const unitsF = findField(issues, ['Quantity Affected', /affected|units|qty|quantity/i])
+    const sevF = findField(issues, ['Severity', /severity|priority/i])
+    const capaF = findField(issues, ['Corrective Action', /corrective|action|fix|capa/i])
+    const statusF = findField(issues, ['Status', /status|stage/i])
+    const dateF = findField(issues, ['Reported Date', /reported|date/i])
+    const madeF = findField(jobs, ['Quantity Made', /made|produced|completed/i])
+    const today = todayIST()
+
+    const isClosed = (v: unknown) => /^(fixed|closed|resolved|done)$/i.test(String(v ?? '').trim())
+    const open = issues.filter(r => !(statusF && isClosed(r.data[statusF])))
+    const sevOrder = ['Critical', 'Major', 'Minor']
+    const bySev = new Map<string, number>()
+    let noFix = 0
+    let oldest = 0
+    const byDefect = new Map<string, number>()
+    for (const r of open) {
+      const raw = sevF ? String(r.data[sevF] ?? '').trim() : ''
+      const sev = sevOrder.find(s => s.toLowerCase() === raw.toLowerCase()) || raw || 'Not rated'
+      bySev.set(sev, (bySev.get(sev) || 0) + 1)
+      if (!(capaF && String(r.data[capaF] ?? '').trim())) noFix++
+      const d = dateF ? dayKey(r.data[dateF]) : ''
+      if (d) oldest = Math.max(oldest, daysBetween(d, today))
+      const defect = defectF ? String(r.data[defectF] ?? '').trim().toLowerCase() : ''
+      if (defect) byDefect.set(defect, (byDefect.get(defect) || 0) + 1)
+    }
+    const entries = Array.from(bySev.entries()).sort((a, b) => {
+      const ia = sevOrder.indexOf(a[0]); const ib = sevOrder.indexOf(b[0])
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
+    })
+    const affected = issues.reduce((t, r) => t + (unitsF ? toNumber(r.data[unitsF]) : 0), 0)
+    const made = jobs.reduce((t, r) => t + (madeF ? toNumber(r.data[madeF]) : 0), 0)
+    const rate = made > 0 ? Math.round((affected / made) * 1000) / 10 : 0
+    const critical = bySev.get('Critical') || 0
+    const topDefect = Array.from(byDefect.entries()).sort((a, b) => b[1] - a[1])[0]
+    const notes: string[] = []
+    if (critical) notes.push(`${critical} critical issue${critical === 1 ? ' is' : 's are'} still open. Fix these first.`)
+    if (noFix) notes.push(`${noFix} open issue${noFix === 1 ? ' has' : 's have'} no corrective action written down yet.`)
+    if (oldest > 14) notes.push(`The oldest open issue is ${oldest} days old.`)
+    if (topDefect && topDefect[1] > 1) notes.push(`"${topDefect[0]}" keeps coming back (${topDefect[1]} times), so look for the root cause.`)
+    if (made > 0) notes.push(`${affected} unit${affected === 1 ? '' : 's'} affected out of ${made} made (${rate}%).`)
+    return {
+      id,
+      title: 'Open quality issues',
+      kind: 'bar',
+      columns: ['Severity', 'Open issues'],
+      rows: entries.map(([k, v]) => [k, v]),
+      bar: entries.map(([k, v]) => ({ label: k, value: v })),
+      total: issues.length ? `${open.length} open of ${issues.length} issue${issues.length === 1 ? '' : 's'}` : undefined,
+      note: issues.length === 0 ? 'No quality issues recorded.' : open.length === 0 ? 'No open issues. Everything reported is fixed or closed.' : notes.join(' ') || undefined,
+    }
+  }
+
   if (id === 'returns_analysis') {
     // Why things come back, what it costs, and the patterns worth a closer look.
     const reasonF = findField(returns, ['Reason', /reason|cause/i])
@@ -704,6 +821,8 @@ export function pickInsightByKeywords(q: string): InsightId | null {
   if (/aging|ageing|receivables?|how (old|late) (are|is)|overdue (by|bucket)|\b(30|60|90) days (late|overdue)|older than \d+ days/.test(t)) return 'receivables_aging'
   if (/concentration|depend(s|ent|ence)? on|too (much|many).*(one|single) client|(share|percent|%).*(top|biggest|best) (client|customer)|(top|biggest|best) (client|customer).*(share|percent|%)|client risk/.test(t)) return 'client_concentration'
   if (/unpaid|overdue|outstanding|pending (payment|invoice)|not paid|baki|bakaya|payment (due|pending)|who owes/.test(t)) return 'unpaid_invoices'
+  if (/production|work order|\bjobs?\b.*(late|status|running|pending|delay)|(late|running|pending|delayed) jobs?|shop floor|manufactur/.test(t)) return 'production_status'
+  if (/quality|defect|non.?conformance|\bncr\b|\bcapa\b|rejection|complaint/.test(t)) return 'quality_summary'
   if (/return(s|ed)?\b|refund|rma\b|warranty|wapas/.test(t) && !/return on|returns? policy/.test(t)) return 'returns_analysis'
   if (/abc (analysis|class)|stock value|inventory value|which (items?|products?) (matter|hold)|value of (my )?(stock|inventory)/.test(t)) return 'stock_abc'
   if (/reorder (plan|list|quantit)|what (should|do) i (order|reorder|buy)|how (much|many) (to )?(order|reorder)|purchase suggestion|restock plan|order kitna/.test(t)) return 'reorder_plan'

@@ -7,6 +7,8 @@ export const MODULE_FIELDS: Record<string, string[]> = {
   HR: ['Name', 'Role', 'Department', 'Salary', 'Joining Date'],
   Projects: ['Project Name', 'Client', 'Status', 'Start Date', 'Deadline', 'Description'],
   Recruiting: ['Candidate Name', 'Role', 'Department', 'Stage', 'Email', 'Phone', 'Interview Date'],
+  'Production Jobs': ['Job No', 'Product', 'Quantity Planned', 'Quantity Made', 'Start Date', 'Due Date', 'Status', 'Line', 'Notes'],
+  'Quality Issues': ['Issue No', 'Product', 'Defect', 'Quantity Affected', 'Severity', 'Root Cause', 'Corrective Action', 'Status', 'Reported Date', 'Owner'],
   Returns: ['Return No', 'Customer', 'Item', 'Quantity', 'Refund Amount', 'Reason', 'Condition', 'Decision', 'Status', 'Return Date', 'Notes'],
 }
 
@@ -19,6 +21,8 @@ export const MODULE_LABELS: Record<string, string> = {
   Projects: 'Projects',
   Recruiting: 'Recruiting',
   Returns: 'Returns & Refunds',
+  'Production Jobs': 'Production Jobs',
+  'Quality Issues': 'Quality Issues',
 }
 
 /** Match sheet columns to standard columns by name only (no AI). */

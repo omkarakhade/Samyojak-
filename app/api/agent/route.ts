@@ -56,6 +56,8 @@ Field names to use:
 - Purchase Orders: PO Number, Vendor, Item, Quantity, Amount, Order Date, Expected Date, Status (Draft, Ordered, Received, Cancelled), Notes
 - Recruiting: Candidate Name, Role, Department, Stage (Applied, Screening, Interview, Offer, Hired, Rejected), Email, Phone, Interview Date
 - Returns: Return No, Customer, Item, Quantity, Refund Amount, Reason (Damaged, Defective, Wrong item, Not as described, Late delivery, Changed mind, Other), Condition (New, Opened, Used, Damaged), Decision (Restock, Refurbish, Discard, Return to vendor), Status (Requested, Approved, Received, Refunded, Rejected), Return Date, Notes. "Sharma returned 2 damaged chairs" is a Returns record with Reason Damaged and Status Requested.
+- Production Jobs: Job No, Product, Quantity Planned, Quantity Made, Start Date, Due Date, Status (Planned, In Progress, On Hold, Done), Line, Notes. "Start a job for 500 steel brackets, due Friday" is a Production Jobs record with Status In Progress.
+- Quality Issues: Issue No, Product, Defect, Quantity Affected, Severity (Minor, Major, Critical), Root Cause, Corrective Action, Status (Open, Investigating, Fixed, Closed), Reported Date, Owner. "20 brackets came out bent, critical" is a Quality Issues record with Severity Critical and Status Open.
 
 RULES:
 - "New lead Neha phone 98000021, call her Monday" means: add to CRM with Name, Phone, Next Follow-up Date set to the coming Monday, and Notes "Call her".

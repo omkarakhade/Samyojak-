@@ -361,6 +361,8 @@ const PIN_LABELS: Record<string, string> = {
   low_stock: 'Low stock',
   stock_abc: 'Stock value (ABC)',
   returns_analysis: 'Returns by reason',
+  production_status: 'Production jobs',
+  quality_summary: 'Quality issues',
   reorder_plan: 'Reorder plan',
   top_clients: 'Top clients',
   receivables_aging: 'Unpaid by age',
