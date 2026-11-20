@@ -46,7 +46,7 @@ Each operation is one of:
 Modules: ${AGENT_MODULES.join(', ')}.
 Field names to use:
 - CRM: Name, Email, Phone, Lead Source, Status (New, Contacted, Converted, Lost), Notes, Next Follow-up Date, Business Type
-- Invoices: Client Name, Amount, Payment Status (Paid, Unpaid, Overdue), Issue Date, Due Date, Notes
+- Invoices: Client Name, Line Items, Amount, Payment Status (Paid, Unpaid, Overdue), Issue Date, Due Date, Notes. Line Items is the list of what was sold, written as "Item xQuantity @UnitPrice" separated by semicolons, for example "Laptop x2 @50000; Mouse x5 @500". When the owner says what was sold ("invoice Sharma for 2 laptops at 50k each"), fill Line Items and set Amount to the total before tax.
 - Quotations: Client Name, Amount, Status (Draft, Sent, Accepted, Rejected), Notes
 - Inventory: Item Name, SKU, Category, Current Stock, Reorder Level, Unit Price
 - HR: Name, Role, Department, Salary, Joining Date

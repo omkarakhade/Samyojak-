@@ -5,6 +5,7 @@ import LockedModule from '@/components/LockedModule'
 import { supabase } from '@/lib/supabase'
 import { getPlanFromMetadata, canAccessModuleSync } from '@/lib/planAccess'
 import { Plus, AlertCircle, RefreshCw } from 'lucide-react'
+import { parseLineItems, lineItemsTotal } from '@/lib/lineItems'
 import UniversalDataView from '@/components/UniversalDataView'
 
 const TAX_SYSTEMS: Record<string, { name: string; rates: number[]; label: string }> = {
@@ -39,6 +40,7 @@ export default function Invoices() {
     clientName: '',
     clientEmail: '',
     clientPhone: '',
+    lineItems: '',
     amount: '',
     dueDate: '',
     extraNotes: '',
@@ -54,6 +56,8 @@ export default function Invoices() {
     })
   }, [])
 
+  const parsedItems = parseLineItems(form.lineItems)
+  const itemsTotal = lineItemsTotal(parsedItems)
   const taxSystem = TAX_SYSTEMS[taxCountry]
   const amount = Number(form.amount) || 0
   const taxAmount = Math.round((amount * taxRate) / 100)
@@ -77,6 +81,7 @@ export default function Invoices() {
         'Total': String(total),
         Source: 'manual_entry',
       }
+      if (parsedItems.length > 0) record['Line Items'] = form.lineItems.trim().slice(0, 450)
       if (form.clientEmail) record['Client Email'] = form.clientEmail.trim()
       if (form.clientPhone) record['Client Phone'] = form.clientPhone.trim()
       if (form.dueDate) record['Due Date'] = form.dueDate
@@ -91,7 +96,7 @@ export default function Invoices() {
       if (!res.ok || data.error) throw new Error(data.error || 'Failed to save')
 
       setShowModal(false)
-      setForm({ clientName: '', clientEmail: '', clientPhone: '', amount: '', dueDate: '', extraNotes: '' })
+      setForm({ clientName: '', clientEmail: '', clientPhone: '', lineItems: '', amount: '', dueDate: '', extraNotes: '' })
       setRefreshKey(k => k + 1)
     } catch (e: any) {
       setError('Failed to create invoice: ' + e.message)
@@ -172,6 +177,7 @@ export default function Invoices() {
                   { key: 'clientName', label: 'Client Name *', type: 'text', required: true, ph: 'Client or company name' },
                   { key: 'clientEmail', label: 'Client Email', type: 'email', required: false, ph: 'client@email.com' },
                   { key: 'clientPhone', label: 'Client WhatsApp', type: 'tel', required: false, ph: '+91 9876543210' },
+                  { key: 'lineItems', label: 'Items sold (optional)', type: 'text', required: false, ph: 'Laptop x2 @50000; Mouse x5 @500' },
                   { key: 'amount', label: 'Amount (before tax) *', type: 'number', required: true, ph: '0' },
                   { key: 'dueDate', label: 'Due Date', type: 'date', required: false, ph: '' },
                   { key: 'extraNotes', label: 'Notes', type: 'text', required: false, ph: 'Additional info' },
@@ -184,8 +190,25 @@ export default function Invoices() {
                       required={f.required}
                       placeholder={f.ph}
                       value={form[f.key as keyof typeof form]}
-                      onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                      onChange={e => {
+                        const value = e.target.value
+                        if (f.key === 'lineItems') {
+                          // Fill the amount from the items while the amount is empty or still the last auto-filled total.
+                          const next = lineItemsTotal(parseLineItems(value))
+                          const keepAuto = form.amount === '' || Number(form.amount) === itemsTotal
+                          setForm({ ...form, lineItems: value, amount: next > 0 && keepAuto ? String(next) : form.amount })
+                        } else {
+                          setForm({ ...form, [f.key]: value })
+                        }
+                      }}
                       className="w-full border border-gray-300 dark:border-white/20 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-violet-500 outline-none dark:bg-white/5 dark:text-white" />
+                    {f.key === 'lineItems' && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {parsedItems.length > 0
+                          ? `${parsedItems.length} item${parsedItems.length === 1 ? '' : 's'} read${itemsTotal > 0 ? `, total ${itemsTotal.toLocaleString()}` : ''}. Write each as name xQuantity @price, separated by ;`
+                          : 'Write each as name xQuantity @price, separated by ;  This lets Samyojak forecast demand.'}
+                      </p>
+                    )}
                   </div>
                 ))}
                 <div>

@@ -1,4 +1,5 @@
 import type { UserRow } from '@/lib/userData'
+import { parseLineItems, itemKey } from '@/lib/lineItems'
 
 /**
  * Answers that show: fixed, safe calculations over the user's own records.
@@ -12,6 +13,7 @@ export type InsightId =
   | 'low_stock'
   | 'stock_abc'
   | 'returns_analysis'
+  | 'demand_forecast'
   | 'production_status'
   | 'quality_summary'
   | 'reorder_plan'
@@ -32,6 +34,7 @@ export const INSIGHT_IDS: InsightId[] = [
   'low_stock',
   'stock_abc',
   'returns_analysis',
+  'demand_forecast',
   'production_status',
   'quality_summary',
   'reorder_plan',
@@ -53,6 +56,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   low_stock: ['Inventory'],
   stock_abc: ['Inventory'],
   returns_analysis: ['Returns'],
+  demand_forecast: ['Invoices', 'Inventory'],
   production_status: ['Production Jobs'],
   quality_summary: ['Quality Issues', 'Production Jobs'],
   reorder_plan: ['Inventory'],
@@ -154,6 +158,35 @@ function daysBetween(a: string, b: string): number {
   const [ay, am, ad] = a.split('-').map(Number)
   const [by, bm, bd] = b.split('-').map(Number)
   return Math.round((Date.UTC(by, bm - 1, bd) - Date.UTC(ay, am - 1, ad)) / 86_400_000)
+}
+
+interface Sale { key: string; name: string; qty: number; day: string }
+
+/**
+ * Every item sold, with its date, read from the invoices.
+ * Uses the "Line Items" text when present; otherwise one item per invoice from an Item/Product + Quantity pair
+ * (what most CSV exports from other software look like).
+ */
+function collectSales(invoices: UserRow[]): Sale[] {
+  const dateF = findField(invoices, ISSUE_FIELDS)
+  if (!dateF) return []
+  const linesF = findField(invoices, ['Line Items', /^line.?items?$|^items$/i])
+  const itemF = findField(invoices, ['Item', 'Item Name', 'Product', /^item|^product/i])
+  const qtyF = findField(invoices, ['Quantity', /^qty$|^quantity/i])
+  const sales: Sale[] = []
+  for (const r of invoices) {
+    const day = dayKey(r.data[dateF])
+    if (!day) continue
+    const lines = linesF ? parseLineItems(r.data[linesF]) : []
+    if (lines.length > 0) {
+      for (const l of lines) sales.push({ key: itemKey(l.name), name: l.name, qty: l.qty, day })
+    } else if (itemF && qtyF) {
+      const name = String(r.data[itemF] ?? '').trim()
+      const qty = toNumber(r.data[qtyF])
+      if (name && qty > 0) sales.push({ key: itemKey(name), name, qty, day })
+    }
+  }
+  return sales
 }
 
 function todayIST(): string {
@@ -468,6 +501,71 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
       note: !qty
         ? 'Your inventory has no stock column, so I cannot check levels.'
         : low.length === 0 ? 'Nothing is below its reorder level.' : undefined,
+    }
+  }
+
+  if (id === 'demand_forecast') {
+    // Weekly sales per item over the last 12 weeks -> average, a buffer for busy weeks, and a reorder point.
+    const WEEKS = 12
+    const LEAD_WEEKS = 2 // time a supplier usually takes to deliver
+    const Z = 1.65 // ~95% chance of not running out during the lead time
+    const today = todayIST()
+    const sales = collectSales(invoices)
+
+    const nameF = findField(stock, ['Item Name', /item|product|name/i])
+    const qtyF = findField(stock, ['Current Stock', /current.*stock|^stock$|quantity|qty/i])
+    const onHand = new Map<string, number>()
+    if (nameF && qtyF) for (const r of stock) onHand.set(itemKey(String(r.data[nameF] ?? '')), toNumber(r.data[qtyF]))
+
+    const perItem = new Map<string, { name: string; weekly: number[]; maxAge: number }>()
+    for (const s of sales) {
+      const age = daysBetween(s.day, today)
+      if (age < 0 || age >= WEEKS * 7) continue
+      const cur = perItem.get(s.key) || { name: s.name, weekly: new Array(WEEKS).fill(0), maxAge: 0 }
+      cur.weekly[Math.floor(age / 7)] += s.qty
+      cur.maxAge = Math.max(cur.maxAge, age)
+      perItem.set(s.key, cur)
+    }
+
+    const forecasts = Array.from(perItem.entries()).map(([key, v]) => {
+      const weeks = Math.min(WEEKS, Math.max(4, Math.ceil((v.maxAge + 1) / 7)))
+      const used = v.weekly.slice(0, weeks)
+      const mean = used.reduce((a, b) => a + b, 0) / weeks
+      const variance = used.reduce((a, b) => a + (b - mean) ** 2, 0) / weeks
+      const reorderPoint = mean * LEAD_WEEKS + Z * Math.sqrt(variance) * Math.sqrt(LEAD_WEEKS)
+      const have = onHand.has(key) ? (onHand.get(key) as number) : null
+      const daysLeft = have !== null && mean > 0 ? Math.floor(have / (mean / 7)) : null
+      const needOrder = have !== null && have <= reorderPoint
+      const orderQty = needOrder ? Math.max(1, Math.ceil(reorderPoint + mean * 4 - (have as number))) : 0
+      return { name: v.name, mean, have, daysLeft, needOrder, orderQty }
+    })
+    forecasts.sort((a, b) => {
+      if (a.needOrder !== b.needOrder) return a.needOrder ? -1 : 1
+      const da = a.daysLeft === null ? 1e9 : a.daysLeft
+      const db = b.daysLeft === null ? 1e9 : b.daysLeft
+      return da - db
+    })
+    const need = forecasts.filter(f => f.needOrder).length
+    const unknown = forecasts.filter(f => f.have === null).length
+    const notes: string[] = []
+    if (unknown) notes.push(`${unknown} sold item${unknown === 1 ? ' is' : 's are'} not in Inventory under the same name, so I can not check their stock.`)
+    notes.push('Based on your recent sales, a 2 week supplier delivery time and a buffer for busy weeks.')
+    return {
+      id,
+      title: 'Demand forecast',
+      kind: 'table',
+      columns: ['Item', 'Sold / week', 'In stock', 'Days left', 'Order now'],
+      rows: forecasts.slice(0, 15).map(f => [
+        f.name,
+        Math.round(f.mean * 10) / 10,
+        f.have === null ? '—' : f.have,
+        f.daysLeft === null ? '—' : f.daysLeft,
+        f.needOrder ? f.orderQty : '—',
+      ]),
+      total: forecasts.length ? `${need} of ${forecasts.length} item${forecasts.length === 1 ? '' : 's'} need ordering now` : undefined,
+      note: forecasts.length === 0
+        ? 'I can not see what you sold yet. Add items to invoices (for example "Laptop x2 @50000") with an issue date, and I will forecast demand from them.'
+        : notes.join(' '),
     }
   }
 
@@ -821,6 +919,7 @@ export function pickInsightByKeywords(q: string): InsightId | null {
   if (/aging|ageing|receivables?|how (old|late) (are|is)|overdue (by|bucket)|\b(30|60|90) days (late|overdue)|older than \d+ days/.test(t)) return 'receivables_aging'
   if (/concentration|depend(s|ent|ence)? on|too (much|many).*(one|single) client|(share|percent|%).*(top|biggest|best) (client|customer)|(top|biggest|best) (client|customer).*(share|percent|%)|client risk/.test(t)) return 'client_concentration'
   if (/unpaid|overdue|outstanding|pending (payment|invoice)|not paid|baki|bakaya|payment (due|pending)|who owes/.test(t)) return 'unpaid_invoices'
+  if (/forecast|demand|days of stock|how long (will|does|do) .*(stock|last)|will .*run out|when .*run out|sales velocity|what (will|should) .*sell/.test(t)) return 'demand_forecast'
   if (/production|work order|\bjobs?\b.*(late|status|running|pending|delay)|(late|running|pending|delayed) jobs?|shop floor|manufactur/.test(t)) return 'production_status'
   if (/quality|defect|non.?conformance|\bncr\b|\bcapa\b|rejection|complaint/.test(t)) return 'quality_summary'
   if (/return(s|ed)?\b|refund|rma\b|warranty|wapas/.test(t) && !/return on|returns? policy/.test(t)) return 'returns_analysis'

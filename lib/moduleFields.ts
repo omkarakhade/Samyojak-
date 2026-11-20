@@ -1,7 +1,7 @@
 /** The standard column names each module page and the AI agent understand. */
 export const MODULE_FIELDS: Record<string, string[]> = {
   CRM: ['Name', 'Email', 'Phone', 'Lead Source', 'Status', 'Notes', 'Next Follow-up Date', 'Business Type', 'Company'],
-  Invoices: ['Invoice No', 'Client Name', 'Amount', 'Tax Amount', 'GSTIN', 'Payment Status', 'Issue Date', 'Due Date', 'Notes'],
+  Invoices: ['Invoice No', 'Client Name', 'Line Items', 'Amount', 'Tax Amount', 'GSTIN', 'Payment Status', 'Issue Date', 'Due Date', 'Notes'],
   Quotations: ['Client Name', 'Amount', 'Status', 'Notes'],
   Inventory: ['Item Name', 'SKU', 'Category', 'Current Stock', 'Reorder Level', 'Unit Price'],
   HR: ['Name', 'Role', 'Department', 'Salary', 'Joining Date'],
