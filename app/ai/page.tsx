@@ -6,6 +6,7 @@ import { getPlanFromMetadata } from '@/lib/planAccess'
 import { Brain, Send, Lock, Zap, Check, X, Undo2, Paperclip, Pin, PinOff, LayoutDashboard, FileText } from 'lucide-react'
 import { parseSheetText, matrixToSheet } from '@/lib/csv'
 import { MODULE_FIELDS, MODULE_LABELS, exactFieldMapping } from '@/lib/moduleFields'
+import { nextSteps, type Suggestion } from '@/lib/suggestions'
 import { pickInsightByKeywords } from '@/lib/insights'
 import type { InsightCard } from '@/lib/insights'
 
@@ -56,6 +57,7 @@ interface Message {
   reverts?: Revert[]
   card?: InsightCard
   migration?: MigrationPlan
+  suggestions?: Suggestion[]
 }
 
 interface MigrationPlan {
@@ -411,6 +413,8 @@ export default function AIAssistant() {
   const migrationRows = useRef<Record<number, Record<string, string>[]>>({})
   const [summary, setSummary] = useState<Summary | null>(null)
   const [welcomeDone, setWelcomeDone] = useState(false)
+  const [noticedList, setNoticedList] = useState<Suggestion[]>([])
+  const inputRef = useRef<HTMLInputElement>(null)
   const [pins, setPins] = useState<string[]>([])
 
   useEffect(() => {
@@ -430,7 +434,7 @@ export default function AIAssistant() {
       if (hasAI) {
         // A brand new account has nothing to summarise, so skip the overview call and show the welcome instead.
         loadSummary().then(data => {
-          if (data?.hasData) loadGreeting(user.id)
+          if (data?.hasData) { loadGreeting(user.id); loadNoticed() }
         })
         try {
           setWelcomeDone(localStorage.getItem(`samyojak_welcome_${user.id}`) === '1')
@@ -557,6 +561,26 @@ export default function AIAssistant() {
       },
     ])
     fileRef.current?.click()
+  }
+
+  const loadNoticed = async () => {
+    try {
+      const token = await getToken()
+      const res = await fetch('/api/suggestions', { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data.suggestions)) setNoticedList(data.suggestions)
+      }
+    } catch { /* the list is a bonus, never block the chat */ }
+  }
+
+  const useSuggestion = (s: Suggestion) => {
+    if (s.mode === 'send') {
+      sendMessage(s.text, true)
+    } else {
+      setInput(s.text)
+      setTimeout(() => inputRef.current?.focus(), 0)
+    }
   }
 
   const loadSummary = async () => {
@@ -840,8 +864,10 @@ export default function AIAssistant() {
           count: data.count || 0,
           updated: data.updated || 0,
           reverts: data.reverts || [],
+          suggestions: nextSteps(msg.actions || []),
         })
         loadSummary()
+        loadNoticed()
         if (data.stockNotes?.length) {
           addAiMessage({ text: data.stockNotes.join(' ') })
         }
@@ -1003,6 +1029,25 @@ export default function AIAssistant() {
           </div>
         )}
 
+        {/* Things the assistant noticed in the owner's own data */}
+        {messages.length === 0 && noticedList.length > 0 && (
+          <div className="p-3 rounded-xl mb-3 flex-shrink-0" style={{ background: '#FFFBEB', border: '1.5px solid #FCD34D' }}>
+            <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#92400E' }}>Things I noticed</p>
+            <div className="space-y-2">
+              {noticedList.map(s => (
+                <div key={s.label} className="flex items-center justify-between gap-3">
+                  <span className="text-xs" style={{ color: '#78350F' }}>{s.why || s.label}</span>
+                  <button onClick={() => useSuggestion(s)}
+                    className="px-3 py-1 rounded-full text-xs font-bold flex-shrink-0"
+                    style={{ background: 'white', color: '#92400E', border: '1.5px solid #FCD34D' }}>
+                    {s.label}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Quick questions + capture hint */}
         {messages.length === 0 && !(summary && !summary.hasData && !welcomeDone) && (
           <div className="mb-4 flex-shrink-0">
@@ -1107,6 +1152,21 @@ export default function AIAssistant() {
                   </div>
                 )}
 
+                {msg.status === 'saved' && msg.suggestions && msg.suggestions.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-bold uppercase tracking-wide mb-1.5 text-gray-400">Want to add this too?</p>
+                    <div className="flex flex-wrap gap-2">
+                      {msg.suggestions.map(s => (
+                        <button key={s.label} onClick={() => useSuggestion(s)}
+                          className="px-3 py-1.5 rounded-full text-xs font-medium hover:opacity-80"
+                          style={{ background: '#EDE9FE', color: '#6D28D9', border: '1.5px solid #C4B5FD' }}>
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {msg.status === 'cancelled' && (
                   <p className="text-xs mt-2 font-semibold" style={{ color: '#94A3B8' }}>Cancelled. Nothing was saved.</p>
                 )}
@@ -1151,6 +1211,7 @@ export default function AIAssistant() {
             <Paperclip size={18} />
           </button>
           <input
+            ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}

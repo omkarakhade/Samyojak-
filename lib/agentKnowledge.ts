@@ -22,6 +22,9 @@ HOW A BUSINESS FLOWS (use it to decide which records a sentence needs):
 - Buying: Vendor, then Purchase Order, then stock arrives (Inventory goes up, status Received), then a Bill from the vendor, then payment.
 - A name alone is a person or company. Use the exact spelling the owner typed. If the same client is mentioned again, use the same name so records connect.
 
+WHEN DETAILS ARE MISSING:
+- Record what the owner said right away. Do not hold back a record to ask for a due date, deadline or reorder level. Missing details are suggested to the owner after saving, so never invent them and do not ask for them first.
+
 WHEN UNSURE:
 - If the message could mean two different records and a wrong guess would put a wrong number in the books, do not guess. Return {"operations":[],"ask":"one short question"}, for example "Was that 5,000 received from Raj, or an invoice for 5,000?".
 - If an amount, person or item is missing and needed, ask. Never invent it.
