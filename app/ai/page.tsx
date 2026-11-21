@@ -408,6 +408,7 @@ export default function AIAssistant() {
   const fileRef = useRef<HTMLInputElement>(null)
   const migrationRows = useRef<Record<number, Record<string, string>[]>>({})
   const [summary, setSummary] = useState<Summary | null>(null)
+  const [welcomeDone, setWelcomeDone] = useState(false)
   const [pins, setPins] = useState<string[]>([])
 
   useEffect(() => {
@@ -425,8 +426,13 @@ export default function AIAssistant() {
       setCanUseAI(hasAI)
       setChecking(false)
       if (hasAI) {
-        loadGreeting(user.id)
-        loadSummary()
+        // A brand new account has nothing to summarise, so skip the overview call and show the welcome instead.
+        loadSummary().then(data => {
+          if (data?.hasData) loadGreeting(user.id)
+        })
+        try {
+          setWelcomeDone(localStorage.getItem(`samyojak_welcome_${user.id}`) === '1')
+        } catch { /* storage unavailable */ }
         try {
           const raw = localStorage.getItem(`samyojak_pins_${user.id}`)
           const parsed = raw ? JSON.parse(raw) : []
@@ -509,12 +515,59 @@ export default function AIAssistant() {
   }
 
 
+  const finishWelcome = () => {
+    setWelcomeDone(true)
+    try { localStorage.setItem(`samyojak_welcome_${userId}`, '1') } catch { /* storage unavailable */ }
+  }
+
+  const chooseNewUser = () => {
+    finishWelcome()
+    setMessages(prev => [
+      ...prev,
+      { role: 'user', text: "I'm new, starting fresh", time: nowTime() },
+      {
+        role: 'ai',
+        time: nowTime(),
+        text:
+          "Welcome! We start from zero, so there is nothing to set up. Just tell me what happens in your business, the way you would tell a friend, and I will keep the records.\n\n" +
+          "Try:\n" +
+          "• \"Prithviraj, one website for 15,000 and monthly maintenance 2,000\" (I add the client, the invoice and the work)\n" +
+          "• \"Raj has paid me 5,000\"\n" +
+          "• \"Simran's work is pending\"\n\n" +
+          "I always show you what I am about to save and you tap confirm, so nothing changes by mistake, and you can undo it. " +
+          "Everything I save shows up in the side menu (Dashboard, Invoices, CRM, Projects and the rest), where you can read or edit it yourself. " +
+          "To see where you stand, ask me things like \"who has not paid me?\"",
+      },
+    ])
+  }
+
+  const chooseMigrate = () => {
+    finishWelcome()
+    setMessages(prev => [
+      ...prev,
+      { role: 'user', text: 'I have old data to bring in', time: nowTime() },
+      {
+        role: 'ai',
+        time: nowTime(),
+        text:
+          "Good, you do not have to retype anything. Tap the paperclip below and attach your sheet (Excel or Google Sheet saved as CSV), or a PDF of an invoice. " +
+          "I will work out what each column means, show you what I understood, and move it in once you confirm. If you use another software, export your data from it as CSV and attach that.",
+      },
+    ])
+    fileRef.current?.click()
+  }
+
   const loadSummary = async () => {
     try {
       const token = await getToken()
       const res = await fetch('/api/summary', { headers: token ? { Authorization: `Bearer ${token}` } : {} })
-      if (res.ok) setSummary(await res.json())
+      if (res.ok) {
+        const data = await res.json()
+        setSummary(data)
+        return data as Summary
+      }
     } catch { /* keep tiles empty */ }
+    return null
   }
 
   const savePins = (next: string[]) => {
@@ -936,8 +989,20 @@ export default function AIAssistant() {
           </div>
         )}
 
+        {/* First visit with an empty account */}
+        {messages.length === 0 && summary && !summary.hasData && !welcomeDone && (
+          <div className="p-4 rounded-2xl mb-4 flex-shrink-0" style={{ background: '#FFFFFF', border: '2px solid #1E293B', boxShadow: '4px 4px 0px #8B5CF6' }}>
+            <p className="text-sm font-black mb-1" style={{ color: '#1E293B', fontFamily: 'Outfit' }}>Welcome to Samyojak</p>
+            <p className="text-sm mb-3" style={{ color: '#475569' }}>Do you already have business records somewhere (a spreadsheet, another software), or are you starting fresh?</p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button onClick={chooseNewUser} className="candy-btn px-4 py-2.5 text-sm">I'm new, starting fresh</button>
+              <button onClick={chooseMigrate} className="px-4 py-2.5 rounded-xl text-sm font-bold" style={{ background: '#EDE9FE', color: '#6D28D9', border: '2px solid #C4B5FD' }}>I have old data to bring in</button>
+            </div>
+          </div>
+        )}
+
         {/* Quick questions + capture hint */}
-        {messages.length === 0 && (
+        {messages.length === 0 && !(summary && !summary.hasData && !welcomeDone) && (
           <div className="mb-4 flex-shrink-0">
             <div className="p-3 rounded-xl mb-3 text-xs"
               style={{ background: '#D1FAE5', border: '1.5px solid #34D399', color: '#065F46' }}>

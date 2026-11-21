@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "node --test \"tests/*.test.js\"",
+    "test:live": "node tests/live-eval.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
