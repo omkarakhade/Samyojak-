@@ -36,6 +36,16 @@ function unleet(s: string): string {
     .replace(/5/g, 's')
 }
 
+function uniqueChars(s: string): number {
+  const seen: Record<string, true> = {}
+  let n = 0
+  const lower = s.toLowerCase()
+  for (let i = 0; i < lower.length; i++) {
+    if (!seen[lower[i]]) { seen[lower[i]] = true; n++ }
+  }
+  return n
+}
+
 /** A run like 12345, abcde or 98765 of this length or more. */
 function hasSequence(s: string, run = 5): boolean {
   const lower = s.toLowerCase()
@@ -56,7 +66,7 @@ function hasKeyboardRun(s: string, run = 5): boolean {
   for (const row of KEYBOARD_ROWS) {
     for (let i = 0; i + run <= row.length; i++) {
       const piece = row.slice(i, i + run)
-      if (lower.includes(piece) || lower.includes([...piece].reverse().join(''))) return true
+      if (lower.includes(piece) || lower.includes(piece.split('').reverse().join(''))) return true
     }
   }
   return false
@@ -122,7 +132,7 @@ export function checkPasswordRules(password: unknown, ctx: PasswordContext = {})
 
     if (/^(.)\1+$/.test(pw)) {
       problems.push('Do not repeat one character.')
-    } else if (new Set(pw.toLowerCase()).size < 5 && pw.length >= MIN_PASSWORD_LENGTH) {
+    } else if (uniqueChars(pw) < 5 && pw.length >= MIN_PASSWORD_LENGTH) {
       problems.push('Use a wider mix of characters.')
     }
 
