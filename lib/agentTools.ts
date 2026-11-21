@@ -20,6 +20,7 @@ export const AGENT_MODULES = [
   'Quality Issues',
   'Timesheets',
   'Assets',
+  'Journal Entries',
 ] as const
 
 export type AgentModule = (typeof AGENT_MODULES)[number]
@@ -62,6 +63,7 @@ const NAME_FIELDS = [
   'Return No',
   'Job No',
   'Issue No',
+  'Debit Account',
   'Asset Name',
   'Task',
   'Product',

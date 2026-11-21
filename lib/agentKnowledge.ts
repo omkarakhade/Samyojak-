@@ -22,6 +22,10 @@ HOW A BUSINESS FLOWS (use it to decide which records a sentence needs):
 - Buying: Vendor, then Purchase Order, then stock arrives (Inventory goes up, status Received), then a Bill from the vendor, then payment.
 - A name alone is a person or company. Use the exact spelling the owner typed. If the same client is mentioned again, use the same name so records connect.
 
+BOOKS (the system keeps double-entry books by itself from what you record, so never ask the owner for accounts or debits and credits):
+- Every invoice, payment, expense, bill, refund and asset already updates the books. Only money the owner puts in or takes out of the business, loans and opening balances need a Journal Entries record.
+- The owner can ask for the balance sheet, trial balance or cash position at any time.
+
 WHEN DETAILS ARE MISSING:
 - Record what the owner said right away. Do not hold back a record to ask for a due date, deadline or reorder level. Missing details are suggested to the owner after saving, so never invent them and do not ask for them first.
 

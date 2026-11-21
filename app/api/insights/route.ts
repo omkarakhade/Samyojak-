@@ -10,6 +10,7 @@ import {
   computeInsight,
   setCurrency,
   pickInsightByKeywords,
+  ACCOUNTING_IDS,
 } from '@/lib/insights'
 
 
@@ -31,7 +32,7 @@ async function pickWithAI(message: string): Promise<InsightId | null> {
               `Pick which report best answers a business owner's question (English, Hindi or Hinglish). ` +
               `Reply with JSON only: {"insight":"<id>"} where id is one of ${INSIGHT_IDS.join(', ')}, or "none" if no report fits. ` +
               `unpaid_invoices = who has not paid / overdue. revenue_by_month = sales trend. leads_by_status = lead pipeline. ` +
-              `low_stock = items to reorder. demand_forecast = forecast of future sales per item, days of stock left and what to order based on sales history. production_status = production jobs by status and which are late. quality_summary = open quality issues and defects. timesheet_summary = hours logged this month per project and billable value. assets_summary = equipment and assets owned, warranty ending, who has what. returns_analysis = why customers return items, refund cost, repeat returners. stock_abc = which items hold the most stock value (ABC ranking). reorder_plan = how much of each low item to order and the estimated cost. top_clients = best customers. receivables_aging = unpaid invoices grouped by how late they are. client_concentration = how much billing depends on a few clients (customer risk). gst_summary = tax collected (GST, VAT or sales tax). Overview questions like how is my business doing = daily_brief. payment_reminders = draft messages to chase unpaid clients. daily_brief = what to focus on today. recent_changes = what the assistant or imports added. profit_loss = profit after expenses per month. bills_due = unpaid vendor bills.`,
+              `low_stock = items to reorder. demand_forecast = forecast of future sales per item, days of stock left and what to order based on sales history. production_status = production jobs by status and which are late. quality_summary = open quality issues and defects. balance_sheet = what the business owns, owes and is worth. trial_balance = every account with debit and credit totals. cash_position = cash in bank, money owed to you and by you. timesheet_summary = hours logged this month per project and billable value. assets_summary = equipment and assets owned, warranty ending, who has what. returns_analysis = why customers return items, refund cost, repeat returners. stock_abc = which items hold the most stock value (ABC ranking). reorder_plan = how much of each low item to order and the estimated cost. top_clients = best customers. receivables_aging = unpaid invoices grouped by how late they are. client_concentration = how much billing depends on a few clients (customer risk). gst_summary = tax collected (GST, VAT or sales tax). Overview questions like how is my business doing = daily_brief. payment_reminders = draft messages to chase unpaid clients. daily_brief = what to focus on today. recent_changes = what the assistant or imports added. profit_loss = profit after expenses per month. bills_due = unpaid vendor bills.`,
           },
           { role: 'user', content: message.slice(0, 500) },
         ],
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
 
     // The daily brief covers whatever the plan includes; other reports need all of their modules.
     let mods = INSIGHT_MODULES[id]
-    if (id === 'daily_brief' || id === 'recent_changes') {
+    if (id === 'daily_brief' || id === 'recent_changes' || ACCOUNTING_IDS.includes(id)) {
       mods = mods.filter(m => moduleAllowed(ent, m))
       if (mods.length === 0) return NextResponse.json({ card: null, locked: lockedText('CRM') })
     } else {

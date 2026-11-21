@@ -113,4 +113,19 @@ module.exports = [
     say: 'Raj gave 5000 advance',
     check: o => ops(o, 'mark_paid').some(x => /raj/i.test(x.find) && Number(String(x.amount).replace(/[^0-9.]/g, '')) === 5000),
   },
+  {
+    name: 'own money put in is a journal entry, not income',
+    say: 'I put 50000 of my own money into the business',
+    check: o => ops(o, 'add', 'Journal Entries').flatMap(x => x.records || []).some(r => Number(r.Amount) === 50000 && /capital/i.test(r['Credit Account']) && /cash|bank/i.test(r['Debit Account'])) && rec(o, 'Invoices').length === 0,
+  },
+  {
+    name: 'bank loan is a journal entry',
+    say: 'Took a 2 lakh loan from the bank',
+    check: o => rec(o, 'Journal Entries').some(r => Number(r.Amount) === 200000 && /loan/i.test(r['Credit Account'])),
+  },
+  {
+    name: 'rent is an expense, never a journal entry',
+    say: 'Paid rent 20000',
+    check: o => rec(o, 'Expenses').some(r => Number(r.Amount) === 20000) && rec(o, 'Journal Entries').length === 0,
+  },
 ]

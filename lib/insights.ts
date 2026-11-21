@@ -1,4 +1,5 @@
 import type { UserRow } from '@/lib/userData'
+import { buildLedger, balances, position, type AccountType } from '@/lib/ledger'
 import { parseLineItems, itemKey } from '@/lib/lineItems'
 
 /**
@@ -17,6 +18,9 @@ export type InsightId =
   | 'production_status'
   | 'quality_summary'
   | 'timesheet_summary'
+  | 'balance_sheet'
+  | 'trial_balance'
+  | 'cash_position'
   | 'assets_summary'
   | 'reorder_plan'
   | 'top_clients'
@@ -40,6 +44,9 @@ export const INSIGHT_IDS: InsightId[] = [
   'production_status',
   'quality_summary',
   'timesheet_summary',
+  'balance_sheet',
+  'trial_balance',
+  'cash_position',
   'assets_summary',
   'reorder_plan',
   'top_clients',
@@ -53,6 +60,10 @@ export const INSIGHT_IDS: InsightId[] = [
   'bills_due',
 ]
 
+/** Everything the books are built from. Reports use whichever of these the plan includes. */
+export const ACCOUNTING_MODULES = ['Invoices', 'Expenses', 'Returns', 'Assets', 'Journal Entries']
+export const ACCOUNTING_IDS: string[] = ['balance_sheet', 'trial_balance', 'cash_position']
+
 export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   unpaid_invoices: ['Invoices'],
   revenue_by_month: ['Invoices'],
@@ -64,6 +75,9 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   production_status: ['Production Jobs'],
   quality_summary: ['Quality Issues', 'Production Jobs'],
   timesheet_summary: ['Timesheets'],
+  balance_sheet: ACCOUNTING_MODULES,
+  trial_balance: ACCOUNTING_MODULES,
+  cash_position: ACCOUNTING_MODULES,
   assets_summary: ['Assets'],
   reorder_plan: ['Inventory'],
   top_clients: ['Invoices'],
@@ -74,7 +88,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   daily_brief: ['CRM', 'Invoices', 'Inventory'],
   profit_loss: ['Invoices', 'Expenses'],
   bills_due: ['Expenses'],
-  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues', 'Timesheets', 'Assets'],
+  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues', 'Timesheets', 'Assets', 'Journal Entries'],
 }
 
 export interface InsightCard {
@@ -636,6 +650,82 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'balance_sheet' || id === 'trial_balance' || id === 'cash_position') {
+    const list = balances(buildLedger(data))
+    const pos = position(list)
+    const hasAny = list.length > 0
+    const empty = 'Nothing to show yet. Once you record an invoice, an expense, or tell me what money you started with, the books build themselves.'
+
+    if (id === 'cash_position') {
+      const rows: (string | number)[][] = [
+        ['Cash and bank', inr(pos.cash)],
+        ['Customers owe you', inr(pos.receivable)],
+        ['You owe suppliers', inr(pos.payable)],
+        ['Cash + owed to you - you owe', inr(pos.cash + pos.receivable - pos.payable)],
+      ]
+      const notes: string[] = []
+      if (pos.cash < 0) notes.push('Cash is below zero because I do not know what money you started with. Tell me, for example, "I started with 50000 in the bank".')
+      if (pos.receivable > 0 && pos.cash + pos.receivable - pos.payable > pos.cash) notes.push('Part of your money is still with customers. Ask me for payment reminders.')
+      return {
+        id,
+        title: 'Cash position',
+        kind: 'table',
+        columns: ['', 'Amount'],
+        rows: hasAny ? rows : [],
+        total: hasAny ? `Cash and bank ${inr(pos.cash)}` : undefined,
+        note: hasAny ? notes.join(' ') || undefined : empty,
+      }
+    }
+
+    if (id === 'trial_balance') {
+      const rows: (string | number)[][] = list.map(b => {
+        const net = b.debit - b.credit
+        return [b.account, net > 0 ? inr(net) : '', net < 0 ? inr(-net) : '']
+      })
+      const totalDebit = list.reduce((s, b) => s + Math.max(0, b.debit - b.credit), 0)
+      const totalCredit = list.reduce((s, b) => s + Math.max(0, b.credit - b.debit), 0)
+      if (hasAny) rows.push(['Total', inr(totalDebit), inr(totalCredit)])
+      return {
+        id,
+        title: 'Trial balance',
+        kind: 'table',
+        columns: ['Account', 'Debit', 'Credit'],
+        rows,
+        total: hasAny ? (Math.abs(totalDebit - totalCredit) < 0.01 ? 'Debits equal credits' : 'Debits and credits differ') : undefined,
+        note: hasAny ? 'Built automatically from your invoices, payments, expenses, bills, refunds, assets and journal entries.' : empty,
+      }
+    }
+
+    // balance_sheet
+    const section = (title: string, type: AccountType): (string | number)[][] => {
+      const items = list.filter(b => b.type === type && Math.abs(b.balance) >= 0.005)
+      return [[title.toUpperCase(), ''], ...items.map(b => ['  ' + b.account, inr(b.balance)])]
+    }
+    const equityItems = list.filter(b => b.type === 'equity' && Math.abs(b.balance) >= 0.005)
+    const rows: (string | number)[][] = [
+      ...section('Assets', 'asset'),
+      ['Total assets', inr(pos.assets)],
+      ...section('Liabilities', 'liability'),
+      ['Total liabilities', inr(pos.liabilities)],
+      ['EQUITY', ''],
+      ...equityItems.map(b => ['  ' + b.account, inr(-(b.debit - b.credit))] as (string | number)[]),
+      ['  Profit so far', inr(pos.profit)],
+      ['Total equity', inr(pos.equity)],
+    ]
+    const notes: string[] = []
+    if (pos.cash < 0) notes.push('Cash is below zero because I do not know what money you started with. Tell me, for example, "I put 50000 of my own money in".')
+    if (!pos.balanced) notes.push('The sheet does not balance, which should not happen. Please tell me.')
+    return {
+      id,
+      title: 'Balance sheet',
+      kind: 'table',
+      columns: ['', 'Amount'],
+      rows: hasAny ? rows : [],
+      total: hasAny ? `Assets ${inr(pos.assets)} = Liabilities ${inr(pos.liabilities)} + Equity ${inr(pos.equity)}` : undefined,
+      note: hasAny ? notes.join(' ') || undefined : empty,
+    }
+  }
+
   if (id === 'timesheet_summary') {
     // Hours this month per project, and what the billable hours are worth.
     const sheet = data.Timesheets || []
@@ -1025,6 +1115,9 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
 
 export function pickInsightByKeywords(q: string): InsightId | null {
   const t = q.toLowerCase()
+  if (/balance sheet|net worth|assets and liabilities|what (do )?i own and (do )?(i )?owe/.test(t)) return 'balance_sheet'
+  if (/trial balance|general ledger|\bledger\b|chart of accounts|debits? (and|&) credits?/.test(t)) return 'trial_balance'
+  if (/cash (in hand|balance|position|flow)|bank balance|how much (cash|money) (do i have|is (there|left)|in)|cash kitna|paisa kitna/.test(t)) return 'cash_position'
   if (/recent (change|activity)|what did you (change|add|do)|activity log|audit|history of (change|import)/.test(t)) return 'recent_changes'
   if (/profit|loss|p&l|p and l|net income|earn(ed|ing)s?\b|kitna (bacha|kamaya)|margin/.test(t)) return 'profit_loss'
   if (/bills? (to pay|due)|what do i owe|i owe|payables?|unpaid bills|vendor.*(due|pay)/.test(t)) return 'bills_due'
