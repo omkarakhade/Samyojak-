@@ -31,6 +31,8 @@ Each operation is one of:
    {"op":"update","module":"CRM","find":"Neha","changes":{"Status":"Contacted"}}
 3. Mark an invoice paid:
    {"op":"mark_paid","find":"Sharma","amount":5000}
+4. Turn an accepted quotation into an invoice:
+   {"op":"convert_quote","find":"Mehta"}
 
 Modules: ${AGENT_MODULES.join(', ')}.
 Field names to use:
@@ -47,6 +49,8 @@ Field names to use:
 - Returns: Return No, Customer, Item, Quantity, Refund Amount, Reason (Damaged, Defective, Wrong item, Not as described, Late delivery, Changed mind, Other), Condition (New, Opened, Used, Damaged), Decision (Restock, Refurbish, Discard, Return to vendor), Status (Requested, Approved, Received, Refunded, Rejected), Return Date, Notes. "Sharma returned 2 damaged chairs" is a Returns record with Reason Damaged and Status Requested.
 - Production Jobs: Job No, Product, Quantity Planned, Quantity Made, Start Date, Due Date, Status (Planned, In Progress, On Hold, Done), Line, Notes. "Start a job for 500 steel brackets, due Friday" is a Production Jobs record with Status In Progress.
 - Quality Issues: Issue No, Product, Defect, Quantity Affected, Severity (Minor, Major, Critical), Root Cause, Corrective Action, Status (Open, Investigating, Fixed, Closed), Reported Date, Owner. "20 brackets came out bent, critical" is a Quality Issues record with Severity Critical and Status Open.
+- Timesheets: Date, Person, Project, Client, Task, Hours, Billable (Yes, No), Hourly Rate, Notes. "Worked 3 hours on Prithviraj's website today" is a Timesheets record with Hours 3, Project Website, Client Prithviraj, Date today, Billable Yes. Only add Hourly Rate if the owner says it.
+- Assets: Asset Name, Category, Serial No, Purchase Date, Purchase Cost, Assigned To, Location, Status (In use, In stock, In repair, Retired, Sold), Warranty Until, Notes. "Bought a Dell laptop for 62000, gave it to Simran" is an Assets record with Category Laptop, Assigned To Simran, Status In use. Assets are things the business owns and uses (laptops, machines, vehicles), not stock it sells.
 
 ${AGENT_KNOWLEDGE}
 
@@ -58,6 +62,7 @@ RULES:
 - For a new Invoice, set Issue Date to today's date unless the user gives another date.
 - Use "update" when the user wants to change something that already exists (status, stock, phone, deadline). Put only the changed fields in "changes".
 - Use "mark_paid" when the user says an invoice or client has paid. Always include "amount" when the user says how much was paid. If no unpaid invoice exists for that client, the system records the payment as a new paid invoice, so a brand new account works too.
+- "Mehta accepted the quote" or "quote approved, bill him" means convert_quote: the system creates the invoice from the quotation and marks the quotation Accepted. Do not also add an Invoice yourself.
 - A new client with a deal ("Prithviraj, one website for 15000 and monthly maintenance 2000") is: a CRM record (Name, Status Converted, Notes with the deal), an Invoices record (Client Name, Line Items, Amount 15000, Payment Status Unpaid, Issue Date today), and a Projects record for the work (Project Name "Website", Client, Status In Progress). Monthly maintenance goes in a second Projects record (Project Name "Website maintenance", Client, Status In Progress, Description "2000 per month"). Do not create a separate invoice for the monthly fee until the user bills it.
 - "X work is pending" or "the website is pending" means work still to be done. If the user has not said it already exists, add a Projects record (Project Name, Client if named, Status In Progress). Use "update" only when the user clearly changes something that was recorded before, like "website is done".
 - If the message is a question, a greeting, or has nothing to record or change, return {"operations":[],"reply":""}.
@@ -113,6 +118,52 @@ export async function resolveOperations(userId: string, ops: RawOp[]) {
     if (op.op === 'add') {
       const cleaned = sanitizeActions([{ type: 'add', module: op.module, records: op.records }])
       for (const a of cleaned) actions.push(a)
+      continue
+    }
+
+    if (op.op === 'convert_quote') {
+      if (updateCount >= 5) continue
+      const find = typeof op.find === 'string' ? op.find.trim().slice(0, 100) : ''
+      if (!find) continue
+      const { matches } = await findRecords(userId, 'Quotations', find, {})
+      const open = matches.filter(m => !/^(rejected|accepted)$/i.test(String(m.data['Status'] ?? '').trim()))
+      const pool = open.length > 0 ? open : matches
+      if (pool.length === 0) {
+        notes.push(`I couldn't find a quotation for "${find}".`)
+        continue
+      }
+      if (pool.length > 1) {
+        const names = pool.slice(0, 4).map(m => recordLabel(m.data)).join(', ')
+        notes.push(`"${find}" matches ${pool.length} quotations (${names}). Please be more specific.`)
+        continue
+      }
+      const quote = pool[0]
+      const amount = toAmount(quote.data['Amount'] ?? quote.data['Total'])
+      const invoice: AgentRecord = {
+        'Client Name': String(quote.data['Client Name'] ?? quote.data['Client'] ?? find),
+        'Payment Status': 'Unpaid',
+        'Issue Date': today,
+        Notes: 'Created from quotation',
+      }
+      if (amount > 0) invoice['Amount'] = amount
+      const lines = quote.data['Line Items']
+      if (typeof lines === 'string' && lines.trim()) invoice['Line Items'] = lines.trim()
+      const added = sanitizeActions([{ type: 'add', module: 'Invoices', records: [invoice] }])
+      if (added.length === 0) continue
+      for (const a of added) actions.push(a)
+      const before: AgentRecord = {}
+      const prev = quote.data['Status']
+      if (typeof prev === 'string' || typeof prev === 'number') before['Status'] = prev
+      actions.push({
+        type: 'update',
+        module: 'Quotations',
+        recordId: quote.id,
+        label: recordLabel(quote.data),
+        changes: { Status: 'Accepted' },
+        before,
+        kind: 'edit',
+      })
+      updateCount++
       continue
     }
 

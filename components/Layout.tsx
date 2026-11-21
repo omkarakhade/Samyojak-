@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, FileText, Package, UserCheck,
   FolderOpen, BarChart3, Brain, Settings, LogOut,
   ChevronLeft, ChevronRight, Menu, X, FileCheck,
-  RefreshCw, UserPlus, TrendingUp, Ticket, Bug, Wallet, Truck, ClipboardList, RotateCcw, Factory, ShieldCheck
+  RefreshCw, UserPlus, TrendingUp, Ticket, Bug, Wallet, Truck, ClipboardList, RotateCcw, Factory, ShieldCheck, Clock, Laptop
 } from 'lucide-react'
 
 const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
@@ -55,6 +55,8 @@ const NAV_SECTIONS: NavSection[] = [
       { href: '/production', icon: Factory, label: 'Production Jobs', badge: '🆕' },
       { href: '/quality', icon: ShieldCheck, label: 'Quality Issues', badge: '🆕' },
       { href: '/projects', icon: FolderOpen, label: 'Projects' },
+      { href: '/timesheets', icon: Clock, label: 'Timesheets', badge: '🆕' },
+      { href: '/assets', icon: Laptop, label: 'Assets', badge: '🆕' },
     ],
   },
   {

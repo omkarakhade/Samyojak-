@@ -16,6 +16,8 @@ export type InsightId =
   | 'demand_forecast'
   | 'production_status'
   | 'quality_summary'
+  | 'timesheet_summary'
+  | 'assets_summary'
   | 'reorder_plan'
   | 'top_clients'
   | 'receivables_aging'
@@ -37,6 +39,8 @@ export const INSIGHT_IDS: InsightId[] = [
   'demand_forecast',
   'production_status',
   'quality_summary',
+  'timesheet_summary',
+  'assets_summary',
   'reorder_plan',
   'top_clients',
   'receivables_aging',
@@ -59,6 +63,8 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   demand_forecast: ['Invoices', 'Inventory'],
   production_status: ['Production Jobs'],
   quality_summary: ['Quality Issues', 'Production Jobs'],
+  timesheet_summary: ['Timesheets'],
+  assets_summary: ['Assets'],
   reorder_plan: ['Inventory'],
   top_clients: ['Invoices'],
   receivables_aging: ['Invoices'],
@@ -68,7 +74,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   daily_brief: ['CRM', 'Invoices', 'Inventory'],
   profit_loss: ['Invoices', 'Expenses'],
   bills_due: ['Expenses'],
-  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues'],
+  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues', 'Timesheets', 'Assets'],
 }
 
 export interface InsightCard {
@@ -200,6 +206,13 @@ const STATUS_FIELDS = ['Payment Status', /payment.*status|^status$|paid/i]
 const ISSUE_FIELDS = ['Issue Date', /issue.*date|invoice.*date|^date$/i]
 const DUE_FIELDS = ['Due Date', /due/i]
 
+/** What is still owed on an invoice: the balance after part payments, or the full amount when nothing was paid yet. */
+function owed(data: Record<string, any>, amountKey: string | null): number {
+  const bal = toNumber(data['Balance Due'])
+  if (bal > 0) return bal
+  return amountKey ? toNumber(data[amountKey]) : 0
+}
+
 function isPaid(v: unknown) {
   return /^\s*paid\s*$/i.test(String(v ?? ''))
 }
@@ -228,7 +241,7 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
       return da < db ? -1 : da > db ? 1 : 0
     })
 
-    const sum = pending.reduce((s, r) => s + (amount ? toNumber(r.data[amount]) : 0), 0)
+    const sum = pending.reduce((s, r) => s + owed(r.data, amount), 0)
     const overdue = due ? pending.filter(r => { const d = dayKey(r.data[due]); return d && d < today }).length : 0
 
     return {
@@ -238,7 +251,7 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
       columns: ['Client', 'Amount', 'Due', 'Status'],
       rows: pending.slice(0, 15).map(r => [
         client ? String(r.data[client] ?? '') : '—',
-        amount ? inr(toNumber(r.data[amount])) : '—',
+        amount ? inr(owed(r.data, amount)) : '—',
         due ? String(r.data[due] ?? '—') : '—',
         status ? String(r.data[status] ?? '—') : '—',
       ]),
@@ -414,7 +427,7 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     overdue.sort((a, b) => (due ? (dayKey(a.data[due]) || '9999') : '').localeCompare(due ? (dayKey(b.data[due]) || '9999') : ''))
     const rows = overdue.slice(0, 10).map(r => {
       const name = client ? String(r.data[client] ?? '').trim() : ''
-      const amt = amount ? inr(toNumber(r.data[amount])) : ''
+      const amt = amount ? inr(owed(r.data, amount)) : ''
       const ref = num && r.data[num] ? ` ${r.data[num]}` : ''
       const when = due && r.data[due] ? ` that was due on ${r.data[due]}` : ''
       const draft = `Hi${name ? ' ' + name : ''}, a friendly reminder about invoice${ref}${amt ? ' for ' + amt : ''}${when}. Could you let us know when we can expect the payment? Thank you!`
@@ -623,6 +636,108 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'timesheet_summary') {
+    // Hours this month per project, and what the billable hours are worth.
+    const sheet = data.Timesheets || []
+    const dateF = findField(sheet, ['Date', /date|day/i])
+    const projF = findField(sheet, ['Project', /project|task|client/i])
+    const hoursF = findField(sheet, ['Hours', /hours|hrs|duration|time/i])
+    const billF = findField(sheet, ['Billable', /billable/i])
+    const rateF = findField(sheet, ['Hourly Rate', /rate/i])
+    const personF = findField(sheet, ['Person', /person|employee|who|name/i])
+    const month = todayIST().slice(0, 7)
+    const inMonth = sheet.filter(r => !dateF || monthKey(r.data[dateF]) === month)
+    const by = new Map<string, { hours: number; value: number }>()
+    const people = new Map<string, number>()
+    let billableHours = 0
+    let total = 0
+    let noRate = 0
+    for (const r of inMonth) {
+      const h = hoursF ? toNumber(r.data[hoursF]) : 0
+      if (!(h > 0)) continue
+      const proj = (projF ? String(r.data[projF] ?? '').trim() : '') || 'No project'
+      const isBillable = !billF || /^(yes|y|true|1|billable)$/i.test(String(r.data[billF] ?? '').trim())
+      const rate = rateF ? toNumber(r.data[rateF]) : 0
+      const cur = by.get(proj) || { hours: 0, value: 0 }
+      cur.hours += h
+      if (isBillable) {
+        billableHours += h
+        cur.value += h * rate
+        if (!(rate > 0)) noRate += h
+      }
+      by.set(proj, cur)
+      total += h
+      const who = personF ? String(r.data[personF] ?? '').trim() : ''
+      if (who) people.set(who, (people.get(who) || 0) + h)
+    }
+    const entries = Array.from(by.entries()).sort((a, b) => b[1].hours - a[1].hours)
+    const worth = entries.reduce((t, e) => t + e[1].value, 0)
+    const round1 = (n: number) => Math.round(n * 10) / 10
+    const notes: string[] = []
+    if (billableHours > 0) notes.push(`${round1(billableHours)} of ${round1(total)} hours are billable.`)
+    if (worth > 0) notes.push(`Billable hours with a rate are worth ${inr(worth)}.`)
+    if (noRate > 0) notes.push(`${round1(noRate)} billable hour${noRate === 1 ? ' has' : 's have'} no hourly rate, so they are not valued.`)
+    const topPerson = Array.from(people.entries()).sort((a, b) => b[1] - a[1])[0]
+    if (topPerson && people.size > 1) notes.push(`Most hours: ${topPerson[0]} (${round1(topPerson[1])}).`)
+    return {
+      id,
+      title: 'Hours this month',
+      kind: 'table',
+      columns: ['Project', 'Hours', 'Billable value'],
+      rows: entries.slice(0, 12).map(e => [e[0], round1(e[1].hours), e[1].value > 0 ? inr(e[1].value) : '—']),
+      total: total > 0 ? `${round1(total)} hours logged this month` : undefined,
+      note: sheet.length === 0 ? 'No time logged yet. Tell me, for example, "worked 3 hours on the website today".' : total === 0 ? 'No hours logged this month.' : notes.join(' ') || undefined,
+    }
+  }
+
+  if (id === 'assets_summary') {
+    // What the business owns, where it is, who has it, and what needs attention.
+    const assets = data.Assets || []
+    const nameF = findField(assets, ['Asset Name', /asset|item|name/i])
+    const catF = findField(assets, ['Category', /category|type/i])
+    const costF = findField(assets, ['Purchase Cost', /cost|price|value/i])
+    const statusF = findField(assets, ['Status', /status|state/i])
+    const warF = findField(assets, ['Warranty Until', /warranty/i])
+    const whoF = findField(assets, ['Assigned To', /assigned|holder|user/i])
+    const today = todayIST()
+    const gone = (v: unknown) => /^(retired|sold|scrapped|disposed)$/i.test(String(v ?? '').trim())
+    const active = assets.filter(r => !(statusF && gone(r.data[statusF])))
+    const by = new Map<string, { n: number; cost: number }>()
+    const expiring: string[] = []
+    let inRepair = 0
+    let unassigned = 0
+    for (const r of active) {
+      const cat = (catF ? String(r.data[catF] ?? '').trim() : '') || 'Uncategorised'
+      const cur = by.get(cat) || { n: 0, cost: 0 }
+      cur.n++
+      cur.cost += costF ? toNumber(r.data[costF]) : 0
+      by.set(cat, cur)
+      const st = statusF ? String(r.data[statusF] ?? '') : ''
+      if (/repair|service/i.test(st)) inRepair++
+      if (whoF && !String(r.data[whoF] ?? '').trim() && !/stock|spare/i.test(st)) unassigned++
+      const w = warF ? dayKey(r.data[warF]) : ''
+      if (w) {
+        const left = daysBetween(today, w)
+        if (left >= 0 && left <= 60) expiring.push(`${nameF ? String(r.data[nameF] ?? 'Asset') : 'Asset'} (${left} days)`)
+      }
+    }
+    const entries = Array.from(by.entries()).sort((a, b) => b[1].cost - a[1].cost)
+    const totalCost = entries.reduce((t, e) => t + e[1].cost, 0)
+    const notes: string[] = []
+    if (expiring.length) notes.push(`Warranty ends soon: ${expiring.slice(0, 5).join(', ')}.`)
+    if (inRepair) notes.push(`${inRepair} asset${inRepair === 1 ? ' is' : 's are'} in repair.`)
+    if (unassigned) notes.push(`${unassigned} asset${unassigned === 1 ? ' has' : 's have'} nobody assigned.`)
+    return {
+      id,
+      title: 'Assets you own',
+      kind: 'table',
+      columns: ['Category', 'Assets', 'Purchase cost'],
+      rows: entries.slice(0, 12).map(e => [e[0], e[1].n, e[1].cost > 0 ? inr(e[1].cost) : '—']),
+      total: active.length ? `${active.length} asset${active.length === 1 ? '' : 's'}${totalCost > 0 ? ' · ' + inr(totalCost) : ''}` : undefined,
+      note: assets.length === 0 ? 'No assets recorded yet. Tell me, for example, "bought a Dell laptop for 62000 and gave it to Simran".' : notes.join(' ') || undefined,
+    }
+  }
+
   if (id === 'quality_summary') {
     // Open problems by seriousness, whether each has a fix recorded, and how much of what you make is affected.
     const defectF = findField(issues, ['Defect', /defect|problem|issue|description/i])
@@ -809,7 +924,7 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     ]
     const pending = status ? invoices.filter(r => !isPaid(r.data[status])) : []
     for (const r of pending) {
-      const amt = amount ? toNumber(r.data[amount]) : 0
+      const amt = owed(r.data, amount)
       // No due date: assume payment is due 30 days after the issue date.
       let dueDay = due ? dayKey(r.data[due]) : ''
       if (!dueDay && issued) {
@@ -921,6 +1036,8 @@ export function pickInsightByKeywords(q: string): InsightId | null {
   if (/unpaid|overdue|outstanding|pending (payment|invoice)|not paid|baki|bakaya|payment (due|pending)|who owes/.test(t)) return 'unpaid_invoices'
   if (/forecast|demand|days of stock|how long (will|does|do) .*(stock|last)|will .*run out|when .*run out|sales velocity|what (will|should) .*sell/.test(t)) return 'demand_forecast'
   if (/production|work order|\bjobs?\b.*(late|status|running|pending|delay)|(late|running|pending|delayed) jobs?|shop floor|manufactur/.test(t)) return 'production_status'
+  if (/timesheets?|hours (logged|worked|spent|booked)|how many hours|billable|man.?hours|time (spent|tracking)/.test(t)) return 'timesheet_summary'
+  if (/\bassets?\b|equipment register|warranty (expir|end)|who (has|got) (the |my )?(laptop|phone|machine)|asset register/.test(t)) return 'assets_summary'
   if (/quality|defect|non.?conformance|\bncr\b|\bcapa\b|rejection|complaint/.test(t)) return 'quality_summary'
   if (/return(s|ed)?\b|refund|rma\b|warranty|wapas/.test(t) && !/return on|returns? policy/.test(t)) return 'returns_analysis'
   if (/abc (analysis|class)|stock value|inventory value|which (items?|products?) (matter|hold)|value of (my )?(stock|inventory)/.test(t)) return 'stock_abc'
@@ -957,7 +1074,7 @@ export function computeSummary(data: ByModule): Summary {
   const thisMonth = today.slice(0, 7)
 
   const pending = status ? invoices.filter(r => !isPaid(r.data[status])) : []
-  const unpaidAmount = pending.reduce((s, r) => s + (amount ? toNumber(r.data[amount]) : 0), 0)
+  const unpaidAmount = pending.reduce((s, r) => s + owed(r.data, amount), 0)
   const overdueCount = due ? pending.filter(r => { const d = dayKey(r.data[due]); return d && d < today }).length : 0
   const billedThisMonth = invoices.reduce(
     (s, r) => s + (issue && monthKey(r.data[issue]) === thisMonth && amount ? toNumber(r.data[amount]) : 0),

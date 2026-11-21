@@ -32,6 +32,8 @@ function guessModule(headers: string[]): string {
     Quotations: (/quotation|quote|estimate/.test(h) ? 3 : 0),
     'Production Jobs': (/job no|work order|quantity planned|quantity made|production/.test(h) ? 4 : 0),
     'Quality Issues': (/defect|root cause|corrective action|severity|non.?conformance|ncr\b/.test(h) ? 4 : 0),
+    Timesheets: (/timesheet|hours worked|hours logged|billable|time spent|hourly rate/.test(h) ? 4 : 0),
+    Assets: (/asset (name|tag|id)|serial no|serial number|warranty|purchase cost|depreciation/.test(h) ? 4 : 0),
     Returns: (/return no|refund amount|\brma\b|return date|return reason|disposition/.test(h) ? 4 : 0),
   }
   return Object.entries(score).sort((a, b) => b[1] - a[1])[0][0] || 'CRM'

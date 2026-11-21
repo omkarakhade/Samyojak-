@@ -93,4 +93,24 @@ module.exports = [
     say: '5000 Raj',
     check: (o, parsed) => nothing(o) ? typeof parsed.ask === 'string' && parsed.ask.length > 3 : true,
   },
+  {
+    name: 'hours worked becomes a timesheet entry',
+    say: "Worked 3 hours on Prithviraj's website today",
+    check: o => rec(o, 'Timesheets').some(r => Number(r.Hours) === 3 && /prithviraj|website/i.test(JSON.stringify(r))),
+  },
+  {
+    name: 'company equipment becomes an asset, not stock',
+    say: 'Bought a Dell laptop for 62000 and gave it to Simran',
+    check: o => rec(o, 'Assets').some(r => Number(r['Purchase Cost']) === 62000 && /simran/i.test(r['Assigned To'])) && rec(o, 'Inventory').length === 0,
+  },
+  {
+    name: 'accepted quote converts, no hand-made invoice',
+    say: 'Mehta accepted the quote, bill him',
+    check: o => ops(o, 'convert_quote').some(x => /mehta/i.test(x.find)) && rec(o, 'Invoices').length === 0,
+  },
+  {
+    name: 'part payment sends the amount',
+    say: 'Raj gave 5000 advance',
+    check: o => ops(o, 'mark_paid').some(x => /raj/i.test(x.find) && Number(String(x.amount).replace(/[^0-9.]/g, '')) === 5000),
+  },
 ]

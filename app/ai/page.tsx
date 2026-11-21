@@ -378,6 +378,8 @@ const PIN_LABELS: Record<string, string> = {
   demand_forecast: 'Demand forecast',
   production_status: 'Production jobs',
   quality_summary: 'Quality issues',
+  timesheet_summary: 'Hours this month',
+  assets_summary: 'Assets',
   reorder_plan: 'Reorder plan',
   top_clients: 'Top clients',
   receivables_aging: 'Unpaid by age',
