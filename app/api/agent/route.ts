@@ -13,7 +13,7 @@ import {
   type AddAction,
   type UpdateAction,
 } from '@/lib/agentTools'
-import { buildSystemPrompt, stripJson, resolveOperations } from '@/lib/agentPlan'
+import { buildSystemPrompt, stripJson, resolveOperations, type RawOp } from '@/lib/agentPlan'
 
 export const maxDuration = 60
 
