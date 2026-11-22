@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
           method: 'POST',
           headers: { Authorization: `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            from: 'Samyojak Support <onboarding@resend.dev>',
+            from: 'Samyojak Support <hello@samyojak-erp.com>',
             to: [SUPPORT_EMAIL],
             subject: `[${priority}] New Support Ticket: ${subject}`,
             html: `<div style="font-family:sans-serif;max-width:600px">

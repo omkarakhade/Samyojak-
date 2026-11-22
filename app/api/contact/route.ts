@@ -49,7 +49,7 @@ Sent from www.samyojak-erp.com/contact
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Samyojak Contact <onboarding@resend.dev>',
+        from: 'Samyojak Contact <hello@samyojak-erp.com>',
         to: ['hello.samyojak@gmail.com'],
         reply_to: email,
         subject: `[Samyojak Contact] ${subject || 'New message'} — from ${name}`,
