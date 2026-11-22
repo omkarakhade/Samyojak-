@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthedUser } from '@/lib/serverAuth'
+import { getAuthedUser, isTeamMember } from '@/lib/serverAuth'
 import { findProduct, regionAllowed } from '@/lib/productLookup'
 
 export async function POST(req: NextRequest) {
@@ -7,6 +7,9 @@ export async function POST(req: NextRequest) {
     const user = await getAuthedUser(req)
     if (!user) {
       return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
+    }
+    if (isTeamMember(user)) {
+      return NextResponse.json({ error: 'Only the account owner can change billing.' }, { status: 403 })
     }
 
     const { productId, name } = await req.json()

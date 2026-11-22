@@ -115,7 +115,7 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
     name: 'Complete ERP',
     emoji: '👑',
     popular: false,
-    features: ['Everything in Business', 'AI Business Intelligence', 'AI reads your live data', 'Priority support', 'White label available', 'All future features'],
+    features: ['Everything in Business', 'Team logins for up to 5 people', 'Priority support', 'All future features'],
     locked: [],
   },
 ]

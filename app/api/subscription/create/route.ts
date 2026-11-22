@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthedUser } from '@/lib/serverAuth'
+import { getAuthedUser, isTeamMember } from '@/lib/serverAuth'
 import { createSubscriptionRecord, getSubscriptionByUserId, updateSubscriptionStatus } from '@/lib/subscriptionDb'
 import { setPlanLabel } from '@/lib/productLookup'
 import type { PlanType, PlanTier } from '@/lib/trialLogic'
@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const user = await getAuthedUser(req)
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  if (isTeamMember(user)) return NextResponse.json({ error: 'Only the account owner can change the plan.' }, { status: 403 })
 
   const body = await req.json().catch(() => ({}))
   const planType = body.planType as PlanType

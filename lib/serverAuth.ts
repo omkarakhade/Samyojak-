@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createSupabaseServerClient } from '@/lib/supabaseServer'
 import { storeGet, isStoreRecordId } from '@/lib/store'
+import { createSupabaseAdminClient } from '@/lib/supabaseAdmin'
+import { isMemberOf } from '@/lib/team'
 
 export const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
 
@@ -10,6 +12,36 @@ export const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
  * Checks an "Authorization: Bearer <token>" header first, then the session cookie.
  * The user is always verified with Supabase, never trusted from the request body.
  */
+/**
+ * A team member works inside the owner's business: the returned user has the owner's id
+ * (so data, plan and limits are the owner's) but the member's own email, so a member is
+ * never treated as the admin. team_member is true for them; billing routes refuse it.
+ * Returns null if the owner has since removed this person.
+ */
+async function toWorkspaceUser<T extends { id: string; email?: string | null; app_metadata?: any; user_metadata?: any }>(u: T): Promise<T | null> {
+  const ownerId = u?.app_metadata?.team_owner
+  if (typeof ownerId !== 'string') return u
+  if (!isSafeId(ownerId)) return null
+  try {
+    const { data, error } = await createSupabaseAdminClient().auth.admin.getUserById(ownerId)
+    const owner = data?.user
+    if (error || !owner || !isMemberOf(owner.app_metadata, u.id)) return null
+    return {
+      ...(owner as any),
+      email: u.email,
+      user_metadata: { ...(owner.user_metadata || {}), full_name: u.user_metadata?.full_name },
+      team_member: true,
+      member_id: u.id,
+    } as T
+  } catch {
+    return null
+  }
+}
+
+export function isTeamMember(user: any): boolean {
+  return !!user && user.team_member === true
+}
+
 export async function getAuthedUser(req: NextRequest) {
   const auth = req.headers.get('authorization') || ''
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
@@ -21,13 +53,13 @@ export async function getAuthedUser(req: NextRequest) {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
     const { data, error } = await supabase.auth.getUser(token)
-    if (!error && data.user) return data.user
+    if (!error && data.user) return toWorkspaceUser(data.user)
   }
 
   try {
     const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase.auth.getUser()
-    if (!error && data.user) return data.user
+    if (!error && data.user) return toWorkspaceUser(data.user)
   } catch {
     // no cookie session
   }

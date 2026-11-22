@@ -91,9 +91,10 @@ export default function Pricing() {
       price: prices.complete,
       color: '#FBBF24',
       popular: false,
-      desc: 'Everything, with priority support and early access to what we build next',
+      desc: 'Everything, plus team logins for your staff, priority support and early access to what we build next',
       features: [
         'Everything in Business',
+        'Team logins: up to 5 people with their own email and password',
         'Priority support',
         'Early access to new features',
         'All future features included',

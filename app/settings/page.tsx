@@ -5,12 +5,13 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { User, Bell, Shield, Trash2, BookOpen, RefreshCw, Check, AlertCircle } from 'lucide-react'
 import OnboardingTour from '@/components/OnboardingTour'
+import TeamSettings from '@/components/TeamSettings'
 
 const CORRECT_EMAIL = 'hello.samyojak@gmail.com'
 
 export default function Settings() {
   const [user, setUser] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security' | 'account'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security' | 'team' | 'account'>('profile')
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState('')
@@ -80,6 +81,7 @@ export default function Settings() {
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'security', label: 'Security', icon: Shield },
+    ...(user?.app_metadata?.team_owner ? [] : [{ id: 'team', label: 'Team', icon: User }]),
     { id: 'account', label: 'Account', icon: Trash2 },
   ]
 
@@ -251,6 +253,8 @@ export default function Settings() {
         )}
 
         {/* SECURITY TAB */}
+        {activeTab === 'team' && <TeamSettings />}
+
         {activeTab === 'security' && (
           <div className="bg-white dark:bg-[#1a2740] rounded-2xl p-6 space-y-5"
             style={{ border: '2px solid #E2E8F0' }}>
