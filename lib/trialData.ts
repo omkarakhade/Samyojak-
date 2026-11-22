@@ -95,7 +95,7 @@ export async function purgeExpiredTrials(): Promise<number> {
   const cutoff = new Date(Date.now() - DATA_KEEP_DAYS * DAY).toISOString()
   const { data: subs } = await supabase
     .from('subscriptions')
-    .select('user_id')
+    .select('user_id, email, notices_sent')
     .eq('data_store', 'supabase')
     .neq('subscription_status', 'active')
     .is('data_deleted_at', null)
@@ -104,6 +104,13 @@ export async function purgeExpiredTrials(): Promise<number> {
 
   let purged = 0
   for (const s of subs || []) {
+    // We promised a warning before deleting. If we have their email but the final warning never went out
+    // (for example the email service is misconfigured), keep their data rather than delete it silently.
+    const done: Record<string, string> = (s as any).notices_sent || {}
+    if ((s as any).email && !done['d25']) {
+      console.error('purge skipped, final warning not sent:', s.user_id)
+      continue
+    }
     const { error } = await supabase.from('records').delete().eq('user_id', s.user_id)
     if (error) {
       console.error('purge error:', s.user_id, error.message)
