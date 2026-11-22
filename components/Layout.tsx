@@ -40,6 +40,9 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Sales',
     items: [
       { href: '/crm', icon: Users, label: 'Leads & CRM' },
+      { href: '/bank', icon: Wallet, label: 'Bank Statement', badge: '🆕' },
+      { href: '/budgets', icon: TrendingUp, label: 'Budgets', badge: '🆕' },
+      { href: '/currencies', icon: RefreshCw, label: 'Currency Rates', badge: '🆕' },
       { href: '/tickets', icon: Ticket, label: 'Support Tickets', badge: '🆕' },
       { href: '/approvals', icon: ShieldCheck, label: 'Approvals', badge: '🆕' },
       { href: '/sales-orders', icon: ClipboardList, label: 'Sales Orders', badge: '🆕' },

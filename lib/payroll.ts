@@ -2,6 +2,8 @@
 // Pure maths, no storage. Salary is the monthly amount. Pay is cut for absent days only:
 // pay = salary x (working days - lost days) / working days, with Sundays as the weekly day off.
 
+import { deductionsFor } from '@/lib/statutory'
+
 type Row = { id: string; data: Record<string, any> }
 
 function num(v: unknown): number {
@@ -41,6 +43,14 @@ export interface PayLine {
   salary: number
   workingDays: number
   lostDays: number
+  /** Pay for the month after absent days, before deductions. */
+  earned: number
+  pf: number
+  esi: number
+  tds: number
+  /** Employer's own PF and ESI share, on top of the salary. */
+  employer: number
+  /** What the person receives. */
   net: number
   note: string
 }
@@ -49,6 +59,8 @@ export interface Payroll {
   month: string
   lines: PayLine[]
   total: number
+  /** Employee deductions plus employer shares: owed to the government (PF, ESI, TDS). */
+  dues: number
   noSalary: string[]
 }
 
@@ -93,18 +105,28 @@ export function payrollFor(month: string, staff: Row[], attendance: Row[], leave
     const salary = salK ? num(d[salK]) : 0
     if (!(salary > 0)) { noSalary.push(name); continue }
     const lostDays = Math.min(wd, lost.get(norm(name)) || 0)
-    const net = Math.round((salary * (wd - lostDays)) / wd)
+    const earned = Math.round((salary * (wd - lostDays)) / wd)
+    const ded = deductionsFor(d, earned, salary)
+    const net = Math.max(0, earned - ded.pfEmployee - ded.esiEmployee - ded.tds)
+    const notes: string[] = []
+    if (lostDays > 0) notes.push(`${lostDays} day${lostDays === 1 ? '' : 's'} cut`)
     lines.push({
       employee: name,
       salary,
       workingDays: wd,
       lostDays,
+      earned,
+      pf: ded.pfEmployee,
+      esi: ded.esiEmployee,
+      tds: ded.tds,
+      employer: ded.pfEmployer + ded.esiEmployer,
       net,
-      note: lostDays > 0 ? `${lostDays} day${lostDays === 1 ? '' : 's'} cut` : '',
+      note: notes.join(', '),
     })
   }
   lines.sort((a, b) => b.net - a.net)
-  return { month, lines, total: lines.reduce((s, l) => s + l.net, 0), noSalary }
+  const dues = lines.reduce((s, l) => s + l.pf + l.esi + l.tds + l.employer, 0)
+  return { month, lines, total: lines.reduce((s, l) => s + l.net, 0), dues, noSalary }
 }
 
 /** People on approved leave on a given date. */

@@ -1,4 +1,10 @@
 import type { UserRow } from '@/lib/userData'
+import { stockLines, byWarehouse, expiring } from '@/lib/stockReports'
+import { depreciationFor } from '@/lib/depreciation'
+import { budgetVsActual } from '@/lib/budgets'
+import { gstSummary } from '@/lib/gst'
+import { statementLines, bookMoves, reconcile } from '@/lib/bank'
+import { rateTable, conversionFor, BASE_CURRENCY } from '@/lib/currency'
 import { openTickets, pendingApprovals } from '@/lib/tickets'
 import { payrollFor, onLeaveOn, fieldValue } from '@/lib/payroll'
 import { dueRecurring, monthlyRecurringTotal } from '@/lib/recurring'
@@ -22,6 +28,14 @@ export type InsightId =
   | 'production_status'
   | 'quality_summary'
   | 'timesheet_summary'
+  | 'stock_value'
+  | 'warehouse_stock'
+  | 'expiring_stock'
+  | 'bank_reconciliation'
+  | 'budget_vs_actual'
+  | 'depreciation'
+  | 'gst_summary'
+  | 'currency_exposure'
   | 'support_tickets'
   | 'approvals_pending'
   | 'payroll'
@@ -36,7 +50,7 @@ export type InsightId =
   | 'top_clients'
   | 'receivables_aging'
   | 'client_concentration'
-  | 'gst_summary'
+  | 'gst_return'
   | 'payment_reminders'
   | 'daily_brief'
   | 'recent_changes'
@@ -54,6 +68,14 @@ export const INSIGHT_IDS: InsightId[] = [
   'production_status',
   'quality_summary',
   'timesheet_summary',
+  'stock_value',
+  'warehouse_stock',
+  'expiring_stock',
+  'bank_reconciliation',
+  'budget_vs_actual',
+  'depreciation',
+  'gst_summary',
+  'currency_exposure',
   'support_tickets',
   'approvals_pending',
   'payroll',
@@ -68,7 +90,7 @@ export const INSIGHT_IDS: InsightId[] = [
   'top_clients',
   'receivables_aging',
   'client_concentration',
-  'gst_summary',
+  'gst_return',
   'payment_reminders',
   'daily_brief',
   'recent_changes',
@@ -77,8 +99,8 @@ export const INSIGHT_IDS: InsightId[] = [
 ]
 
 /** Everything the books are built from. Reports use whichever of these the plan includes. */
-export const ACCOUNTING_MODULES = ['Invoices', 'Expenses', 'Returns', 'Assets', 'Journal Entries']
-export const ACCOUNTING_IDS: string[] = ['balance_sheet', 'trial_balance', 'cash_position']
+export const ACCOUNTING_MODULES = ['Invoices', 'Expenses', 'Returns', 'Assets', 'Journal Entries', 'Currency Rates']
+export const ACCOUNTING_IDS: string[] = ['balance_sheet', 'trial_balance', 'cash_position', 'bank_reconciliation']
 
 export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   unpaid_invoices: ['Invoices'],
@@ -91,6 +113,14 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   production_status: ['Production Jobs'],
   quality_summary: ['Quality Issues', 'Production Jobs'],
   timesheet_summary: ['Timesheets'],
+  stock_value: ['Inventory'],
+  warehouse_stock: ['Inventory'],
+  expiring_stock: ['Inventory'],
+  bank_reconciliation: ['Bank Statement', ...ACCOUNTING_MODULES],
+  budget_vs_actual: ['Budgets', 'Expenses'],
+  depreciation: ['Assets'],
+  gst_return: ['Invoices', 'Expenses'],
+  currency_exposure: ['Invoices', 'Currency Rates'],
   support_tickets: ['Support Tickets'],
   approvals_pending: ['Approvals'],
   payroll: ['HR', 'Attendance', 'Leave Requests', 'Expense Claims'],
@@ -110,7 +140,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   daily_brief: ['CRM', 'Invoices', 'Inventory'],
   profit_loss: ['Invoices', 'Expenses'],
   bills_due: ['Expenses'],
-  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues', 'Timesheets', 'Assets', 'Journal Entries', 'Bills of Materials', 'Recurring Invoices', 'Sales Orders', 'Attendance', 'Leave Requests', 'Expense Claims', 'Support Tickets', 'Approvals'],
+  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues', 'Timesheets', 'Assets', 'Journal Entries', 'Bills of Materials', 'Recurring Invoices', 'Sales Orders', 'Attendance', 'Leave Requests', 'Expense Claims', 'Support Tickets', 'Approvals', 'Bank Statement', 'Budgets', 'Currency Rates'],
 }
 
 export interface InsightCard {
@@ -672,6 +702,165 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'stock_value') {
+    const lines = stockLines(data.Inventory || []).filter(l => l.stock > 0)
+    const total = lines.reduce((s, l) => s + l.value, 0)
+    const priceOnly = lines.filter(l => l.basis === 'price').length
+    const none = lines.filter(l => l.basis === 'none').map(l => l.item)
+    const notes: string[] = []
+    if (priceOnly) notes.push(`${priceOnly} item${priceOnly === 1 ? ' is' : 's are'} valued at the selling price because no Cost Price is recorded, so the value is higher than your real cost.`)
+    if (none.length) notes.push(`No price at all for: ${none.slice(0, 5).join(', ')}.`)
+    return {
+      id,
+      title: 'Stock value',
+      kind: 'table',
+      columns: ['Item', 'Where', 'Stock', 'Cost each', 'Value'],
+      rows: lines.sort((a, b) => b.value - a.value).slice(0, 25).map(l => [l.item, l.warehouse, l.stock, l.unitCost > 0 ? inr(l.unitCost) : '—', inr(l.value)]),
+      total: lines.length ? `Total stock value ${inr(total)}` : undefined,
+      note: lines.length === 0 ? 'No stock recorded yet.' : notes.join(' ') || 'Add a Cost Price to each item for an exact value.',
+    }
+  }
+
+  if (id === 'warehouse_stock') {
+    const list = byWarehouse(data.Inventory || [])
+    return {
+      id,
+      title: 'Stock by warehouse',
+      kind: 'table',
+      columns: ['Warehouse', 'Items', 'Units', 'Value'],
+      rows: list.map(w => [w.warehouse, w.items, w.units, inr(w.value)]),
+      total: list.length ? `${list.length} location${list.length === 1 ? '' : 's'}` : undefined,
+      note: list.length === 0 ? 'No stock recorded yet.' : list.length === 1 ? 'Everything is in one place. Say "move 50 steel sheets to the Pune shop" to start using a second warehouse.' : undefined,
+    }
+  }
+
+  if (id === 'expiring_stock') {
+    const list = expiring(data.Inventory || [], todayIST(), 60)
+    return {
+      id,
+      title: 'Stock expiring soon',
+      kind: 'table',
+      columns: ['Item', 'Batch', 'Where', 'Stock', 'Expires', 'Days left'],
+      rows: list.slice(0, 25).map(l => [l.item, l.batch || '—', l.warehouse, l.stock, l.expiry, l.daysLeft < 0 ? `expired ${-l.daysLeft}d ago` : l.daysLeft]),
+      total: list.length ? `${list.length} batch${list.length === 1 ? '' : 'es'}` : undefined,
+      note: list.length === 0 ? 'Nothing expires in the next 60 days. Record a Batch No and Expiry Date on Inventory items to track this.' : 'Sell or use the oldest batches first.',
+    }
+  }
+
+  if (id === 'bank_reconciliation') {
+    const lines = statementLines(data['Bank Statement'] || [])
+    if (lines.length === 0) {
+      return { id, title: 'Bank reconciliation', kind: 'table', columns: ['', 'Count'], rows: [], note: 'Upload your bank statement (a CSV with Date, Description and Amount, or Debit and Credit columns) in Bank Statement, then ask me to reconcile.' }
+    }
+    const rec = reconcile(lines, bookMoves(buildLedger(data as any), 'Cash and Bank'))
+    const rows: (string | number)[][] = [
+      ...rec.bankOnly.slice(0, 12).map(l => ['In bank, not in books', l.date, l.description || '—', inr(l.amount)]),
+      ...rec.booksOnly.slice(0, 12).map(m => ['In books, not in bank', m.date, m.memo, inr(m.amount)]),
+    ]
+    return {
+      id,
+      title: 'Bank reconciliation',
+      kind: 'table',
+      columns: ['What', 'Date', 'Detail', 'Amount'],
+      rows,
+      total: `${rec.matched.length} matched · ${rec.bankOnly.length} only in bank · ${rec.booksOnly.length} only in books`,
+      note: rows.length === 0
+        ? 'Every bank line matches your books.'
+        : rec.bankOnly.length ? `Record the ${rec.bankOnly.length} bank line${rec.bankOnly.length === 1 ? '' : 's'} that are missing from your books (an expense, a payment received, or a journal entry). Lines "only in books" may simply not have cleared yet.` : 'These entries are in your books but not in the bank yet. They may not have cleared.',
+    }
+  }
+
+  if (id === 'budget_vs_actual') {
+    const month = todayIST().slice(0, 7)
+    const r = budgetVsActual(data.Budgets || [], data.Expenses || [], month)
+    const over = r.lines.filter(l => l.status === 'over')
+    const notes: string[] = []
+    if (over.length) notes.push(`Over budget: ${over.slice(0, 4).map(l => `${l.category} (${inr(l.spent - l.budget)} over)`).join(', ')}.`)
+    if (r.unbudgeted.length) notes.push(`Spending with no budget: ${r.unbudgeted.slice(0, 4).map(u => `${u.category} ${inr(u.spent)}`).join(', ')}.`)
+    return {
+      id,
+      title: `Budget for ${month}`,
+      kind: 'table',
+      columns: ['Category', 'Budget', 'Spent', 'Left', 'Used'],
+      rows: r.lines.map(l => [l.category, inr(l.budget), inr(l.spent), inr(l.left), `${l.percent}%`]),
+      total: r.lines.length ? `Spent ${inr(r.totalSpent)} of ${inr(r.totalBudget)} budgeted` : undefined,
+      note: r.lines.length === 0 ? 'No budgets yet. Tell me, for example, "budget 20000 a month for marketing".' : notes.join(' ') || undefined,
+    }
+  }
+
+  if (id === 'depreciation') {
+    const list = depreciationFor(data.Assets || [], todayIST())
+    const withoutLife = (data.Assets || []).filter(r => !(toNumber(r.data['Useful Life Years'] ?? r.data['Useful Life']) > 0)).length
+    return {
+      id,
+      title: 'Asset depreciation',
+      kind: 'table',
+      columns: ['Asset', 'Cost', 'Per month', 'Written off', 'Book value'],
+      rows: list.slice(0, 25).map(l => [l.asset, inr(l.cost), inr(l.monthly), inr(l.accumulated), inr(l.bookValue)]),
+      total: list.length ? `Book value ${inr(list.reduce((s, l) => s + l.bookValue, 0))} of ${inr(list.reduce((s, l) => s + l.cost, 0))} bought` : undefined,
+      note: list.length === 0
+        ? 'Add a Useful Life Years (for example 5 for a laptop) to an asset and I will write it down every month automatically.'
+        : withoutLife ? `${withoutLife} asset${withoutLife === 1 ? ' has' : 's have'} no Useful Life Years, so ${withoutLife === 1 ? 'it is' : 'they are'} not depreciated.` : 'The books include this depreciation automatically.',
+    }
+  }
+
+  if (id === 'gst_return') {
+    const now = todayIST()
+    const d = new Date(Date.parse(now.slice(0, 7) + '-01T00:00:00Z'))
+    d.setUTCMonth(d.getUTCMonth() - (Number(now.slice(8, 10)) <= 20 ? 1 : 0))
+    const month = d.toISOString().slice(0, 7)
+    const g = gstSummary(data.Invoices || [], data.Expenses || [], month)
+    const notes: string[] = []
+    if (g.noTax > 0) notes.push(`${g.noTax} invoice${g.noTax === 1 ? ' has' : 's have'} no tax recorded.`)
+    if (g.badGstin.length) notes.push(`Check the GSTIN for: ${g.badGstin.slice(0, 4).join(', ')}.`)
+    if (g.inputCredit === 0) notes.push('No tax on purchases is recorded, so input credit is zero. Add a GST Amount to expenses to claim it.')
+    notes.push('These are the figures for your return. File them on the GST portal (GSTR-1 by the 11th, GSTR-3B by the 20th of next month).')
+    return {
+      id,
+      title: `GST for ${month}`,
+      kind: 'table',
+      columns: ['', 'Invoices', 'Taxable value', 'Tax'],
+      rows: [
+        ['Sales to businesses (B2B)', g.b2b.invoices, inr(g.b2b.taxable), inr(g.b2b.tax)],
+        ['Sales to consumers (B2C)', g.b2c.invoices, inr(g.b2c.taxable), inr(g.b2c.tax)],
+        ['Tax on sales', '', '', inr(g.outputTax)],
+        ['Tax paid on purchases (credit)', '', '', inr(g.inputCredit)],
+        [g.netPayable >= 0 ? 'Tax to pay' : 'Credit to carry forward', '', '', inr(Math.abs(g.netPayable))],
+      ],
+      total: `${g.b2b.invoices + g.b2c.invoices} invoices · ${g.netPayable >= 0 ? 'pay' : 'credit'} ${inr(Math.abs(g.netPayable))}`,
+      note: notes.join(' '),
+    }
+  }
+
+  if (id === 'currency_exposure') {
+    const rates = rateTable(data['Currency Rates'] || [])
+    const by = new Map<string, { code: string; original: number; base: number; count: number; missing: boolean }>()
+    for (const r of data.Invoices || []) {
+      const dd = r.data
+      if (isPaid(dd['Payment Status'] ?? dd['Status'])) continue
+      const left = owed(dd, dd['Amount'] !== undefined ? 'Amount' : 'Total')
+      if (!(left > 0)) continue
+      const c = conversionFor(dd, rates)
+      const cur = by.get(c.currency) || { code: c.currency, original: 0, base: 0, count: 0, missing: false }
+      cur.original += left
+      cur.base += left * c.rate
+      cur.count++
+      cur.missing = cur.missing || c.missingRate
+      by.set(c.currency, cur)
+    }
+    const list = Array.from(by.values()).sort((a, b) => b.base - a.base)
+    const missing = list.filter(l => l.missing).map(l => l.code)
+    return {
+      id,
+      title: 'Money owed by currency',
+      kind: 'table',
+      columns: ['Currency', 'Invoices', 'Owed', `In ${BASE_CURRENCY}`],
+      rows: list.map(l => [l.code, l.count, Math.round(l.original), l.missing ? 'rate missing' : inr(l.base)]),
+      total: list.length ? `${inr(list.filter(l => !l.missing).reduce((s, l) => s + l.base, 0))} in total` : undefined,
+      note: list.length === 0 ? 'No unpaid invoices.' : missing.length ? `I have no exchange rate for ${missing.join(', ')}. Tell me, for example, "1 USD is 84 rupees".` : list.length === 1 && list[0].code === BASE_CURRENCY ? 'All your invoices are in rupees. Add a Currency (like USD) to an invoice to bill someone abroad.' : undefined,
+    }
+  }
+
   if (id === 'support_tickets') {
     const list = openTickets(data['Support Tickets'] || [], todayIST())
     const late = list.filter(t => t.lateBy > 0)
@@ -714,13 +903,15 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     const claimSum = claims.reduce((s, r) => s + toNumber(fieldValue(r.data, 'Amount', /amount/i)), 0)
     if (claims.length) notes.push(`${claims.length} expense claim${claims.length === 1 ? '' : 's'} to pay back (${inr(claimSum)}).`)
     if (pay.noSalary.length) notes.push(`No salary recorded for: ${pay.noSalary.slice(0, 5).join(', ')}.`)
+    if (pay.dues > 0) notes.push(`Owed to the government (PF, ESI and tax, with the employer share): ${inr(pay.dues)}.`)
+    else if (pay.lines.length) notes.push('PF, ESI and tax are off for everyone. Say "turn on PF for Simran" (or ESI, or TDS) to include them.')
     if (pay.lines.length) notes.push('Say "run payroll" and I will record each salary as a paid expense.')
     return {
       id,
       title: `Payroll for ${month}`,
       kind: 'table',
-      columns: ['Employee', 'Salary', 'Days cut', 'To pay'],
-      rows: pay.lines.slice(0, 30).map(l => [l.employee, inr(l.salary), l.lostDays > 0 ? l.lostDays : '—', inr(l.net)]),
+      columns: ['Employee', 'Earned', 'Deductions', 'To pay'],
+      rows: pay.lines.slice(0, 30).map(l => [l.employee, inr(l.earned), l.pf + l.esi + l.tds > 0 ? `PF ${l.pf} · ESI ${l.esi} · tax ${l.tds}` : (l.lostDays > 0 ? `${l.lostDays} day${l.lostDays === 1 ? '' : 's'} cut` : '—'), inr(l.net)]),
       total: pay.lines.length ? `${pay.lines.length} people · ${inr(pay.total)}` : undefined,
       note: pay.lines.length === 0 ? 'No salaries recorded yet. Add people in HR with a monthly Salary.' : notes.join(' ') || undefined,
     }
@@ -1257,6 +1448,14 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
 
 export function pickInsightByKeywords(q: string): InsightId | null {
   const t = q.toLowerCase()
+  if (/stock (value|worth|valuation)|inventory (value|worth|valuation)|value of (my )?(stock|inventory)|how much is my (stock|inventory) worth/.test(t)) return 'stock_value'
+  if (/warehouses?|stock (by|in|at) (location|shop|godown|store)|godown|where is my stock/.test(t)) return 'warehouse_stock'
+  if (!/warrant|assets?\b|subscription|licen[cs]e|contract/.test(t) && /expir(y|ing|ed)|shelf life|best before|batch(es)? (expir|stock|number)/.test(t)) return 'expiring_stock'
+  if (/reconcil|bank statement|bank (match|mismatch)|match(ing)? (my )?bank/.test(t)) return 'bank_reconciliation'
+  if (/budgets?|overspend|over budget|spending limit/.test(t)) return 'budget_vs_actual'
+  if (/depreciat|book value|written down|asset value/.test(t)) return 'depreciation'
+  if (/gstr|gst (return|filing|file|due|payable)|file (my )?gst|tax (due|payable) (to )?(the )?government|input (tax )?credit/.test(t)) return 'gst_return'
+  if (/currenc(y|ies)|foreign|exchange rate|dollars?|usd|owed in|international (clients?|invoices?)/.test(t)) return 'currency_exposure'
   if (/(support )?tickets?|complaints?|customer (issues?|problems?)|sla\b|open issues|unanswered/.test(t)) return 'support_tickets'
   if (/approvals?|waiting for (my )?(approval|decision|yes)|pending (requests?|decisions?)|needs? my (ok|approval)/.test(t)) return 'approvals_pending'
   if (/payroll|salar(y|ies)|pay(ing)? (my )?(staff|employees|team|people)|who('s| is| are) on leave|leave (balance|requests?)|expense claims?|attendance/.test(t)) return 'payroll'

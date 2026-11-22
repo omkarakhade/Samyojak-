@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     }
     const ent = await getEntitlement(user)
     if (!ent.ai) return NextResponse.json({ suggestions: [] })
-    const modules = ['CRM', 'Invoices', 'Inventory', 'Projects', 'Timesheets', 'Assets', 'Production Jobs', 'Bills of Materials', 'Recurring Invoices', 'HR', 'Leave Requests', 'Expense Claims', 'Support Tickets', 'Approvals'].filter(m => moduleAllowed(ent, m))
+    const modules = ['CRM', 'Invoices', 'Inventory', 'Projects', 'Timesheets', 'Assets', 'Production Jobs', 'Bills of Materials', 'Recurring Invoices', 'HR', 'Leave Requests', 'Expense Claims', 'Support Tickets', 'Approvals', 'Bank Statement', 'Budgets', 'Currency Rates', 'Expenses'].filter(m => moduleAllowed(ent, m))
     const data = await fetchUserRecords(user.id, modules)
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
     return NextResponse.json({ suggestions: noticed(data, today) })

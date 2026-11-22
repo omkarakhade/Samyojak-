@@ -16,6 +16,9 @@ export interface Entry {
 }
 
 type Row = { id: string; data: Record<string, any> }
+import { rateTable, conversionFor } from '@/lib/currency'
+import { depreciationFor } from '@/lib/depreciation'
+
 export type LedgerData = Record<string, Row[]>
 
 export const CASH = 'Cash and Bank'
@@ -26,6 +29,8 @@ export const TAX = 'Tax Payable'
 export const FIXED = 'Fixed Assets'
 export const RETURNS = 'Sales Returns'
 export const CAPITAL = 'Owner Capital'
+export const DEPRECIATION = 'Depreciation'
+export const ACC_DEPRECIATION = 'Accumulated Depreciation'
 
 function num(v: unknown): number {
   if (typeof v === 'number') return Number.isFinite(v) ? v : 0
@@ -73,8 +78,10 @@ const liab = (account: string) => ({ account, type: 'liability' as AccountType }
 const income = (account: string) => ({ account, type: 'income' as AccountType })
 const expense = (account: string) => ({ account, type: 'expense' as AccountType })
 
-export function buildLedger(data: LedgerData): Entry[] {
+export function buildLedger(data: LedgerData, today?: string): Entry[] {
   const out: Entry[] = []
+  const rates = rateTable(data['Currency Rates'] || [])
+  const asOf = today || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
 
   // Invoices: what you billed, the tax you collected for the government, and the money that came in.
   for (const r of data.Invoices || []) {
@@ -85,6 +92,10 @@ export function buildLedger(data: LedgerData): Entry[] {
     let tax = num(pick(d, ['Tax Amount']))
     if (!(net > 0)) { net = num(pick(d, ['Total'])); tax = 0 }
     if (!(net > 0)) continue
+    // Foreign-currency invoices are kept in rupees in the books.
+    const fx = conversionFor(d, rates).rate
+    net = money(net * fx)
+    tax = money(tax * fx)
     const gross = net + tax
     const memo = `Invoice to ${client}`
     pair(out, date, 'Invoices', memo, net, asset(AR), income(SALES))
@@ -94,7 +105,7 @@ export function buildLedger(data: LedgerData): Entry[] {
     if (paid(status)) {
       pair(out, payDate, 'Payments', `Payment from ${client}`, gross, asset(CASH), asset(AR))
     } else {
-      const got = num(pick(d, ['Amount Received']))
+      const got = num(pick(d, ['Amount Received'])) * fx
       if (got > 0) pair(out, payDate, 'Payments', `Part payment from ${client}`, Math.min(got, gross), asset(CASH), asset(AR))
     }
   }
@@ -102,7 +113,7 @@ export function buildLedger(data: LedgerData): Entry[] {
   // Expenses and bills: cost goes to its category, and either cash went out or you now owe the supplier.
   for (const r of data.Expenses || []) {
     const d = r.data
-    const amount = num(pick(d, ['Amount', 'Total']))
+    const amount = num(pick(d, ['Amount', 'Total'])) * conversionFor(d, rates).rate
     if (!(amount > 0)) continue
     const isBill = /^bill$/i.test(String(pick(d, ['Type']) ?? ''))
     const category = String(pick(d, ['Category']) ?? '').trim() || (isBill ? 'Purchases' : 'General Expenses')
@@ -127,6 +138,11 @@ export function buildLedger(data: LedgerData): Entry[] {
     const cost = num(pick(d, ['Purchase Cost', 'Cost']))
     if (!(cost > 0)) continue
     pair(out, iso(pick(d, ['Purchase Date'])), 'Assets', `Bought ${pick(d, ['Asset Name']) ?? 'asset'}`, cost, asset(FIXED), asset(CASH))
+  }
+
+  // Depreciation to date for assets that have a Useful Life Years: written down automatically, nothing to post.
+  for (const line of depreciationFor(data.Assets || [], asOf)) {
+    pair(out, asOf, 'Depreciation', `Depreciation on ${line.asset}`, line.accumulated, expense(DEPRECIATION), asset(ACC_DEPRECIATION))
   }
 
   // Money moves that are not a sale or an expense: capital put in, loans, drawings.

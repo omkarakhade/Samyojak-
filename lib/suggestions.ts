@@ -5,6 +5,9 @@
 // A suggestion either sends a ready question ('send') or puts the start of a sentence in the box ('fill').
 
 import { findField, toNumber, inr } from '@/lib/insights'
+import { expiring } from '@/lib/stockReports'
+import { budgetVsActual } from '@/lib/budgets'
+import { conversionFor, rateTable } from '@/lib/currency'
 import { openTickets, pendingApprovals } from '@/lib/tickets'
 import { fieldValue } from '@/lib/payroll'
 import { dueRecurring } from '@/lib/recurring'
@@ -298,6 +301,67 @@ export function noticed(data: ByModule, today: string): Suggestion[] {
         text: 'What is waiting for my approval?',
         mode: 'send',
         why: `${waiting.length} ${plural(waiting.length, 'request is', 'requests are')} waiting for your decision.`,
+      })
+    }
+  }
+
+  // 6f. Money controls: expiring stock, budgets, foreign invoices without a rate, bank lines to reconcile, assets without a life.
+  if (data.Inventory?.length) {
+    const soon = expiring(data.Inventory, today, 30)
+    if (soon.length) {
+      out.push({
+        label: `${soon.length} ${plural(soon.length, 'batch', 'batches')} expiring`,
+        text: 'Which stock is expiring soon?',
+        mode: 'send',
+        why: `${soon.length} ${plural(soon.length, 'batch expires', 'batches expire')} within 30 days or already expired, starting with ${soon[0].item}.`,
+      })
+    }
+  }
+  if (data.Budgets?.length && data.Expenses?.length) {
+    const r = budgetVsActual(data.Budgets, data.Expenses, today.slice(0, 7))
+    const over = r.lines.filter(l => l.status === 'over')
+    if (over.length) {
+      out.push({
+        label: `Over budget on ${over[0].category}`,
+        text: 'How am I doing against my budget?',
+        mode: 'send',
+        why: `${over.length} ${plural(over.length, 'category is', 'categories are')} over budget this month.`,
+      })
+    }
+  }
+  if (data.Invoices?.length) {
+    const rates = rateTable(data['Currency Rates'] || [])
+    const missing = new Set<string>()
+    for (const r of data.Invoices) {
+      const c = conversionFor(r.data, rates)
+      if (c.missingRate) missing.add(c.currency)
+    }
+    if (missing.size) {
+      const code = Array.from(missing)[0]
+      out.push({
+        label: `Add the ${code} rate`,
+        text: `1 ${code} is `,
+        mode: 'fill',
+        why: `You have invoices in ${Array.from(missing).join(', ')} but I do not know the exchange rate, so the books count them as rupees.`,
+      })
+    }
+  }
+  if (data['Bank Statement']?.length) {
+    out.push({
+      label: 'Reconcile my bank statement',
+      text: 'Reconcile my bank statement',
+      mode: 'send',
+      why: `${data['Bank Statement'].length} bank ${plural(data['Bank Statement'].length, 'line is', 'lines are')} recorded. I can check them against your books.`,
+    })
+  }
+  if (data.Assets?.length) {
+    const noLife = data.Assets.filter(r => !(Number(String(r.data['Useful Life Years'] ?? '').replace(/[^0-9.]/g, '')) > 0) && Number(String(r.data['Purchase Cost'] ?? '').replace(/[^0-9.]/g, '')) > 0)
+    if (noLife.length) {
+      out.push({
+        label: 'Set a useful life for assets',
+        text: `Useful life for ${String(noLife[0].data['Asset Name'] ?? 'the asset')} is 5 years`,
+        mode: 'fill',
+        why: `${noLife.length} ${plural(noLife.length, 'asset has', 'assets have')} no useful life, so ${plural(noLife.length, 'it is', 'they are')} not being depreciated.`,
       })
     }
   }
