@@ -17,7 +17,7 @@ import type { PlanTier } from '@/lib/trialLogic'
 const NEEDS: Record<string, PlanTier> = {
   CRM: 'starter',
   Invoices: 'basic', Quotations: 'basic', Inventory: 'basic',
-  HR: 'business', Recruiting: 'business', Projects: 'business',
+  HR: 'business', Attendance: 'business', 'Leave Requests': 'business', 'Expense Claims': 'business', Recruiting: 'business', Projects: 'business',
   Expenses: 'basic', Vendors: 'basic', 'Purchase Orders': 'basic', Returns: 'basic', 'Production Jobs': 'business', 'Quality Issues': 'business', Timesheets: 'business', 'Journal Entries': 'basic', 'Bills of Materials': 'business', 'Recurring Invoices': 'basic', 'Sales Orders': 'basic', Assets: 'business',
 }
 const RANK: Record<PlanTier, number> = { starter: 0, basic: 1, business: 2, complete: 3 }

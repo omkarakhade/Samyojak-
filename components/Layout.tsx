@@ -67,6 +67,9 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'People',
     items: [
       { href: '/hr', icon: UserCheck, label: 'HR & Payroll' },
+      { href: '/attendance', icon: Clock, label: 'Attendance', badge: '🆕' },
+      { href: '/leave', icon: Ticket, label: 'Leave Requests', badge: '🆕' },
+      { href: '/claims', icon: Wallet, label: 'Expense Claims', badge: '🆕' },
       { href: '/recruiting', icon: UserPlus, label: 'Recruiting', badge: '🆕' },
     ],
   },

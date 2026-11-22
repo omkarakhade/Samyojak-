@@ -1,5 +1,6 @@
 // The agent's prompt and the step that turns the model's JSON into safe, checked actions.
 // Kept out of the route file so tests can load it without Next.js.
+import { payrollFor } from '@/lib/payroll'
 import { dueRecurring } from '@/lib/recurring'
 import { AGENT_KNOWLEDGE } from '@/lib/agentKnowledge'
 import {
@@ -43,6 +44,8 @@ Each operation is one of:
    {"op":"bill_recurring"}
 8. A customer's sales order is delivered, so invoice it:
    {"op":"convert_order","find":"Mehta"}
+9. Pay this month's salaries (each becomes a paid Expense; absent days are cut):
+   {"op":"run_payroll"}
 
 Modules: ${AGENT_MODULES.join(', ')}.
 Field names to use:
@@ -50,6 +53,9 @@ Field names to use:
 - Invoices: Client Name, Line Items, Amount, Payment Status (Paid, Unpaid, Overdue), Issue Date, Due Date, Notes. Line Items is the list of what was sold, written as "Item xQuantity @UnitPrice" separated by semicolons, for example "Laptop x2 @50000; Mouse x5 @500". When the owner says what was sold ("invoice Sharma for 2 laptops at 50k each"), fill Line Items and set Amount to the total before tax.
 - Recurring Invoices: Client Name, Description, Amount, Frequency (Monthly, Weekly, Quarterly, Yearly), Next Date, Status (Active, Paused, Ended), Notes. "Prithviraj monthly maintenance 2000, bill on the 1st" is a Recurring Invoices record with Frequency Monthly and Next Date the coming 1st.
 - Sales Orders: Order No, Client Name, Line Items, Amount, Order Date, Delivery Date, Status (Open, Confirmed, Delivered, Cancelled), Notes. A customer who has ordered but not been billed yet is a Sales Orders record, not an Invoice.
+- Attendance: Date, Employee, Status (Present, Absent, Half day, Leave), Notes. "Simran absent today" is an Attendance record with Date today.
+- Leave Requests: Employee, Leave Type (Paid, Sick, Casual, Unpaid), From, To, Reason, Status (Pending, Approved, Rejected). "Ravi on leave Monday to Wednesday" is a Leave Requests record with Status Approved if the owner is the one saying it.
+- Expense Claims: Employee, Category, Amount, Date, Description, Status (Submitted, Approved, Reimbursed, Rejected). "Simran spent 800 on travel" is an Expense Claims record with Status Submitted.
 - Quotations: Client Name, Amount, Status (Draft, Sent, Accepted, Rejected), Notes
 - Inventory: Item Name, SKU, Category, Current Stock, Reorder Level, Unit Price
 - HR: Name, Role, Department, Salary, Joining Date
@@ -78,6 +84,7 @@ RULES:
 - Use "mark_paid" when the user says an invoice or client has paid. Always include "amount" when the user says how much was paid. If no unpaid invoice exists for that client, the system records the payment as a new paid invoice, so a brand new account works too.
 - "We made 480 brackets" or "bracket job is done" means finish_job with made set to the number the owner said (leave made out if they gave no number). Say done true only when the job is finished; for "made 200 so far" use done false. Do not add a new Production Jobs record for a job that already exists.
 - "Received the steel sheets" or "Raj Traders delivered the order" means receive_po (add "received" only if the owner gave a number different from the order). Do not also change stock with an update. If no purchase order exists, add one with Status Received instead.
+- "Run payroll" or "pay everyone's salary" means run_payroll. Do not add Expenses yourself for salaries.
 - "Bill the monthly clients" or "send this month's recurring invoices" means bill_recurring. Do not add the Invoices yourself.
 - "Mehta's order is delivered, invoice it" means convert_order. Do not also add an Invoice yourself.
 - "Mehta accepted the quote" or "quote approved, bill him" means convert_quote: the system creates the invoice from the quotation and marks the quotation Accepted. Do not also add an Invoice yourself.
@@ -136,6 +143,44 @@ export async function resolveOperations(userId: string, ops: RawOp[]) {
     if (op.op === 'add') {
       const cleaned = sanitizeActions([{ type: 'add', module: op.module, records: op.records }])
       for (const a of cleaned) actions.push(a)
+      continue
+    }
+
+    if (op.op === 'run_payroll') {
+      const month = today.slice(0, 7)
+      const [staff, attendance, leaves, expenses] = await Promise.all([
+        listUserRecords(userId, 'HR'),
+        listUserRecords(userId, 'Attendance'),
+        listUserRecords(userId, 'Leave Requests'),
+        listUserRecords(userId, 'Expenses'),
+      ])
+      const pay = payrollFor(month, staff.map(r => ({ id: r.id, data: r.data })), attendance.map(r => ({ id: r.id, data: r.data })), leaves.map(r => ({ id: r.id, data: r.data })))
+      if (pay.lines.length === 0) {
+        notes.push('No salaries are recorded in HR yet, so there is nothing to pay. Tell me each person and their monthly salary.')
+        continue
+      }
+      const already = new Set(
+        expenses
+          .filter(e => String(e.data['Notes'] ?? '').includes(`Payroll ${month}`))
+          .map(e => String(e.data['Vendor'] ?? '').trim().toLowerCase())
+      )
+      const fresh = pay.lines.filter(l => l.net > 0 && !already.has(l.employee.trim().toLowerCase()))
+      if (fresh.length === 0) {
+        notes.push(`Payroll for ${month} is already recorded for everyone.`)
+        continue
+      }
+      const records = fresh.slice(0, 10).map(l => ({
+        Vendor: l.employee,
+        Category: 'Salary',
+        Amount: l.net,
+        Date: today,
+        Type: 'Expense',
+        Status: 'Paid',
+        Notes: `Payroll ${month}${l.lostDays > 0 ? ` (${l.lostDays} days cut)` : ''}`,
+      }))
+      for (const a of sanitizeActions([{ type: 'add', module: 'Expenses', records }])) actions.push(a)
+      if (fresh.length > 10) notes.push('I recorded the first 10 people. Say "run payroll" again for the rest.')
+      if (already.size) notes.push('Anyone already paid this month was skipped.')
       continue
     }
 

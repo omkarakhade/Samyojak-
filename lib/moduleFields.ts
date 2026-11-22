@@ -15,6 +15,9 @@ export const MODULE_FIELDS: Record<string, string[]> = {
   Assets: ['Asset Name', 'Category', 'Serial No', 'Purchase Date', 'Purchase Cost', 'Assigned To', 'Location', 'Status', 'Warranty Until', 'Notes'],
   'Recurring Invoices': ['Client Name', 'Description', 'Amount', 'Frequency', 'Next Date', 'Status', 'Notes'],
   'Sales Orders': ['Order No', 'Client Name', 'Line Items', 'Amount', 'Order Date', 'Delivery Date', 'Status', 'Notes'],
+  Attendance: ['Date', 'Employee', 'Status', 'Notes'],
+  'Leave Requests': ['Employee', 'Leave Type', 'From', 'To', 'Reason', 'Status'],
+  'Expense Claims': ['Employee', 'Category', 'Amount', 'Date', 'Description', 'Status'],
   Returns: ['Return No', 'Customer', 'Item', 'Quantity', 'Refund Amount', 'Reason', 'Condition', 'Decision', 'Status', 'Return Date', 'Notes'],
 }
 
@@ -27,6 +30,9 @@ export const MODULE_LABELS: Record<string, string> = {
   Projects: 'Projects',
   Recruiting: 'Recruiting',
   Returns: 'Returns & Refunds',
+  Attendance: 'Attendance',
+  'Leave Requests': 'Leave Requests',
+  'Expense Claims': 'Expense Claims',
   'Recurring Invoices': 'Recurring Invoices',
   'Sales Orders': 'Sales Orders',
   'Bills of Materials': 'Bills of Materials',

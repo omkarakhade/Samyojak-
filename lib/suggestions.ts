@@ -5,6 +5,7 @@
 // A suggestion either sends a ready question ('send') or puts the start of a sentence in the box ('fill').
 
 import { findField, toNumber, inr } from '@/lib/insights'
+import { fieldValue } from '@/lib/payroll'
 import { dueRecurring } from '@/lib/recurring'
 import { materialNeeds } from '@/lib/productionPlan'
 
@@ -255,6 +256,25 @@ export function noticed(data: ByModule, today: string): Suggestion[] {
         why: `${due.length} recurring ${plural(due.length, 'bill is', 'bills are')} due: ${due.slice(0, 3).map(d => d.client).join(', ')}.`,
       })
     }
+  }
+
+  // 6d. People matters: leave waiting for approval, claims to pay back.
+  const pendingLeave = (data['Leave Requests'] || []).filter(r => /^pending$/i.test(String(fieldValue(r.data, 'Status', /status/i) ?? '')))
+  if (pendingLeave.length) {
+    out.push({
+      label: 'Who is waiting for leave approval?',
+      text: 'Show payroll, leave and claims',
+      mode: 'send',
+      why: `${pendingLeave.length} leave ${plural(pendingLeave.length, 'request is', 'requests are')} waiting for you.`,
+    })
+  }
+  if (data.HR?.length && Number(today.slice(8, 10)) >= 25) {
+    out.push({
+      label: 'Run this month\'s payroll',
+      text: 'Run payroll',
+      mode: 'send',
+      why: 'It is near month end and salaries may be due.',
+    })
   }
 
   // 7. Warranties ending soon.

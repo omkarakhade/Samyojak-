@@ -1,4 +1,5 @@
 import type { UserRow } from '@/lib/userData'
+import { payrollFor, onLeaveOn, fieldValue } from '@/lib/payroll'
 import { dueRecurring, monthlyRecurringTotal } from '@/lib/recurring'
 import { materialNeeds, productCosts } from '@/lib/productionPlan'
 import { buildLedger, balances, position, type AccountType } from '@/lib/ledger'
@@ -20,6 +21,7 @@ export type InsightId =
   | 'production_status'
   | 'quality_summary'
   | 'timesheet_summary'
+  | 'payroll'
   | 'recurring_due'
   | 'production_materials'
   | 'product_cost'
@@ -49,6 +51,7 @@ export const INSIGHT_IDS: InsightId[] = [
   'production_status',
   'quality_summary',
   'timesheet_summary',
+  'payroll',
   'recurring_due',
   'production_materials',
   'product_cost',
@@ -83,6 +86,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   production_status: ['Production Jobs'],
   quality_summary: ['Quality Issues', 'Production Jobs'],
   timesheet_summary: ['Timesheets'],
+  payroll: ['HR', 'Attendance', 'Leave Requests', 'Expense Claims'],
   recurring_due: ['Recurring Invoices'],
   production_materials: ['Production Jobs', 'Bills of Materials', 'Inventory'],
   product_cost: ['Bills of Materials', 'Inventory'],
@@ -99,7 +103,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   daily_brief: ['CRM', 'Invoices', 'Inventory'],
   profit_loss: ['Invoices', 'Expenses'],
   bills_due: ['Expenses'],
-  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues', 'Timesheets', 'Assets', 'Journal Entries', 'Bills of Materials', 'Recurring Invoices', 'Sales Orders'],
+  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues', 'Timesheets', 'Assets', 'Journal Entries', 'Bills of Materials', 'Recurring Invoices', 'Sales Orders', 'Attendance', 'Leave Requests', 'Expense Claims'],
 }
 
 export interface InsightCard {
@@ -661,6 +665,31 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'payroll') {
+    const today = todayIST()
+    const month = today.slice(0, 7)
+    const pay = payrollFor(month, data.HR || [], data.Attendance || [], data['Leave Requests'] || [])
+    const notes: string[] = []
+    const off = onLeaveOn(today, data['Leave Requests'] || [])
+    if (off.length) notes.push(`On leave today: ${off.slice(0, 5).join(', ')}.`)
+    const pending = (data['Leave Requests'] || []).filter(r => /^pending$/i.test(String(fieldValue(r.data, 'Status', /status/i) ?? ''))).length
+    if (pending) notes.push(`${pending} leave request${pending === 1 ? ' is' : 's are'} waiting for your approval.`)
+    const claims = (data['Expense Claims'] || []).filter(r => /^(submitted|approved)$/i.test(String(fieldValue(r.data, 'Status', /status/i) ?? '')))
+    const claimSum = claims.reduce((s, r) => s + toNumber(fieldValue(r.data, 'Amount', /amount/i)), 0)
+    if (claims.length) notes.push(`${claims.length} expense claim${claims.length === 1 ? '' : 's'} to pay back (${inr(claimSum)}).`)
+    if (pay.noSalary.length) notes.push(`No salary recorded for: ${pay.noSalary.slice(0, 5).join(', ')}.`)
+    if (pay.lines.length) notes.push('Say "run payroll" and I will record each salary as a paid expense.')
+    return {
+      id,
+      title: `Payroll for ${month}`,
+      kind: 'table',
+      columns: ['Employee', 'Salary', 'Days cut', 'To pay'],
+      rows: pay.lines.slice(0, 30).map(l => [l.employee, inr(l.salary), l.lostDays > 0 ? l.lostDays : '—', inr(l.net)]),
+      total: pay.lines.length ? `${pay.lines.length} people · ${inr(pay.total)}` : undefined,
+      note: pay.lines.length === 0 ? 'No salaries recorded yet. Add people in HR with a monthly Salary.' : notes.join(' ') || undefined,
+    }
+  }
+
   if (id === 'recurring_due') {
     const rows = data['Recurring Invoices'] || []
     const due = dueRecurring(rows, todayIST())
@@ -1192,6 +1221,7 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
 
 export function pickInsightByKeywords(q: string): InsightId | null {
   const t = q.toLowerCase()
+  if (/payroll|salar(y|ies)|pay(ing)? (my )?(staff|employees|team|people)|who('s| is| are) on leave|leave (balance|requests?)|expense claims?|attendance/.test(t)) return 'payroll'
   if (/recurring|subscriptions? (due|bill)|(monthly|regular|repeat) (bills?|clients?|invoices?)|bill (the )?(monthly|recurring)|what('s| is) due to bill|retainers?/.test(t)) return 'recurring_due'
   if (/(materials?|components?|raw (material|stock)|parts?).*(need|short|requir|enough|buy)|can i (make|build|produce)|enough (materials?|stock|parts?) (to|for)|what (do i|should i) (buy|order).*(production|jobs?)|material (requirement|shortage|plan)|\bmrp\b/.test(t)) return 'production_materials'
   if (/(cost|price) (to|of) (make|making|produc|build|manufactur)|how much does it cost to make|production cost|\bbom\b.*cost|product cost|margin on (my )?products?|cost per unit/.test(t)) return 'product_cost'
