@@ -5,6 +5,7 @@
 // A suggestion either sends a ready question ('send') or puts the start of a sentence in the box ('fill').
 
 import { findField, toNumber, inr } from '@/lib/insights'
+import { dueRecurring } from '@/lib/recurring'
 import { materialNeeds } from '@/lib/productionPlan'
 
 export interface Suggestion {
@@ -239,6 +240,19 @@ export function noticed(data: ByModule, today: string): Suggestion[] {
         text: `Bill of materials for ${plan.noBom[0]}: `,
         mode: 'fill',
         why: `${plan.noBom.length === 1 ? plan.noBom[0] + ' is' : plan.noBom.length + ' products are'} being made without a bill of materials, so I cannot track the parts.`,
+      })
+    }
+  }
+
+  // 6c. Recurring bills that are due.
+  if (data['Recurring Invoices']?.length) {
+    const due = dueRecurring(data['Recurring Invoices'], today)
+    if (due.length) {
+      out.push({
+        label: `Bill ${due.length} recurring ${plural(due.length, 'client', 'clients')}`,
+        text: 'Bill the recurring clients that are due',
+        mode: 'send',
+        why: `${due.length} recurring ${plural(due.length, 'bill is', 'bills are')} due: ${due.slice(0, 3).map(d => d.client).join(', ')}.`,
       })
     }
   }

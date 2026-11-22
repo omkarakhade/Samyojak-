@@ -1,4 +1,5 @@
 import type { UserRow } from '@/lib/userData'
+import { dueRecurring, monthlyRecurringTotal } from '@/lib/recurring'
 import { materialNeeds, productCosts } from '@/lib/productionPlan'
 import { buildLedger, balances, position, type AccountType } from '@/lib/ledger'
 import { parseLineItems, itemKey } from '@/lib/lineItems'
@@ -19,6 +20,7 @@ export type InsightId =
   | 'production_status'
   | 'quality_summary'
   | 'timesheet_summary'
+  | 'recurring_due'
   | 'production_materials'
   | 'product_cost'
   | 'balance_sheet'
@@ -47,6 +49,7 @@ export const INSIGHT_IDS: InsightId[] = [
   'production_status',
   'quality_summary',
   'timesheet_summary',
+  'recurring_due',
   'production_materials',
   'product_cost',
   'balance_sheet',
@@ -80,6 +83,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   production_status: ['Production Jobs'],
   quality_summary: ['Quality Issues', 'Production Jobs'],
   timesheet_summary: ['Timesheets'],
+  recurring_due: ['Recurring Invoices'],
   production_materials: ['Production Jobs', 'Bills of Materials', 'Inventory'],
   product_cost: ['Bills of Materials', 'Inventory'],
   balance_sheet: ACCOUNTING_MODULES,
@@ -95,7 +99,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   daily_brief: ['CRM', 'Invoices', 'Inventory'],
   profit_loss: ['Invoices', 'Expenses'],
   bills_due: ['Expenses'],
-  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues', 'Timesheets', 'Assets', 'Journal Entries', 'Bills of Materials'],
+  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues', 'Timesheets', 'Assets', 'Journal Entries', 'Bills of Materials', 'Recurring Invoices', 'Sales Orders'],
 }
 
 export interface InsightCard {
@@ -657,6 +661,25 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'recurring_due') {
+    const rows = data['Recurring Invoices'] || []
+    const due = dueRecurring(rows, todayIST())
+    const monthly = monthlyRecurringTotal(rows)
+    return {
+      id,
+      title: 'Recurring bills due',
+      kind: 'table',
+      columns: ['Client', 'For', 'Amount', 'Due', 'Missed'],
+      rows: due.map(d => [d.client, d.description || '—', inr(d.amount), d.dueDate, d.missed > 1 ? `${d.missed} times` : '—']),
+      total: due.length ? `${due.length} due · ${inr(due.reduce((s, d) => s + d.amount, 0))}` : undefined,
+      note: rows.length === 0
+        ? 'No recurring bills yet. Tell me, for example, "Prithviraj monthly maintenance 2000".'
+        : due.length === 0
+          ? `Nothing is due today. Your active recurring bills bring in about ${inr(monthly)} a month.`
+          : `Say "bill the recurring clients" and I will make these invoices. Active recurring bills bring in about ${inr(monthly)} a month.`,
+    }
+  }
+
   if (id === 'production_materials') {
     // Can the open jobs be made with what is in stock, and what has to be bought?
     const plan = materialNeeds(data['Production Jobs'] || [], data['Bills of Materials'] || [], data.Inventory || [])
@@ -1169,6 +1192,7 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
 
 export function pickInsightByKeywords(q: string): InsightId | null {
   const t = q.toLowerCase()
+  if (/recurring|subscriptions? (due|bill)|(monthly|regular|repeat) (bills?|clients?|invoices?)|bill (the )?(monthly|recurring)|what('s| is) due to bill|retainers?/.test(t)) return 'recurring_due'
   if (/(materials?|components?|raw (material|stock)|parts?).*(need|short|requir|enough|buy)|can i (make|build|produce)|enough (materials?|stock|parts?) (to|for)|what (do i|should i) (buy|order).*(production|jobs?)|material (requirement|shortage|plan)|\bmrp\b/.test(t)) return 'production_materials'
   if (/(cost|price) (to|of) (make|making|produc|build|manufactur)|how much does it cost to make|production cost|\bbom\b.*cost|product cost|margin on (my )?products?|cost per unit/.test(t)) return 'product_cost'
   if (/balance sheet|net worth|assets and liabilities|what (do )?i own and (do )?(i )?owe/.test(t)) return 'balance_sheet'

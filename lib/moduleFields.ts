@@ -13,6 +13,8 @@ export const MODULE_FIELDS: Record<string, string[]> = {
   'Journal Entries': ['Date', 'Debit Account', 'Credit Account', 'Amount', 'Narration'],
   Timesheets: ['Date', 'Person', 'Project', 'Client', 'Task', 'Hours', 'Billable', 'Hourly Rate', 'Notes'],
   Assets: ['Asset Name', 'Category', 'Serial No', 'Purchase Date', 'Purchase Cost', 'Assigned To', 'Location', 'Status', 'Warranty Until', 'Notes'],
+  'Recurring Invoices': ['Client Name', 'Description', 'Amount', 'Frequency', 'Next Date', 'Status', 'Notes'],
+  'Sales Orders': ['Order No', 'Client Name', 'Line Items', 'Amount', 'Order Date', 'Delivery Date', 'Status', 'Notes'],
   Returns: ['Return No', 'Customer', 'Item', 'Quantity', 'Refund Amount', 'Reason', 'Condition', 'Decision', 'Status', 'Return Date', 'Notes'],
 }
 
@@ -25,6 +27,8 @@ export const MODULE_LABELS: Record<string, string> = {
   Projects: 'Projects',
   Recruiting: 'Recruiting',
   Returns: 'Returns & Refunds',
+  'Recurring Invoices': 'Recurring Invoices',
+  'Sales Orders': 'Sales Orders',
   'Bills of Materials': 'Bills of Materials',
   'Journal Entries': 'Journal Entries',
   Timesheets: 'Timesheets',

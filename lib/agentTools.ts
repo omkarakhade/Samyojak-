@@ -3,6 +3,7 @@
 
 import { storeList, storeGet, storeCreate, storeWrite, storeFindBatch, storeDelete, isStoreRecordId } from '@/lib/store'
 import { postProduction, reverseProduction } from '@/lib/production'
+import { receivePurchase, reverseReceipt } from '@/lib/receipts'
 import { deductStock, restoreStock, formatDeducted, describeStock } from '@/lib/stockSync'
 
 export const AGENT_MODULES = [
@@ -16,6 +17,8 @@ export const AGENT_MODULES = [
   'Expenses',
   'Vendors',
   'Purchase Orders',
+  'Recurring Invoices',
+  'Sales Orders',
   'Returns',
   'Production Jobs',
   'Quality Issues',
@@ -41,7 +44,7 @@ export interface UpdateAction {
   label: string // human name of the record being changed
   changes: AgentRecord
   before?: AgentRecord // old values of the changed fields (display only; recomputed on confirm)
-  kind?: 'edit' | 'mark_paid' | 'finish_job'
+  kind?: 'edit' | 'mark_paid' | 'finish_job' | 'receive_po'
 }
 
 export type AgentAction = AddAction | UpdateAction
@@ -70,6 +73,10 @@ const NAME_FIELDS = [
   'Task',
   'Product',
   'Product Name',
+  'Vendor',
+  'Vendor Name',
+  'PO Number',
+  'Order No',
   'SKU',
 ]
 
@@ -84,7 +91,7 @@ function sanitizeRecord(raw: any): AgentRecord | null {
     const cleanKey = String(key).trim().slice(0, 60)
     if (!cleanKey || cleanKey.startsWith('_')) continue
     // Written only by the server when production is posted to stock.
-    if (cleanKey === 'Stock Posted' || cleanKey === 'Stock Posted Qty') continue
+    if (cleanKey === 'Stock Posted' || cleanKey === 'Stock Posted Qty' || cleanKey === 'Stock Received') continue
     if (typeof value === 'number' && Number.isFinite(value)) {
       out[cleanKey] = value
       count++
@@ -123,7 +130,7 @@ export function sanitizeActions(raw: any): AgentAction[] {
         label: typeof item.label === 'string' ? item.label.slice(0, 120) : 'Record',
         changes,
         before,
-        kind: item.kind === 'mark_paid' ? 'mark_paid' : item.kind === 'finish_job' && item.module === 'Production Jobs' ? 'finish_job' : 'edit',
+        kind: item.kind === 'mark_paid' ? 'mark_paid' : item.kind === 'finish_job' && item.module === 'Production Jobs' ? 'finish_job' : item.kind === 'receive_po' && item.module === 'Purchase Orders' ? 'receive_po' : 'edit',
       })
       totalUpdates++
       continue
@@ -380,6 +387,20 @@ export async function applyAgentUpdates(userId: string, updates: UpdateAction[])
         stockNotes.push('I could not update stock for this job. Please check Inventory.')
       }
     }
+    // Receiving a purchase order adds what arrived to Inventory, once.
+    if (u.kind === 'receive_po' && u.module === 'Purchase Orders') {
+      try {
+        const got = await receivePurchase(userId, data, Number(u.changes['Quantity Received']) || undefined)
+        stockNotes.push(...got.notes)
+        if (got.qty > 0) {
+          nextData['Stock Received'] = got.text
+          previous['Stock Received'] = 'Stock Received' in data ? data['Stock Received'] : null
+        }
+      } catch (e: any) {
+        console.error('receipt post failed:', e?.message)
+        stockNotes.push('I could not update stock for this order. Please check Inventory.')
+      }
+    }
     const nextMeta = { ...meta, lastEditedAt: new Date().toISOString(), lastEditedBy: 'agent' }
     await writeRecordData(userId, u.recordId, nextData, nextMeta)
     reverts.push({ recordId: u.recordId, previous })
@@ -425,6 +446,14 @@ export async function undoAgentUpdates(userId: string, reverts: Revert[]) {
         stockItems += await reverseProduction(userId, added)
       } catch (e: any) {
         console.error('production reverse failed:', e?.message)
+      }
+    }
+    // An order being un-received takes the goods out of stock again.
+    if (owned.stored.module === 'Purchase Orders' && 'Stock Received' in r.previous && r.previous['Stock Received'] === null && typeof data['Stock Received'] === 'string') {
+      try {
+        stockItems += await reverseReceipt(userId, data['Stock Received'])
+      } catch (e: any) {
+        console.error('receipt reverse failed:', e?.message)
       }
     }
     for (const [key, value] of Object.entries(r.previous)) {

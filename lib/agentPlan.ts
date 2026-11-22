@@ -1,10 +1,12 @@
 // The agent's prompt and the step that turns the model's JSON into safe, checked actions.
 // Kept out of the route file so tests can load it without Next.js.
+import { dueRecurring } from '@/lib/recurring'
 import { AGENT_KNOWLEDGE } from '@/lib/agentKnowledge'
 import {
   AGENT_MODULES,
   sanitizeActions,
   findRecords,
+  listUserRecords,
   recordLabel,
   type AgentAction,
   type AgentModule,
@@ -35,11 +37,19 @@ Each operation is one of:
    {"op":"convert_quote","find":"Mehta"}
 5. Finish (or report progress on) a production job; this also updates stock:
    {"op":"finish_job","find":"bracket","made":480,"done":true}
+6. Goods arrived for a purchase order; this adds them to stock:
+   {"op":"receive_po","find":"Steel Traders","received":100}
+7. Make invoices for every recurring bill that is due today or earlier:
+   {"op":"bill_recurring"}
+8. A customer's sales order is delivered, so invoice it:
+   {"op":"convert_order","find":"Mehta"}
 
 Modules: ${AGENT_MODULES.join(', ')}.
 Field names to use:
 - CRM: Name, Email, Phone, Lead Source, Status (New, Contacted, Converted, Lost), Notes, Next Follow-up Date, Business Type
 - Invoices: Client Name, Line Items, Amount, Payment Status (Paid, Unpaid, Overdue), Issue Date, Due Date, Notes. Line Items is the list of what was sold, written as "Item xQuantity @UnitPrice" separated by semicolons, for example "Laptop x2 @50000; Mouse x5 @500". When the owner says what was sold ("invoice Sharma for 2 laptops at 50k each"), fill Line Items and set Amount to the total before tax.
+- Recurring Invoices: Client Name, Description, Amount, Frequency (Monthly, Weekly, Quarterly, Yearly), Next Date, Status (Active, Paused, Ended), Notes. "Prithviraj monthly maintenance 2000, bill on the 1st" is a Recurring Invoices record with Frequency Monthly and Next Date the coming 1st.
+- Sales Orders: Order No, Client Name, Line Items, Amount, Order Date, Delivery Date, Status (Open, Confirmed, Delivered, Cancelled), Notes. A customer who has ordered but not been billed yet is a Sales Orders record, not an Invoice.
 - Quotations: Client Name, Amount, Status (Draft, Sent, Accepted, Rejected), Notes
 - Inventory: Item Name, SKU, Category, Current Stock, Reorder Level, Unit Price
 - HR: Name, Role, Department, Salary, Joining Date
@@ -67,8 +77,11 @@ RULES:
 - Use "update" when the user wants to change something that already exists (status, stock, phone, deadline). Put only the changed fields in "changes".
 - Use "mark_paid" when the user says an invoice or client has paid. Always include "amount" when the user says how much was paid. If no unpaid invoice exists for that client, the system records the payment as a new paid invoice, so a brand new account works too.
 - "We made 480 brackets" or "bracket job is done" means finish_job with made set to the number the owner said (leave made out if they gave no number). Say done true only when the job is finished; for "made 200 so far" use done false. Do not add a new Production Jobs record for a job that already exists.
+- "Received the steel sheets" or "Raj Traders delivered the order" means receive_po (add "received" only if the owner gave a number different from the order). Do not also change stock with an update. If no purchase order exists, add one with Status Received instead.
+- "Bill the monthly clients" or "send this month's recurring invoices" means bill_recurring. Do not add the Invoices yourself.
+- "Mehta's order is delivered, invoice it" means convert_order. Do not also add an Invoice yourself.
 - "Mehta accepted the quote" or "quote approved, bill him" means convert_quote: the system creates the invoice from the quotation and marks the quotation Accepted. Do not also add an Invoice yourself.
-- A new client with a deal ("Prithviraj, one website for 15000 and monthly maintenance 2000") is: a CRM record (Name, Status Converted, Notes with the deal), an Invoices record (Client Name, Line Items, Amount 15000, Payment Status Unpaid, Issue Date today), and a Projects record for the work (Project Name "Website", Client, Status In Progress). Monthly maintenance goes in a second Projects record (Project Name "Website maintenance", Client, Status In Progress, Description "2000 per month"). Do not create a separate invoice for the monthly fee until the user bills it.
+- A new client with a deal ("Prithviraj, one website for 15000 and monthly maintenance 2000") is: a CRM record (Name, Status Converted, Notes with the deal), an Invoices record (Client Name, Line Items, Amount 15000, Payment Status Unpaid, Issue Date today), and a Projects record for the work (Project Name "Website", Client, Status In Progress). Monthly maintenance goes in a second Projects record (Project Name "Website maintenance", Client, Status In Progress, Description "2000 per month"). Also add a Recurring Invoices record for the monthly fee (Client Name, Description "Website maintenance", Amount 2000, Frequency Monthly, Next Date one month from today, Status Active). Do not create a separate invoice for the monthly fee until it is billed.
 - "X work is pending" or "the website is pending" means work still to be done. If the user has not said it already exists, add a Projects record (Project Name, Client if named, Status In Progress). Use "update" only when the user clearly changes something that was recorded before, like "website is done".
 - If the message is a question, a greeting, or has nothing to record or change, return {"operations":[],"reply":""}.
 - You cannot delete records or send messages. For those, return {"operations":[],"reply":""}.
@@ -123,6 +136,107 @@ export async function resolveOperations(userId: string, ops: RawOp[]) {
     if (op.op === 'add') {
       const cleaned = sanitizeActions([{ type: 'add', module: op.module, records: op.records }])
       for (const a of cleaned) actions.push(a)
+      continue
+    }
+
+    if (op.op === 'receive_po') {
+      if (updateCount >= 5) continue
+      const find = typeof op.find === 'string' ? op.find.trim().slice(0, 100) : ''
+      if (!find) continue
+      const { matches } = await findRecords(userId, 'Purchase Orders', find, {})
+      const open = matches.filter(m => !/^(received|cancelled|canceled)$/i.test(String(m.data['Status'] ?? '').trim()))
+      const pool = open.length > 0 ? open : matches
+      if (pool.length === 0) {
+        notes.push(`I couldn't find a purchase order for "${find}".`)
+        continue
+      }
+      if (pool.length > 1) {
+        notes.push(`"${find}" matches ${pool.length} purchase orders (${pool.slice(0, 4).map(m => recordLabel(m.data)).join(', ')}). Please be more specific.`)
+        continue
+      }
+      const po = pool[0]
+      if (po.data['Stock Received']) {
+        notes.push(`${recordLabel(po.data)} was already received and added to stock.`)
+        continue
+      }
+      const got = toAmount((op as any).received)
+      const changes: AgentRecord = { Status: 'Received', 'Received Date': today }
+      if (got > 0) changes['Quantity Received'] = got
+      const before: AgentRecord = {}
+      for (const k of ['Status', 'Received Date', 'Quantity Received']) {
+        const v = po.data[k]
+        if (typeof v === 'string' || typeof v === 'number') before[k] = v
+      }
+      actions.push({ type: 'update', module: 'Purchase Orders', recordId: po.id, label: recordLabel(po.data), changes, before, kind: 'receive_po' })
+      updateCount++
+      continue
+    }
+
+    if (op.op === 'bill_recurring') {
+      const matches = await listUserRecords(userId, 'Recurring Invoices')
+      const due = dueRecurring(matches.map(m => ({ id: m.id, data: m.data })), today)
+      if (due.length === 0) {
+        notes.push('No recurring bills are due yet.')
+        continue
+      }
+      for (const d of due.slice(0, 5)) {
+        const invoice: AgentRecord = {
+          'Client Name': d.client,
+          Amount: d.amount,
+          'Payment Status': 'Unpaid',
+          'Issue Date': today,
+          Notes: `Recurring bill${d.description ? ': ' + d.description : ''} (${d.frequency.toLowerCase()}, due ${d.dueDate})`,
+        }
+        if (d.description) invoice['Line Items'] = `${d.description} x1 @${d.amount}`
+        const added = sanitizeActions([{ type: 'add', module: 'Invoices', records: [invoice] }])
+        for (const a of added) actions.push(a)
+        const row = matches.find(m => m.id === d.id)
+        const before: AgentRecord = {}
+        const prev = row?.data['Next Date']
+        if (typeof prev === 'string' || typeof prev === 'number') before['Next Date'] = prev
+        actions.push({ type: 'update', module: 'Recurring Invoices', recordId: d.id, label: d.client, changes: { 'Next Date': d.nextAfter }, before, kind: 'edit' })
+        if (d.missed > 1) notes.push(`${d.client} was due ${d.missed} times. I made one invoice; tell me if you want the missed ones too.`)
+      }
+      continue
+    }
+
+    if (op.op === 'convert_order') {
+      const find = typeof op.find === 'string' ? op.find.trim().slice(0, 100) : ''
+      if (!find) continue
+      const { matches } = await findRecords(userId, 'Sales Orders', find, {})
+      const open = matches.filter(m => !/^(delivered|cancelled|canceled)$/i.test(String(m.data['Status'] ?? '').trim()))
+      const pool = open.length > 0 ? open : matches
+      if (pool.length === 0) {
+        notes.push(`I couldn't find a sales order for "${find}".`)
+        continue
+      }
+      if (pool.length > 1) {
+        notes.push(`"${find}" matches ${pool.length} sales orders (${pool.slice(0, 4).map(m => recordLabel(m.data)).join(', ')}). Please be more specific.`)
+        continue
+      }
+      const order = pool[0]
+      if (/^delivered$/i.test(String(order.data['Status'] ?? ''))) {
+        notes.push(`${recordLabel(order.data)} is already delivered.`)
+        continue
+      }
+      const amount = toAmount(order.data['Amount'] ?? order.data['Total'])
+      const invoice: AgentRecord = {
+        'Client Name': String(order.data['Client Name'] ?? order.data['Client'] ?? find),
+        'Payment Status': 'Unpaid',
+        'Issue Date': today,
+        Notes: `Created from sales order${order.data['Order No'] ? ' ' + order.data['Order No'] : ''}`,
+      }
+      if (amount > 0) invoice['Amount'] = amount
+      const lines = order.data['Line Items']
+      if (typeof lines === 'string' && lines.trim()) invoice['Line Items'] = lines.trim()
+      const added = sanitizeActions([{ type: 'add', module: 'Invoices', records: [invoice] }])
+      if (added.length === 0) continue
+      for (const a of added) actions.push(a)
+      const before: AgentRecord = {}
+      const prev = order.data['Status']
+      if (typeof prev === 'string' || typeof prev === 'number') before['Status'] = prev
+      actions.push({ type: 'update', module: 'Sales Orders', recordId: order.id, label: recordLabel(order.data), changes: { Status: 'Delivered' }, before, kind: 'edit' })
+      updateCount++
       continue
     }
 

@@ -32,6 +32,8 @@ function guessModule(headers: string[]): string {
     Quotations: (/quotation|quote|estimate/.test(h) ? 3 : 0),
     'Production Jobs': (/job no|work order|quantity planned|quantity made|production/.test(h) ? 4 : 0),
     'Quality Issues': (/defect|root cause|corrective action|severity|non.?conformance|ncr\b/.test(h) ? 4 : 0),
+    'Recurring Invoices': (/recurring|next date|frequency|subscription/.test(h) ? 4 : 0),
+    'Sales Orders': (/sales order|order no|delivery date/.test(h) ? 4 : 0),
     'Bills of Materials': (/component|bill of material|\bbom\b|materials? list/.test(h) ? 4 : 0),
     'Journal Entries': (/debit account|credit account|narration|journal|voucher|ledger/.test(h) ? 4 : 0),
     Timesheets: (/timesheet|hours worked|hours logged|billable|time spent|hourly rate/.test(h) ? 4 : 0),

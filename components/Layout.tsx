@@ -40,6 +40,8 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Sales',
     items: [
       { href: '/crm', icon: Users, label: 'Leads & CRM' },
+      { href: '/sales-orders', icon: ClipboardList, label: 'Sales Orders', badge: '🆕' },
+      { href: '/recurring', icon: RefreshCw, label: 'Recurring Invoices', badge: '🆕' },
       { href: '/quotations', icon: FileCheck, label: 'Quotations', badge: '🆕' },
       { href: '/invoices', icon: FileText, label: 'Invoices' },
     ],
