@@ -33,6 +33,8 @@ Each operation is one of:
    {"op":"mark_paid","find":"Sharma","amount":5000}
 4. Turn an accepted quotation into an invoice:
    {"op":"convert_quote","find":"Mehta"}
+5. Finish (or report progress on) a production job; this also updates stock:
+   {"op":"finish_job","find":"bracket","made":480,"done":true}
 
 Modules: ${AGENT_MODULES.join(', ')}.
 Field names to use:
@@ -49,6 +51,7 @@ Field names to use:
 - Returns: Return No, Customer, Item, Quantity, Refund Amount, Reason (Damaged, Defective, Wrong item, Not as described, Late delivery, Changed mind, Other), Condition (New, Opened, Used, Damaged), Decision (Restock, Refurbish, Discard, Return to vendor), Status (Requested, Approved, Received, Refunded, Rejected), Return Date, Notes. "Sharma returned 2 damaged chairs" is a Returns record with Reason Damaged and Status Requested.
 - Production Jobs: Job No, Product, Quantity Planned, Quantity Made, Start Date, Due Date, Status (Planned, In Progress, On Hold, Done), Line, Notes. "Start a job for 500 steel brackets, due Friday" is a Production Jobs record with Status In Progress.
 - Quality Issues: Issue No, Product, Defect, Quantity Affected, Severity (Minor, Major, Critical), Root Cause, Corrective Action, Status (Open, Investigating, Fixed, Closed), Reported Date, Owner. "20 brackets came out bent, critical" is a Quality Issues record with Severity Critical and Status Open.
+- Bills of Materials: Product, Components, Labour Cost, Notes. Components lists the parts for ONE unit like invoice items, "Steel sheet x2; Bolt x8". "One bracket needs 2 steel sheets and 8 bolts" is a Bills of Materials record with Product Bracket and Components "Steel sheet x2; Bolt x8".
 - Timesheets: Date, Person, Project, Client, Task, Hours, Billable (Yes, No), Hourly Rate, Notes. "Worked 3 hours on Prithviraj's website today" is a Timesheets record with Hours 3, Project Website, Client Prithviraj, Date today, Billable Yes. Only add Hourly Rate if the owner says it.
 - Journal Entries: Date, Debit Account, Credit Account, Amount, Narration. Use this ONLY for money moves that are not a sale, an expense, a bill or an invoice payment. "I put 50000 of my own money in" or "I started with 50000 in the bank" is Debit Account Cash and Bank, Credit Account Owner Capital, Amount 50000. "Took a 2 lakh loan from the bank" is Debit Cash and Bank, Credit Bank Loan. "Took 10000 out for personal use" is Debit Owner Drawings, Credit Cash and Bank. Never use it for sales, rent, salaries or customer payments.
 - Assets: Asset Name, Category, Serial No, Purchase Date, Purchase Cost, Assigned To, Location, Status (In use, In stock, In repair, Retired, Sold), Warranty Until, Notes. "Bought a Dell laptop for 62000, gave it to Simran" is an Assets record with Category Laptop, Assigned To Simran, Status In use. Assets are things the business owns and uses (laptops, machines, vehicles), not stock it sells.
@@ -63,6 +66,7 @@ RULES:
 - For a new Invoice, set Issue Date to today's date unless the user gives another date.
 - Use "update" when the user wants to change something that already exists (status, stock, phone, deadline). Put only the changed fields in "changes".
 - Use "mark_paid" when the user says an invoice or client has paid. Always include "amount" when the user says how much was paid. If no unpaid invoice exists for that client, the system records the payment as a new paid invoice, so a brand new account works too.
+- "We made 480 brackets" or "bracket job is done" means finish_job with made set to the number the owner said (leave made out if they gave no number). Say done true only when the job is finished; for "made 200 so far" use done false. Do not add a new Production Jobs record for a job that already exists.
 - "Mehta accepted the quote" or "quote approved, bill him" means convert_quote: the system creates the invoice from the quotation and marks the quotation Accepted. Do not also add an Invoice yourself.
 - A new client with a deal ("Prithviraj, one website for 15000 and monthly maintenance 2000") is: a CRM record (Name, Status Converted, Notes with the deal), an Invoices record (Client Name, Line Items, Amount 15000, Payment Status Unpaid, Issue Date today), and a Projects record for the work (Project Name "Website", Client, Status In Progress). Monthly maintenance goes in a second Projects record (Project Name "Website maintenance", Client, Status In Progress, Description "2000 per month"). Do not create a separate invoice for the monthly fee until the user bills it.
 - "X work is pending" or "the website is pending" means work still to be done. If the user has not said it already exists, add a Projects record (Project Name, Client if named, Status In Progress). Use "update" only when the user clearly changes something that was recorded before, like "website is done".
@@ -119,6 +123,51 @@ export async function resolveOperations(userId: string, ops: RawOp[]) {
     if (op.op === 'add') {
       const cleaned = sanitizeActions([{ type: 'add', module: op.module, records: op.records }])
       for (const a of cleaned) actions.push(a)
+      continue
+    }
+
+    if (op.op === 'finish_job') {
+      if (updateCount >= 5) continue
+      const find = typeof op.find === 'string' ? op.find.trim().slice(0, 100) : ''
+      if (!find) continue
+      const { matches } = await findRecords(userId, 'Production Jobs', find, {})
+      const open = matches.filter(m => !/^(done|completed|complete|finished|closed|cancelled|canceled)$/i.test(String(m.data['Status'] ?? '').trim()))
+      const pool = open.length > 0 ? open : matches
+      if (pool.length === 0) {
+        notes.push(`I couldn't find a production job for "${find}".`)
+        continue
+      }
+      if (pool.length > 1) {
+        const names = pool.slice(0, 4).map(m => recordLabel(m.data)).join(', ')
+        notes.push(`"${find}" matches ${pool.length} jobs (${names}). Please be more specific.`)
+        continue
+      }
+      const job = pool[0]
+      const planned = toAmount(job.data['Quantity Planned'])
+      let made = toAmount((op as any).made)
+      let assumed = false
+      if (!(made > 0)) {
+        if (planned > 0) { made = planned; assumed = true }
+        else {
+          notes.push(`How many ${String(job.data['Product'] ?? 'units')} were made? Tell me the number and I will update the job and the stock.`)
+          continue
+        }
+      }
+      const already = toAmount(job.data['Stock Posted Qty'])
+      if (made <= already) {
+        notes.push(`${recordLabel(job.data)} already shows ${already} made and posted to stock.`)
+        continue
+      }
+      const finished = (op as any).done === true || assumed || (planned > 0 && made >= planned)
+      const changes: AgentRecord = { 'Quantity Made': made, Status: finished ? 'Done' : 'In Progress' }
+      const before: AgentRecord = {}
+      for (const k of Object.keys(changes)) {
+        const v = job.data[k]
+        if (typeof v === 'string' || typeof v === 'number') before[k] = v
+      }
+      actions.push({ type: 'update', module: 'Production Jobs', recordId: job.id, label: recordLabel(job.data), changes, before, kind: 'finish_job' })
+      if (assumed) notes.push(`You did not say how many, so I assumed all ${planned} were made.`)
+      updateCount++
       continue
     }
 

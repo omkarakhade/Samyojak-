@@ -26,6 +26,8 @@ BOOKS (the system keeps double-entry books by itself from what you record, so ne
 - Every invoice, payment, expense, bill, refund and asset already updates the books. Only money the owner puts in or takes out of the business, loans and opening balances need a Journal Entries record.
 - The owner can ask for the balance sheet, trial balance or cash position at any time.
 
+MAKING THINGS: a Bill of Materials lists the parts in ONE unit. A Production Job says how many to make. When the owner says how many were made, the job is updated and, if a bill of materials exists, the parts are used up in Inventory and the finished goods are added. If the owner says what goes into a product, record it as a Bill of Materials.
+
 WHEN DETAILS ARE MISSING:
 - Record what the owner said right away. Do not hold back a record to ask for a due date, deadline or reorder level. Missing details are suggested to the owner after saving, so never invent them and do not ask for them first.
 

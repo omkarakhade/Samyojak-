@@ -92,6 +92,11 @@ async function adjustStock(
   return result
 }
 
+/** Move named items in (+1) or out (-1) of Inventory. Used by production for parts used and goods made. */
+export async function adjustStockItems(userId: string, items: { name: string; qty: number }[], direction: 1 | -1): Promise<StockResult> {
+  return adjustStock(userId, wantedFrom(items), direction)
+}
+
 /** Take the items of a new invoice off Inventory. */
 export async function deductStock(userId: string, lineItemsText: unknown): Promise<StockResult> {
   return adjustStock(userId, wantedFrom(parseLineItems(lineItemsText)), -1)

@@ -5,6 +5,7 @@
 // A suggestion either sends a ready question ('send') or puts the start of a sentence in the box ('fill').
 
 import { findField, toNumber, inr } from '@/lib/insights'
+import { materialNeeds } from '@/lib/productionPlan'
 
 export interface Suggestion {
   label: string
@@ -217,6 +218,28 @@ export function noticed(data: ByModule, today: string): Suggestion[] {
           why: `${noRate.length} billable time ${plural(noRate.length, 'entry has', 'entries have')} no hourly rate, so I cannot say what it is worth.`,
         })
       }
+    }
+  }
+
+  // 6b. Open production jobs: missing parts, or no bill of materials.
+  if (data['Production Jobs']?.length) {
+    const plan = materialNeeds(data['Production Jobs'], data['Bills of Materials'] || [], stock)
+    const short = plan.needs.filter(n => n.short > 0)
+    if (short.length) {
+      out.push({
+        label: 'What materials do I need to buy?',
+        text: 'What materials do I need for my production jobs?',
+        mode: 'send',
+        why: `${short.length} ${plural(short.length, 'material is', 'materials are')} short for the open jobs.`,
+      })
+    }
+    if (plan.noBom.length) {
+      out.push({
+        label: `Add parts list for ${plan.noBom[0]}`,
+        text: `Bill of materials for ${plan.noBom[0]}: `,
+        mode: 'fill',
+        why: `${plan.noBom.length === 1 ? plan.noBom[0] + ' is' : plan.noBom.length + ' products are'} being made without a bill of materials, so I cannot track the parts.`,
+      })
     }
   }
 

@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
         updated = r.updated
         reverts = r.reverts
         skipped = r.skipped
+        stockNotes = [...stockNotes, ...r.stockNotes]
       }
 
       await logActivity(user.id, describeApproved(actions))
@@ -82,7 +83,9 @@ export async function POST(req: NextRequest) {
       }
       const reverts = sanitizeReverts(body.reverts)
       if (reverts.length > 0) {
-        restored = (await undoAgentUpdates(user.id, reverts)).restored
+        const ur = await undoAgentUpdates(user.id, reverts)
+        restored = ur.restored
+        stockRestored += ur.stockItems
       }
       if (!body.batchId && reverts.length === 0) {
         return NextResponse.json({ error: 'Nothing to undo.' }, { status: 400 })
@@ -169,13 +172,14 @@ export async function POST(req: NextRequest) {
       const parts: string[] = []
       if (addCount > 0) parts.push(`add ${addCount} record${addCount > 1 ? 's' : ''}`)
       if (updates.length > 0) parts.push(`change ${updates.length} record${updates.length > 1 ? 's' : ''}`)
+      const finishesJob = updates.some(u => (u as UpdateAction).kind === 'finish_job')
       const reducesStock = adds.some(a => a.module === 'Invoices' && a.records.some(r => typeof r['Line Items'] === 'string' && String(r['Line Items']).trim()))
 
       return NextResponse.json({
         actions,
         notes,
         needsConfirm: true,
-        reply: `I'm ready to ${parts.join(' and ')}. Please review and confirm.${reducesStock ? ' Saving will also reduce Inventory stock for the items sold (undo puts it back).' : ''}${notes.length ? ' ' + notes.join(' ') : ''}`,
+        reply: `I'm ready to ${parts.join(' and ')}. Please review and confirm.${reducesStock ? ' Saving will also reduce Inventory stock for the items sold (undo puts it back).' : ''}${finishesJob ? ' Saving will also use up the materials from its bill of materials and add the finished goods to stock (undo reverses it).' : ''}${notes.length ? ' ' + notes.join(' ') : ''}`,
       })
     }
 

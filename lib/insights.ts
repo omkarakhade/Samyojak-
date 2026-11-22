@@ -1,4 +1,5 @@
 import type { UserRow } from '@/lib/userData'
+import { materialNeeds, productCosts } from '@/lib/productionPlan'
 import { buildLedger, balances, position, type AccountType } from '@/lib/ledger'
 import { parseLineItems, itemKey } from '@/lib/lineItems'
 
@@ -18,6 +19,8 @@ export type InsightId =
   | 'production_status'
   | 'quality_summary'
   | 'timesheet_summary'
+  | 'production_materials'
+  | 'product_cost'
   | 'balance_sheet'
   | 'trial_balance'
   | 'cash_position'
@@ -44,6 +47,8 @@ export const INSIGHT_IDS: InsightId[] = [
   'production_status',
   'quality_summary',
   'timesheet_summary',
+  'production_materials',
+  'product_cost',
   'balance_sheet',
   'trial_balance',
   'cash_position',
@@ -75,6 +80,8 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   production_status: ['Production Jobs'],
   quality_summary: ['Quality Issues', 'Production Jobs'],
   timesheet_summary: ['Timesheets'],
+  production_materials: ['Production Jobs', 'Bills of Materials', 'Inventory'],
+  product_cost: ['Bills of Materials', 'Inventory'],
   balance_sheet: ACCOUNTING_MODULES,
   trial_balance: ACCOUNTING_MODULES,
   cash_position: ACCOUNTING_MODULES,
@@ -88,7 +95,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   daily_brief: ['CRM', 'Invoices', 'Inventory'],
   profit_loss: ['Invoices', 'Expenses'],
   bills_due: ['Expenses'],
-  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues', 'Timesheets', 'Assets', 'Journal Entries'],
+  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues', 'Timesheets', 'Assets', 'Journal Entries', 'Bills of Materials'],
 }
 
 export interface InsightCard {
@@ -650,6 +657,53 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'production_materials') {
+    // Can the open jobs be made with what is in stock, and what has to be bought?
+    const plan = materialNeeds(data['Production Jobs'] || [], data['Bills of Materials'] || [], data.Inventory || [])
+    const short = plan.needs.filter(n => n.short > 0)
+    const notes: string[] = []
+    if (short.length) notes.push(`${short.length} material${short.length === 1 ? ' is' : 's are'} short. Buy these before the jobs run out of parts.`)
+    else if (plan.needs.length) notes.push('You have enough of every material for the open jobs.')
+    if (plan.noBom.length) notes.push(`No bill of materials yet for: ${plan.noBom.slice(0, 5).join(', ')}. Tell me what goes into one unit and I will include it.`)
+    const notInInv = plan.needs.filter(n => !n.inInventory)
+    if (notInInv.length) notes.push(`Not in Inventory yet: ${notInInv.slice(0, 5).map(n => n.name).join(', ')}.`)
+    return {
+      id,
+      title: 'Materials for open jobs',
+      kind: 'table',
+      columns: ['Material', 'Needed', 'In stock', 'To buy'],
+      rows: plan.needs.slice(0, 20).map(n => [n.name, n.need, n.stock, n.short > 0 ? n.short : '—']),
+      total: plan.openJobs ? `${plan.openJobs} open job${plan.openJobs === 1 ? '' : 's'}${short.length ? ` · ${short.length} short` : ''}` : undefined,
+      note: plan.openJobs === 0 ? 'No open production jobs.' : notes.join(' ') || undefined,
+    }
+  }
+
+  if (id === 'product_cost') {
+    // What one unit costs to make, from the parts' prices in Inventory plus labour.
+    const costs = productCosts(data['Bills of Materials'] || [], data.Inventory || [])
+    const notes: string[] = []
+    const unpriced = costs.filter(c => c.unpriced.length)
+    if (unpriced.length) notes.push(`Some parts have no price in Inventory, so these costs are too low: ${unpriced.slice(0, 3).map(c => `${c.product} (${c.unpriced.slice(0, 3).join(', ')})`).join('; ')}.`)
+    const losing = costs.filter(c => c.selling > 0 && c.total > c.selling)
+    if (losing.length) notes.push(`${losing.map(c => c.product).slice(0, 3).join(', ')} cost${losing.length === 1 ? 's' : ''} more to make than the selling price.`)
+    return {
+      id,
+      title: 'Cost to make one unit',
+      kind: 'table',
+      columns: ['Product', 'Materials', 'Labour', 'Cost', 'Sells for', 'Margin'],
+      rows: costs.slice(0, 20).map(c => [
+        c.product,
+        inr(c.material),
+        c.labour > 0 ? inr(c.labour) : '—',
+        inr(c.total),
+        c.selling > 0 ? inr(c.selling) : '—',
+        c.selling > 0 && c.total > 0 ? `${Math.round(((c.selling - c.total) / c.selling) * 100)}%` : '—',
+      ]),
+      total: costs.length ? `${costs.length} product${costs.length === 1 ? '' : 's'} with a bill of materials` : undefined,
+      note: costs.length === 0 ? 'No bills of materials yet. Tell me, for example, "one bracket needs 2 steel sheets and 8 bolts".' : notes.join(' ') || undefined,
+    }
+  }
+
   if (id === 'balance_sheet' || id === 'trial_balance' || id === 'cash_position') {
     const list = balances(buildLedger(data))
     const pos = position(list)
@@ -1115,6 +1169,8 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
 
 export function pickInsightByKeywords(q: string): InsightId | null {
   const t = q.toLowerCase()
+  if (/(materials?|components?|raw (material|stock)|parts?).*(need|short|requir|enough|buy)|can i (make|build|produce)|enough (materials?|stock|parts?) (to|for)|what (do i|should i) (buy|order).*(production|jobs?)|material (requirement|shortage|plan)|\bmrp\b/.test(t)) return 'production_materials'
+  if (/(cost|price) (to|of) (make|making|produc|build|manufactur)|how much does it cost to make|production cost|\bbom\b.*cost|product cost|margin on (my )?products?|cost per unit/.test(t)) return 'product_cost'
   if (/balance sheet|net worth|assets and liabilities|what (do )?i own and (do )?(i )?owe/.test(t)) return 'balance_sheet'
   if (/trial balance|general ledger|\bledger\b|chart of accounts|debits? (and|&) credits?/.test(t)) return 'trial_balance'
   if (/cash (in hand|balance|position|flow)|bank balance|how much (cash|money) (do i have|is (there|left)|in)|cash kitna|paisa kitna/.test(t)) return 'cash_position'
