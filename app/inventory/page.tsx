@@ -4,7 +4,7 @@ import Layout from '@/components/Layout'
 import LockedModule from '@/components/LockedModule'
 import { supabase } from '@/lib/supabase'
 import { getPlanFromMetadata, canAccessModuleSync } from '@/lib/planAccess'
-import { Plus, AlertCircle, RefreshCw } from 'lucide-react'
+import { Plus, AlertCircle, RefreshCw, QrCode } from 'lucide-react'
 import UniversalDataView from '@/components/UniversalDataView'
 
 export default function Inventory() {
@@ -99,6 +99,11 @@ export default function Inventory() {
             <p className="text-gray-500 text-sm">Products, stock levels, and QR codes</p>
           </div>
           <div className="flex gap-2">
+            <a
+              href="/inventory/labels"
+              className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-white/20 rounded-xl hover:bg-gray-50 dark:hover:bg-white/10 transition-colors text-gray-700 dark:text-gray-200">
+              <QrCode size={16} /> QR labels
+            </a>
             <button
               onClick={() => setRefreshKey(k => k + 1)}
               className="p-2 border border-gray-300 dark:border-white/20 rounded-xl hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
