@@ -18,6 +18,8 @@ export const MODULE_FIELDS: Record<string, string[]> = {
   Attendance: ['Date', 'Employee', 'Status', 'Notes'],
   'Leave Requests': ['Employee', 'Leave Type', 'From', 'To', 'Reason', 'Status'],
   'Expense Claims': ['Employee', 'Category', 'Amount', 'Date', 'Description', 'Status'],
+  'Support Tickets': ['Ticket No', 'Customer', 'Subject', 'Priority', 'Status', 'Opened', 'Due Date', 'Assigned To', 'Notes'],
+  Approvals: ['Request', 'Requested By', 'Amount', 'Date', 'Status', 'Notes'],
   Returns: ['Return No', 'Customer', 'Item', 'Quantity', 'Refund Amount', 'Reason', 'Condition', 'Decision', 'Status', 'Return Date', 'Notes'],
 }
 
@@ -30,6 +32,8 @@ export const MODULE_LABELS: Record<string, string> = {
   Projects: 'Projects',
   Recruiting: 'Recruiting',
   Returns: 'Returns & Refunds',
+  'Support Tickets': 'Support Tickets',
+  Approvals: 'Approvals',
   Attendance: 'Attendance',
   'Leave Requests': 'Leave Requests',
   'Expense Claims': 'Expense Claims',

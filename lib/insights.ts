@@ -1,4 +1,5 @@
 import type { UserRow } from '@/lib/userData'
+import { openTickets, pendingApprovals } from '@/lib/tickets'
 import { payrollFor, onLeaveOn, fieldValue } from '@/lib/payroll'
 import { dueRecurring, monthlyRecurringTotal } from '@/lib/recurring'
 import { materialNeeds, productCosts } from '@/lib/productionPlan'
@@ -21,6 +22,8 @@ export type InsightId =
   | 'production_status'
   | 'quality_summary'
   | 'timesheet_summary'
+  | 'support_tickets'
+  | 'approvals_pending'
   | 'payroll'
   | 'recurring_due'
   | 'production_materials'
@@ -51,6 +54,8 @@ export const INSIGHT_IDS: InsightId[] = [
   'production_status',
   'quality_summary',
   'timesheet_summary',
+  'support_tickets',
+  'approvals_pending',
   'payroll',
   'recurring_due',
   'production_materials',
@@ -86,6 +91,8 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   production_status: ['Production Jobs'],
   quality_summary: ['Quality Issues', 'Production Jobs'],
   timesheet_summary: ['Timesheets'],
+  support_tickets: ['Support Tickets'],
+  approvals_pending: ['Approvals'],
   payroll: ['HR', 'Attendance', 'Leave Requests', 'Expense Claims'],
   recurring_due: ['Recurring Invoices'],
   production_materials: ['Production Jobs', 'Bills of Materials', 'Inventory'],
@@ -103,7 +110,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   daily_brief: ['CRM', 'Invoices', 'Inventory'],
   profit_loss: ['Invoices', 'Expenses'],
   bills_due: ['Expenses'],
-  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues', 'Timesheets', 'Assets', 'Journal Entries', 'Bills of Materials', 'Recurring Invoices', 'Sales Orders', 'Attendance', 'Leave Requests', 'Expense Claims'],
+  recent_changes: ['CRM', 'Invoices', 'Quotations', 'Inventory', 'HR', 'Projects', 'Recruiting', 'Expenses', 'Vendors', 'Purchase Orders', 'Returns', 'Production Jobs', 'Quality Issues', 'Timesheets', 'Assets', 'Journal Entries', 'Bills of Materials', 'Recurring Invoices', 'Sales Orders', 'Attendance', 'Leave Requests', 'Expense Claims', 'Support Tickets', 'Approvals'],
 }
 
 export interface InsightCard {
@@ -665,6 +672,35 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
     }
   }
 
+  if (id === 'support_tickets') {
+    const list = openTickets(data['Support Tickets'] || [], todayIST())
+    const late = list.filter(t => t.lateBy > 0)
+    return {
+      id,
+      title: 'Open support tickets',
+      kind: 'table',
+      columns: ['Customer', 'Problem', 'Priority', 'Reply by', 'Late'],
+      rows: list.slice(0, 25).map(t => [t.who || '—', t.subject || '—', t.priority, t.due, t.lateBy > 0 ? `${t.lateBy} day${t.lateBy === 1 ? '' : 's'}` : '—']),
+      total: list.length ? `${list.length} open${late.length ? ` · ${late.length} late` : ''}` : undefined,
+      note: (data['Support Tickets'] || []).length === 0
+        ? 'No tickets yet. Tell me, for example, "Mehta says the invoice PDF will not open, high priority".'
+        : list.length === 0 ? 'No open tickets. Everything is resolved.' : late.length ? `${late.length} ticket${late.length === 1 ? ' is' : 's are'} past the reply deadline. Reply to those first.` : undefined,
+    }
+  }
+
+  if (id === 'approvals_pending') {
+    const list = pendingApprovals(data.Approvals || [])
+    return {
+      id,
+      title: 'Waiting for your approval',
+      kind: 'table',
+      columns: ['Request', 'Asked by', 'Amount', 'Date'],
+      rows: list.slice(0, 25).map(a => [a.what, a.by || '—', a.amount > 0 ? inr(a.amount) : '—', a.date || '—']),
+      total: list.length ? `${list.length} waiting` : undefined,
+      note: list.length === 0 ? 'Nothing is waiting for you.' : 'Tell me your decision, for example "approve the Mehta discount".',
+    }
+  }
+
   if (id === 'payroll') {
     const today = todayIST()
     const month = today.slice(0, 7)
@@ -1221,6 +1257,8 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
 
 export function pickInsightByKeywords(q: string): InsightId | null {
   const t = q.toLowerCase()
+  if (/(support )?tickets?|complaints?|customer (issues?|problems?)|sla\b|open issues|unanswered/.test(t)) return 'support_tickets'
+  if (/approvals?|waiting for (my )?(approval|decision|yes)|pending (requests?|decisions?)|needs? my (ok|approval)/.test(t)) return 'approvals_pending'
   if (/payroll|salar(y|ies)|pay(ing)? (my )?(staff|employees|team|people)|who('s| is| are) on leave|leave (balance|requests?)|expense claims?|attendance/.test(t)) return 'payroll'
   if (/recurring|subscriptions? (due|bill)|(monthly|regular|repeat) (bills?|clients?|invoices?)|bill (the )?(monthly|recurring)|what('s| is) due to bill|retainers?/.test(t)) return 'recurring_due'
   if (/(materials?|components?|raw (material|stock)|parts?).*(need|short|requir|enough|buy)|can i (make|build|produce)|enough (materials?|stock|parts?) (to|for)|what (do i|should i) (buy|order).*(production|jobs?)|material (requirement|shortage|plan)|\bmrp\b/.test(t)) return 'production_materials'

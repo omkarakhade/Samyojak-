@@ -32,6 +32,8 @@ function guessModule(headers: string[]): string {
     Quotations: (/quotation|quote|estimate/.test(h) ? 3 : 0),
     'Production Jobs': (/job no|work order|quantity planned|quantity made|production/.test(h) ? 4 : 0),
     'Quality Issues': (/defect|root cause|corrective action|severity|non.?conformance|ncr\b/.test(h) ? 4 : 0),
+    'Support Tickets': (/ticket|sla|priority.*subject|subject/.test(h) ? 4 : 0),
+    Approvals: (/approval|approver|requested by/.test(h) ? 4 : 0),
     Attendance: (/attendance|present|absent/.test(h) ? 4 : 0),
     'Leave Requests': (/leave type|leave request|\bleave\b/.test(h) ? 4 : 0),
     'Expense Claims': (/claim|reimburse/.test(h) ? 4 : 0),

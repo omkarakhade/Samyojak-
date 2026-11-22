@@ -5,6 +5,7 @@
 // A suggestion either sends a ready question ('send') or puts the start of a sentence in the box ('fill').
 
 import { findField, toNumber, inr } from '@/lib/insights'
+import { openTickets, pendingApprovals } from '@/lib/tickets'
 import { fieldValue } from '@/lib/payroll'
 import { dueRecurring } from '@/lib/recurring'
 import { materialNeeds } from '@/lib/productionPlan'
@@ -275,6 +276,30 @@ export function noticed(data: ByModule, today: string): Suggestion[] {
       mode: 'send',
       why: 'It is near month end and salaries may be due.',
     })
+  }
+
+  // 6e. Customers waiting for a reply, and decisions waiting for the owner.
+  if (data['Support Tickets']?.length) {
+    const late = openTickets(data['Support Tickets'], today).filter(t => t.lateBy > 0)
+    if (late.length) {
+      out.push({
+        label: `${late.length} late ${plural(late.length, 'ticket', 'tickets')}`,
+        text: 'Show open support tickets',
+        mode: 'send',
+        why: `${late.length} customer ${plural(late.length, 'ticket is', 'tickets are')} past the reply deadline${late[0].who ? ', starting with ' + late[0].who : ''}.`,
+      })
+    }
+  }
+  if (data.Approvals?.length) {
+    const waiting = pendingApprovals(data.Approvals)
+    if (waiting.length) {
+      out.push({
+        label: 'What needs my approval?',
+        text: 'What is waiting for my approval?',
+        mode: 'send',
+        why: `${waiting.length} ${plural(waiting.length, 'request is', 'requests are')} waiting for your decision.`,
+      })
+    }
   }
 
   // 7. Warranties ending soon.

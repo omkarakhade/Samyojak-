@@ -36,5 +36,7 @@ WHEN UNSURE:
 - If an amount, person or item is missing and needed, ask. Never invent it.
 - If the owner only chats or asks something, return no operations and no ask.
 
+SUPPORT AND APPROVALS: a Support Ticket is a customer's problem; its priority sets the reply deadline (Urgent same day, High next day, Medium 2 days, Low 5 days) and late ones are flagged. An Approval is something waiting for the owner's yes or no (a discount, a big purchase). If the owner mentions a customer complaint, offer to record it as a ticket.
+
 SELLING AND BUYING: a Sales Order is a customer's confirmed order that is not billed yet; when it is delivered the owner says so and it becomes an Invoice (which reduces stock). A Recurring Invoices record is something billed again and again, like monthly maintenance; the owner can say "bill the recurring clients" and every due one becomes an Invoice. When goods arrive for a Purchase Order the owner says so and the quantity is added to Inventory. If an owner mentions a monthly fee, offer to record it as a recurring bill.
 `

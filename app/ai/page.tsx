@@ -381,6 +381,8 @@ const PIN_LABELS: Record<string, string> = {
   production_status: 'Production jobs',
   quality_summary: 'Quality issues',
   timesheet_summary: 'Hours this month',
+  support_tickets: 'Support tickets',
+  approvals_pending: 'Approvals',
   payroll: 'Payroll',
   recurring_due: 'Recurring bills',
   production_materials: 'Materials for jobs',
