@@ -278,9 +278,9 @@ export default function Pricing() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { emoji: '🔒', label: 'SSL security', desc: 'All data encrypted' },
-                { emoji: '📱', label: 'Mobile app', desc: 'Works on any device' },
+                { emoji: '📱', label: 'Works on your phone', desc: 'Use it in any phone or laptop browser' },
                 { emoji: '🌍', label: 'Global access', desc: 'Use from anywhere' },
-                { emoji: '🎫', label: 'Support tickets', desc: '24hr response time' },
+                { emoji: '🎫', label: 'Support tickets', desc: 'We reply by email' },
                 { emoji: '📥', label: 'CSV import', desc: 'Any format accepted' },
                 { emoji: '📤', label: 'CSV export', desc: 'Your data, always' },
                 { emoji: '🔄', label: 'Cancel anytime', desc: 'No lock-in ever' },

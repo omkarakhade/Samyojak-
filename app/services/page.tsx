@@ -12,8 +12,8 @@ const services = [
   {
     icon: FileText,
     title: 'GST Invoicing & Payments',
-    desc: 'Create professional GST-compliant invoices in seconds. Accept payments via Stripe or UPI. Send invoices directly to clients via WhatsApp with one click.',
-    features: ['GST 5% 12% 18% 28%', 'Stripe Payment Integration', 'WhatsApp Invoice Sending', 'PDF Download', 'Overdue Tracking'],
+    desc: 'Create professional GST-compliant invoices in seconds. Track part payments and what is overdue, and open a ready WhatsApp reminder for any unpaid invoice with one tap.',
+    features: ['GST 5% 12% 18% 28%', 'WhatsApp payment reminders', 'Part payments', 'Automatic stock deduction', 'Overdue Tracking'],
     color: '#F472B6', bg: '#FCE7F3', emoji: '📄',
   },
   {
@@ -33,8 +33,8 @@ const services = [
   {
     icon: FolderOpen,
     title: 'Project Management',
-    desc: 'Beautiful Kanban board to track all your projects from Planning to Done. Add tasks, assign team members, track progress, and never miss a deadline.',
-    features: ['Kanban Board', 'Task Management', 'Deadline Tracking', 'Progress Percentage', 'Team Assignment'],
+    desc: 'A Kanban board to track all your projects from Planning to Done. Move each project between stages, keep client and deadline on every card, and never miss a deadline.',
+    features: ['Kanban Board', 'Client on every project', 'Deadline Tracking', 'Timesheets'],
     color: '#8B5CF6', bg: '#EDE9FE', emoji: '🎯',
   },
   {

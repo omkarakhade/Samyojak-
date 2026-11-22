@@ -8,11 +8,12 @@ interface Props {
   module: string
   color: string
   bg: string
+  rowAction?: (record: any) => React.ReactNode
 }
 
 const PAGE_SIZE = 50
 
-export default function UniversalDataView({ userId, module, color, bg }: Props) {
+export default function UniversalDataView({ userId, module, color, bg, rowAction }: Props) {
   const [records, setRecords] = useState<any[]>([])
   const [columns, setColumns] = useState<string[]>([])
   const [importBatches, setImportBatches] = useState<any[]>([])
@@ -255,7 +256,8 @@ export default function UniversalDataView({ userId, module, color, bg }: Props) 
                     {hiddenCount > 0 && (
                       <td className="p-3 text-xs text-gray-300">...</td>
                     )}
-                    <td className="p-3">
+                    <td className="p-3 whitespace-nowrap">
+                      {rowAction ? rowAction(record) : null}
                       <button
                         onClick={() => deleteRecord(record.id)}
                         className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors">

@@ -49,7 +49,7 @@ const FAQS = [
   { q: 'Can I import my data from any existing ERP or spreadsheet?', a: 'Yes. Upload any CSV file from any ERP system. Samyojak reads your column names as-is and stores everything without forcing you to rename or restructure your data.' },
   { q: 'Does it support GST, VAT, and other taxes?', a: 'Yes. Universal tax engine supports GST for India, VAT for UK, Germany, UAE, HST for Canada, Sales Tax for US, and 10+ more countries. Switch between them per invoice.' },
   { q: 'Can I cancel anytime?', a: 'Yes. Weekly plans expire at the end of the week if you turn off auto-pay. No cancellation fees. No lock-in ever.' },
-  { q: 'Do you charge per user?', a: 'No per-user fees. Each plan is a flat price and includes a set number of team members, shown on the pricing page.' },
+  { q: 'Do you charge per user?', a: 'No per-user fees. Each plan is one flat price for your business.' },
   { q: 'Does the AI actually read my real data?', a: 'Yes. The assistant reads your live records for the modules in your plan, and the numbers in its answers are calculated from your data, not guessed. When it wants to add or change something, it shows a preview and waits for your approval, and you can undo it.' },
   { q: 'Can the assistant change my data without asking?', a: 'No. It shows what it is about to add or change and waits for you to confirm. Every confirmed change goes into an activity log, and you can undo it from the chat.' },
   { q: 'Is my data secure?', a: 'Yes. All data is encrypted in transit. Authentication is handled by Supabase — enterprise grade security. Your data is stored securely and never shared.' },

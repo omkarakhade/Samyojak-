@@ -7,6 +7,7 @@ import { getPlanFromMetadata, canAccessModuleSync } from '@/lib/planAccess'
 import { Plus, AlertCircle, RefreshCw } from 'lucide-react'
 import { parseLineItems, lineItemsTotal } from '@/lib/lineItems'
 import UniversalDataView from '@/components/UniversalDataView'
+import { invoiceWhatsapp } from '@/lib/whatsapp'
 
 const TAX_SYSTEMS: Record<string, { name: string; rates: number[]; label: string }> = {
   IN: { name: 'GST (India)', rates: [0, 5, 12, 18, 28], label: 'GST' },
@@ -167,6 +168,15 @@ export default function Invoices() {
             module="Invoices"
             color="#F472B6"
             bg="#FCE7F3"
+            rowAction={(record: any) => {
+              const link = invoiceWhatsapp(record.data || {}, taxCountry === 'IN' ? '91' : '')
+              return link ? (
+                <a href={link} target="_blank" rel="noopener noreferrer" title="Send on WhatsApp"
+                  className="inline-block mr-1 px-2 py-1 rounded-lg text-xs font-semibold text-white bg-green-500 hover:bg-green-600">
+                  WhatsApp
+                </a>
+              ) : null
+            }}
           />
         )}
 
