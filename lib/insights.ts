@@ -11,6 +11,7 @@ import { dueRecurring, monthlyRecurringTotal } from '@/lib/recurring'
 import { materialNeeds, productCosts } from '@/lib/productionPlan'
 import { buildLedger, balances, position, type AccountType } from '@/lib/ledger'
 import { parseLineItems, itemKey } from '@/lib/lineItems'
+import { scoreLeads } from '@/lib/leadScore'
 
 /**
  * Answers that show: fixed, safe calculations over the user's own records.
@@ -21,6 +22,7 @@ export type InsightId =
   | 'unpaid_invoices'
   | 'revenue_by_month'
   | 'leads_by_status'
+  | 'lead_scores'
   | 'low_stock'
   | 'stock_abc'
   | 'returns_analysis'
@@ -61,6 +63,7 @@ export const INSIGHT_IDS: InsightId[] = [
   'unpaid_invoices',
   'revenue_by_month',
   'leads_by_status',
+  'lead_scores',
   'low_stock',
   'stock_abc',
   'returns_analysis',
@@ -106,6 +109,7 @@ export const INSIGHT_MODULES: Record<InsightId, string[]> = {
   unpaid_invoices: ['Invoices'],
   revenue_by_month: ['Invoices'],
   leads_by_status: ['CRM'],
+  lead_scores: ['CRM'],
   low_stock: ['Inventory'],
   stock_abc: ['Inventory'],
   returns_analysis: ['Returns'],
@@ -533,6 +537,22 @@ export function computeInsight(id: InsightId, data: ByModule): InsightCard {
       columns: ['Area', 'Focus', 'Detail'],
       rows: items,
       note: items.length === 0 ? 'Add some data first, then I can tell you what to focus on.' : 'Ask me to open any of these, for example "Who has not paid me?"',
+    }
+  }
+
+  if (id === 'lead_scores') {
+    const leads = scoreLeads(data['CRM'] || [], todayIST())
+    const hot = leads.filter(l => l.level === 'Hot').length
+    return {
+      id,
+      title: 'Lead scores (0-100)',
+      kind: 'table',
+      columns: ['Lead', 'Score', 'Level', 'Why', 'Next step'],
+      rows: leads.slice(0, 15).map(l => [l.name, l.score, l.level, l.reasons.join(', ') || '—', l.next]),
+      total: leads.length ? `${leads.length} open lead${leads.length === 1 ? '' : 's'} · ${hot} hot` : undefined,
+      note: leads.length === 0
+        ? 'No open leads yet. Tell me, for example, "new lead Neha 98xxxxxx, interested in a website".'
+        : 'Score comes from the stage, contact details, deal value and follow-up date. Call the hot ones first.',
     }
   }
 
@@ -1485,6 +1505,7 @@ export function pickInsightByKeywords(q: string): InsightId | null {
   if (/low stock|reorder|running out|out of stock|stock alert|kam stock/.test(t)) return 'low_stock'
   if (/top (client|customer)|best (client|customer)|biggest (client|customer)/.test(t)) return 'top_clients'
   if (/(revenue|sales|billing|billed|income|kamai).*(month|trend|chart|graph)|monthly (revenue|sales)|month.?wise/.test(t)) return 'revenue_by_month'
+  if (/lead.?scor|score.*leads?|leads?.*score|hot leads?|best leads?|which leads?.*(call|chase|follow|first|priorit)|prioriti[sz]e.*leads?/.test(t)) return 'lead_scores'
   if (/lead.*(status|stage|pipeline|funnel|breakdown)|pipeline|funnel|how many leads|leads (by|per)/.test(t)) return 'leads_by_status'
   return null
 }

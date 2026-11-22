@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId, isSafeModule, userOwnsRecord } from '@/lib/serverAuth'
-import { storeList, storeGet, storeDelete } from '@/lib/store'
+import { storeList, storeGet, storeDelete, storeWrite } from '@/lib/store'
 import { restoreStock } from '@/lib/stockSync'
 import { lockedModules, lockedText } from '@/lib/access'
 
@@ -156,4 +156,35 @@ export async function DELETE(req: NextRequest) {
   }
 
   return NextResponse.json({ error: 'id, or importId and module, required' }, { status: 400 })
+}
+
+// Move a project to another column of the board (changes only its Status).
+const PROJECT_STATUSES = ['Planning', 'In Progress', 'Review', 'Done']
+
+export async function PATCH(req: NextRequest) {
+  const user = await getAuthedUser(req)
+  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
+  const userId = user.id
+  let body: any = {}
+  try { body = await req.json() } catch { /* handled below */ }
+  const id = body?.id
+  const status = body?.status
+  if (typeof id !== 'string' || !PROJECT_STATUSES.includes(status)) {
+    return NextResponse.json({ error: 'id and a valid status are required' }, { status: 400 })
+  }
+  const locked = await lockedModules(user, ['Projects'])
+  if (locked.length) return NextResponse.json({ error: lockedText(locked[0]) }, { status: 403 })
+  if (!(await userOwnsRecord(userId, id))) return NextResponse.json({ error: 'Record not found.' }, { status: 404 })
+  try {
+    const raw = await storeGet(userId, id)
+    if (!raw || raw.fields?.Module !== 'Projects') return NextResponse.json({ error: 'Not a project.' }, { status: 400 })
+    const data = JSON.parse(raw.fields?.['Record Data'] || '{}')
+    const key = Object.keys(data).find(k => /^status$|^stage$/i.test(k)) || 'Status'
+    data[key] = status
+    await storeWrite(userId, id, data)
+    return NextResponse.json({ ok: true })
+  } catch (e: any) {
+    console.error('universal-data PATCH error:', e?.message)
+    return NextResponse.json({ error: 'Could not move that project.' }, { status: 500 })
+  }
 }

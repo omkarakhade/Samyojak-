@@ -374,6 +374,7 @@ const PIN_LABELS: Record<string, string> = {
   unpaid_invoices: 'Unpaid invoices',
   revenue_by_month: 'Billed per month',
   leads_by_status: 'Leads by status',
+  lead_scores: 'Lead scores',
   low_stock: 'Low stock',
   stock_abc: 'Stock value (ABC)',
   returns_analysis: 'Returns by reason',

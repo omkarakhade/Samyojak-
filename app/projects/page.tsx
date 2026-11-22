@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { getPlanFromMetadata, canAccessModuleSync } from '@/lib/planAccess'
 import { Plus, AlertCircle, RefreshCw } from 'lucide-react'
 import UniversalDataView from '@/components/UniversalDataView'
+import ProjectBoard from '@/components/ProjectBoard'
 
 const STATUS_OPTIONS = ['Planning', 'In Progress', 'Review', 'Done']
 
@@ -17,6 +18,7 @@ export default function Projects() {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [view, setView] = useState<'list' | 'board'>('board')
   const [form, setForm] = useState({
     'Project Name': '',
     Status: 'Planning',
@@ -101,6 +103,10 @@ export default function Projects() {
             <p className="text-gray-500 text-sm">Track client projects and deadlines</p>
           </div>
           <div className="flex gap-2">
+            <div className="flex rounded-xl border border-gray-300 dark:border-white/20 overflow-hidden text-sm">
+              <button onClick={() => setView('board')} className={'px-3 py-2 ' + (view === 'board' ? 'bg-violet-500 text-white' : 'text-gray-600 dark:text-gray-300')}>Board</button>
+              <button onClick={() => setView('list')} className={'px-3 py-2 ' + (view === 'list' ? 'bg-violet-500 text-white' : 'text-gray-600 dark:text-gray-300')}>List</button>
+            </div>
             <button
               onClick={() => setRefreshKey(k => k + 1)}
               className="p-2 border border-gray-300 dark:border-white/20 rounded-xl hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
@@ -115,7 +121,8 @@ export default function Projects() {
         </div>
 
         {/* UNIFIED DATA VIEW — contains the one and only Import button */}
-        {userId && (
+        {userId && view === 'board' && <ProjectBoard userId={userId} refreshKey={refreshKey} />}
+        {userId && view === 'list' && (
           <UniversalDataView
             key={refreshKey}
             userId={userId}
