@@ -11,6 +11,7 @@ import {
   applyAgentUpdates,
   undoAgentUpdates,
   type AddAction,
+  findRecords,
   type UpdateAction,
 } from '@/lib/agentTools'
 import { buildSystemPrompt, stripJson, resolveOperations, type RawOp } from '@/lib/agentPlan'
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ actions: [], fallback: true, degraded: true })
       }
 
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const callModel = () => fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -137,6 +138,14 @@ export async function POST(req: NextRequest) {
           max_tokens: 3500,
         }),
       })
+
+      // Groq sometimes says "busy" (429). Wait a moment and try again before bothering the owner.
+      let res = await callModel()
+      for (const wait of [2500, 4500]) {
+        if (res.status !== 429) break
+        await new Promise(r => setTimeout(r, wait))
+        res = await callModel()
+      }
 
       if (!res.ok) {
         const errText = await res.text()
@@ -163,6 +172,38 @@ export async function POST(req: NextRequest) {
         if (!ok) notes.push(lockedText((a as any).module))
         return ok
       })
+
+      // A sale needs a phone number so the invoice can go on WhatsApp: use the CRM one, or ask once.
+      const hasPhone = (r: Record<string, any>) => Object.keys(r).some(k => /phone|mobile|whats/i.test(k) && String(r[k]).trim())
+      const askedBefore = history.some(h => h.role === 'assistant' && /phone|whatsapp|number/i.test(h.content))
+      let phoneQuestion = ''
+      const crmPhones = new Map<string, string>()
+      for (const a of actions) {
+        if (a.type === 'add' && a.module === 'CRM') {
+          for (const r of a.records) {
+            const ph = String(r['Phone'] ?? '').trim()
+            const nm = String(r['Name'] ?? '').trim().toLowerCase()
+            if (ph && nm) crmPhones.set(nm, ph)
+          }
+        }
+      }
+      for (const a of actions) {
+        if (a.type !== 'add' || a.module !== 'Invoices') continue
+        for (const r of a.records) {
+          if (hasPhone(r)) continue
+          const name = String(r['Client Name'] ?? '').trim()
+          if (!name) continue
+          const sameBatch = crmPhones.get(name.toLowerCase())
+          if (sameBatch) { r['Client Phone'] = sameBatch; continue }
+          try {
+            const { matches } = await findRecords(user.id, 'CRM', name)
+            const known = matches.length === 1 ? String(matches[0].data['Phone'] ?? '').trim() : ''
+            if (known) { r['Client Phone'] = known; continue }
+          } catch { /* ask below */ }
+          if (!askedBefore && !phoneQuestion) phoneQuestion = `What is ${name}'s phone number? I'll keep it so you can send the invoice on WhatsApp. Say "skip" to save without it.`
+        }
+      }
+      if (phoneQuestion) return NextResponse.json({ actions: [], notes: [phoneQuestion], reply: phoneQuestion })
 
       if (actions.length === 0) {
         if (notes.length > 0) {

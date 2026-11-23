@@ -55,7 +55,7 @@ Each operation is one of:
 Modules: ${AGENT_MODULES.join(', ')}.
 Field names to use:
 - CRM: Name, Email, Phone, Lead Source, Status (New, Contacted, Converted, Lost), Notes, Next Follow-up Date, Business Type
-- Invoices: Client Name, Line Items, Amount, Payment Status (Paid, Unpaid, Overdue), Issue Date, Due Date, Notes. Line Items is the list of what was sold, written as "Item xQuantity @UnitPrice" separated by semicolons, for example "Laptop x2 @50000; Mouse x5 @500". When the owner says what was sold ("invoice Sharma for 2 laptops at 50k each"), fill Line Items and set Amount to the total before tax.
+- Invoices: Client Name, Client Phone, Line Items, Amount, Payment Status (Paid, Unpaid, Overdue), Issue Date, Due Date, Notes. Line Items is the list of what was sold, written as "Item xQuantity @UnitPrice" separated by semicolons, for example "Laptop x2 @50000; Mouse x5 @500". When the owner says what was sold ("invoice Sharma for 2 laptops at 50k each"), fill Line Items and set Amount to the total before tax.
 - Recurring Invoices: Client Name, Description, Amount, Frequency (Monthly, Weekly, Quarterly, Yearly), Next Date, Status (Active, Paused, Ended), Notes. "Prithviraj monthly maintenance 2000, bill on the 1st" is a Recurring Invoices record with Frequency Monthly and Next Date the coming 1st.
 - Sales Orders: Order No, Client Name, Line Items, Amount, Order Date, Delivery Date, Status (Open, Confirmed, Delivered, Cancelled), Notes. A customer who has ordered but not been billed yet is a Sales Orders record, not an Invoice.
 - Support Tickets: Ticket No, Customer, Subject, Priority (Urgent, High, Medium, Low), Status (Open, In Progress, Waiting, Resolved, Closed), Opened (today unless said), Due Date (leave out; the system works it out from Priority), Assigned To, Notes. "Mehta says the invoice PDF will not open, high priority" is a Support Tickets record. "Mehta's ticket is fixed" is an update with Status Resolved.
@@ -71,7 +71,7 @@ Field names to use:
 - Inventory: Item Name, SKU, Category, Current Stock, Reorder Level, Unit Price (selling price), Cost Price (what it cost you), Warehouse (where it is kept; leave out for the main place), Batch No, Serial No, Expiry Date. The same item can have one Inventory record per warehouse.
 - HR: Name, Role, Department, Salary (monthly), Joining Date, PF (Yes to deduct provident fund), ESI (Yes to deduct ESI), TDS (Yes to deduct income tax). "Turn on PF for Simran" is an update with PF Yes.
 - Projects: Project Name, Client, Status (Planning, In Progress, Review, Done), Start Date, Deadline, Description
-- Expenses: Vendor, Category, Amount, Date, Type (Expense, Bill), Status (Paid, Unpaid), Due Date, Notes. "Paid rent 20k" is an Expense with Status Paid; "bill from Sharma Traders 15k due 30th" is a Bill with Status Unpaid.
+- Expenses: Vendor, Category, Amount (before GST), GST Amount (GST the supplier charged us, claimed back later), Bill No, Date, Type (Expense, Bill), Status (Paid, Unpaid), Due Date, Notes. "Paid rent 20k" is an Expense with Status Paid; "bill from Sharma Traders 15k due 30th" is a Bill with Status Unpaid.
 - Vendors: Vendor Name, Email, Phone, Category, Notes
 - Purchase Orders: PO Number, Vendor, Item, Quantity, Amount, Order Date, Expected Date, Status (Draft, Ordered, Received, Cancelled), Notes
 - Recruiting: Candidate Name, Role, Department, Stage (Applied, Screening, Interview, Offer, Hired, Rejected), Email, Phone, Interview Date
