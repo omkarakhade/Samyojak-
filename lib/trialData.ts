@@ -127,13 +127,13 @@ export async function purgeExpiredTrials(): Promise<number> {
 
 // ───────────── reminder emails ─────────────
 
-function noticeText(day: number, deleteOn: string) {
+function noticeText(day: number, deleteOn: string, daysLeft: number) {
   const link = 'https://www.samyojak-erp.com/pricing'
   if (day < 14) {
-    const left = 14 - day
+    const left = Math.max(1, Math.min(14 - day, daysLeft))
     return {
-      subject: `${left} days left in your Samyojak trial`,
-      body: `Your free trial ends in ${left} days. Choose a plan any time and everything you have added moves with you automatically. Short on budget? A weekly plan lets you pay week by week and keep your data.`,
+      subject: `${left} ${left === 1 ? 'day' : 'days'} left in your Samyojak trial`,
+      body: `Your free trial ends in ${left} ${left === 1 ? 'day' : 'days'}. Choose a plan any time and everything you have added moves with you automatically. Short on budget? A weekly plan lets you pay week by week and keep your data.`,
       link,
     }
   }
@@ -184,7 +184,8 @@ export async function sendTrialNotices(): Promise<{ sent: number; configured: bo
     const deleteOn = new Date(startMs + DATA_KEEP_DAYS * DAY).toLocaleDateString('en-IN', {
       day: 'numeric', month: 'long', year: 'numeric',
     })
-    const t = noticeText(latest, deleteOn)
+    const daysLeft = Math.ceil((startMs + 14 * DAY - Date.now()) / DAY)
+    const t = noticeText(latest, deleteOn, daysLeft)
     try {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
