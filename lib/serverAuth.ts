@@ -18,7 +18,7 @@ export const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
  * never treated as the admin. team_member is true for them; billing routes refuse it.
  * Returns null if the owner has since removed this person.
  */
-async function toWorkspaceUser<T extends { id: string; email?: string | null; app_metadata?: any; user_metadata?: any }>(u: T): Promise<T | null> {
+export async function toWorkspaceUser<T extends { id: string; email?: string | null; app_metadata?: any; user_metadata?: any }>(u: T): Promise<T | null> {
   const ownerId = u?.app_metadata?.team_owner
   if (typeof ownerId !== 'string') return u
   if (!isSafeId(ownerId)) return null

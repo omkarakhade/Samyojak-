@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabaseServer'
 import { getSubscriptionByUserId } from '@/lib/subscriptionDb'
 import { getTrialStatus } from '@/lib/trialLogic'
+import { toWorkspaceUser } from '@/lib/serverAuth'
 
 const ADMIN_EMAIL = 'omkarakhade083@gmail.com'
 
@@ -13,8 +14,12 @@ export async function GET() {
     return NextResponse.json({ isLocked: true, status: 'no_session' }, { status: 401 })
   }
 
+  // A team member shares the owner's trial or plan.
+  const user = await toWorkspaceUser(session.user)
+  if (!user) return NextResponse.json({ isLocked: true, status: 'no_session' }, { status: 401 })
+
   // Admin and demo accounts are never locked
-  if (session.user.email === ADMIN_EMAIL || session.user.app_metadata?.is_demo === true) {
+  if (user.email === ADMIN_EMAIL || user.app_metadata?.is_demo === true) {
     return NextResponse.json({
       isLocked: false,
       daysRemaining: 0,
@@ -25,7 +30,7 @@ export async function GET() {
     })
   }
 
-  const subRecord = await getSubscriptionByUserId(session.user.id)
+  const subRecord = await getSubscriptionByUserId(user.id)
   const trialStatus = getTrialStatus(subRecord?.data)
 
   return NextResponse.json(trialStatus)
