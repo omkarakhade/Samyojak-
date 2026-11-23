@@ -11,6 +11,7 @@ import { DATA_KEEP_DAYS } from '@/lib/trialLogic'
 
 const DAY = 24 * 60 * 60 * 1000
 const MOVE_CHUNK = 10 // rows per Airtable request; marked as moved right after each one
+const MOVE_TO_AIRTABLE = false
 const NOTICE_DAYS = [7, 12, 14, 25]
 
 /** Only one mover per user at a time (webhook and daily job can overlap). */
@@ -53,6 +54,8 @@ export async function migrateTrialData(userId: string, budgetMs = 40_000): Promi
   if (!sub) return { done: false, moved: 0, skipped: 'no subscription' }
   if (sub.data_store !== 'supabase') return { done: true, moved: 0, skipped: 'already on Airtable' }
   if (sub.subscription_status !== 'active') return { done: false, moved: 0, skipped: 'not paid' }
+  // Paid accounts keep their data in Supabase (no record cap, nothing to move).
+  if (!MOVE_TO_AIRTABLE) return { done: true, moved: 0, skipped: 'stays on Supabase' }
 
   if (!(await claimLock(userId))) return { done: false, moved: 0, skipped: 'another move is running' }
 

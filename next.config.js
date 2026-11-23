@@ -6,6 +6,13 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        // the old vercel.app address must never be where people sign in (sessions are per-domain)
+        source: '/:path*',
+        has: [{ type: 'host', value: 'samyojak.vercel.app' }],
+        destination: 'https://www.samyojak-erp.com/:path*',
+        permanent: true,
+      },
+      {
         source: '/:path*',
         has: [
           {

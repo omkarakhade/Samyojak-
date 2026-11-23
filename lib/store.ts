@@ -23,7 +23,7 @@ const BASE = () => (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRT
 const AT_URL = () => `https://api.airtable.com/v0/${BASE()}/UserData`
 const AT_HEADERS = () => ({ Authorization: `Bearer ${TOKEN()}`, 'Content-Type': 'application/json' })
 
-export const MAX_TRIAL_ROWS = 3000
+export const MAX_TRIAL_ROWS = 20000
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const AT_ID_RE = /^rec[A-Za-z0-9]{10,20}$/
@@ -52,16 +52,18 @@ export async function getStoreKind(userId: string): Promise<StoreKind> {
   assertUser(userId)
   const hit = kindCache.get(userId)
   if (hit && hit.expires > Date.now()) return hit.kind
-  let kind: StoreKind = 'airtable'
+  // Everyone lives in Supabase now. Airtable's free base is capped at 1,000 records, so it is only
+  // used for accounts explicitly marked 'airtable' (old data).
+  let kind: StoreKind = 'supabase'
   try {
     const { data } = await createSupabaseAdminClient()
       .from('subscriptions')
       .select('data_store')
       .eq('user_id', userId)
       .maybeSingle()
-    if (data?.data_store === 'supabase') kind = 'supabase'
+    if (data?.data_store === 'airtable') kind = 'airtable'
   } catch {
-    // if the check fails, fall back to Airtable (the original behaviour)
+    // if the check fails, stay on Supabase
   }
   kindCache.set(userId, { kind, expires: Date.now() + 15_000 })
   return kind

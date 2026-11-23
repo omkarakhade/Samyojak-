@@ -62,6 +62,9 @@ export async function POST(req: NextRequest) {
     if (!subject) return NextResponse.json({ error: 'Subject is required' }, { status: 400 })
     if (!description) return NextResponse.json({ error: 'Please describe your issue' }, { status: 400 })
 
+    let saved: any = { id: null }
+    let saveFailed = false
+    try {
     const res = await fetch(TABLE_URL, {
       method: 'POST',
       headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
@@ -79,7 +82,13 @@ export async function POST(req: NextRequest) {
       }),
     })
     if (!res.ok) throw new Error(`Airtable ${res.status}`)
-    const saved = await res.json()
+    saved = await res.json()
+    } catch (e: any) {
+      // Ticket table unavailable (for example full). The email below still reaches us.
+      saveFailed = true
+      console.error('support save failed:', e.message)
+    }
+    if (saveFailed && !process.env.RESEND_API_KEY) throw new Error('ticket not saved')
 
     // Optional email notification (only if RESEND_API_KEY is set)
     const RESEND_KEY = process.env.RESEND_API_KEY
