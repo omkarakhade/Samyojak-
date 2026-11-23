@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, isSafeId } from '@/lib/serverAuth'
+import { createSupabaseAdminClient } from '@/lib/supabaseAdmin'
 
-const TOKEN = (process.env.AIRTABLE_TOKEN || process.env.NEXT_PUBLIC_AIRTABLE_TOKEN) || ''
-const BASE = (process.env.AIRTABLE_BASE_ID || process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID) || ''
-const TABLE_URL = `https://api.airtable.com/v0/${BASE}/Support_Tickets`
 const SUPPORT_EMAIL = 'hello.samyojak@gmail.com'
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Emergency']
@@ -22,21 +20,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 })
   }
   try {
-    const records: any[] = []
-    let offset: string | undefined
-    do {
-      const params = new URLSearchParams()
-      params.set('filterByFormula', `{User ID}="${user.id}"`)
-      params.set('pageSize', '100')
-      if (offset) params.set('offset', offset)
-      const res = await fetch(`${TABLE_URL}?${params}`, {
-        headers: { Authorization: `Bearer ${TOKEN}` },
-      })
-      if (!res.ok) throw new Error(`Airtable ${res.status}`)
-      const data = await res.json()
-      records.push(...(data.records || []))
-      offset = data.offset
-    } while (offset)
+    const { data, error } = await createSupabaseAdminClient()
+      .from('support_tickets')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(200)
+    if (error) throw new Error(error.message)
+    // same shape the page already reads
+    const records = (data || []).map((t: any) => ({
+      id: t.id,
+      fields: {
+        Subject: t.subject, Description: t.description, Priority: t.priority, Category: t.category,
+        Status: t.status, 'User Email': t.user_email, 'User ID': t.user_id,
+        'Created At': String(t.created_at).slice(0, 10),
+      },
+    }))
     return NextResponse.json({ records })
   } catch (e: any) {
     console.error('support GET error:', e.message)
@@ -62,33 +61,12 @@ export async function POST(req: NextRequest) {
     if (!subject) return NextResponse.json({ error: 'Subject is required' }, { status: 400 })
     if (!description) return NextResponse.json({ error: 'Please describe your issue' }, { status: 400 })
 
-    let saved: any = { id: null }
-    let saveFailed = false
-    try {
-    const res = await fetch(TABLE_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fields: {
-          Subject: subject,
-          Description: description,
-          Priority: priority,
-          Category: category,
-          Status: 'Open',
-          'User Email': email,
-          'User ID': user.id,
-          'Created At': new Date().toISOString().split('T')[0],
-        },
-      }),
-    })
-    if (!res.ok) throw new Error(`Airtable ${res.status}`)
-    saved = await res.json()
-    } catch (e: any) {
-      // Ticket table unavailable (for example full). The email below still reaches us.
-      saveFailed = true
-      console.error('support save failed:', e.message)
-    }
-    if (saveFailed && !process.env.RESEND_API_KEY) throw new Error('ticket not saved')
+    const { data: saved, error: saveErr } = await createSupabaseAdminClient()
+      .from('support_tickets')
+      .insert({ user_id: user.id, user_email: email, subject, description, priority, category })
+      .select('id')
+      .single()
+    if (saveErr) throw new Error(saveErr.message)
 
     // Optional email notification (only if RESEND_API_KEY is set)
     const RESEND_KEY = process.env.RESEND_API_KEY
@@ -113,7 +91,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, ticketId: saved.id })
+    return NextResponse.json({ success: true, ticketId: saved?.id })
   } catch (e: any) {
     console.error('support POST error:', e.message)
     return NextResponse.json({ error: 'Could not submit your ticket.' }, { status: 500 })
