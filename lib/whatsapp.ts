@@ -21,18 +21,33 @@ function field(d: Record<string, any>, pattern: RegExp): string {
   return k ? String(d[k]).trim() : ''
 }
 
-/** Link for an invoice record, or '' when there is no phone number or the invoice is already paid. */
+/** Link for an invoice record with the whole invoice written out, or '' when there is no phone number. */
 export function invoiceWhatsapp(data: Record<string, any>, defaultCode = '91'): string {
   const phone = field(data, /phone|mobile|whats/i)
   if (!phone) return ''
   const status = field(data, /status/i)
-  if (/^paid$/i.test(status)) return ''
+  const paid = /^paid$/i.test(status)
   const name = field(data, /client.?name|^client$|customer|^name$/i)
   const number = field(data, /invoice.?(no|number|#)|^number$/i)
-  const amount = field(data, /^amount|^total|balance/i)
+  const items = field(data, /^line.?items$/i)
+  const amount = field(data, /^amount$/i)
+  const taxRate = field(data, /^tax.?rate$/i)
+  const taxAmt = field(data, /^tax.?amount$/i)
+  const total = field(data, /^total$/i) || (amount && !taxAmt ? amount : '')
   const due = field(data, /due/i)
-  const parts = ['Hi' + (name ? ' ' + name : '') + ',']
-  parts.push('this is a reminder for ' + (number ? 'invoice ' + number : 'your invoice') + (amount ? ' of ' + amount : '') + (due ? ', due on ' + due : '') + '.')
-  parts.push('Please let me know once it is paid. Thank you.')
-  return whatsappLink(phone, parts.join(' '), defaultCode)
+  const lines: string[] = ['Hi' + (name ? ' ' + name : '') + ',']
+  lines.push(paid ? 'Thank you, we have received your payment.' : 'Here is your invoice.')
+  lines.push('')
+  lines.push('Invoice' + (number ? ' ' + number : ''))
+  if (items) lines.push('Items: ' + items)
+  if (amount && taxAmt) lines.push('Amount: ' + amount)
+  if (taxAmt) lines.push((taxRate ? 'Tax (' + taxRate + ')' : 'Tax') + ': ' + taxAmt)
+  if (total) lines.push('Total: ' + total)
+  if (!paid && due) lines.push('Due date: ' + due)
+  lines.push('Status: ' + (paid ? 'Paid' : 'Unpaid'))
+  if (!paid) {
+    lines.push('')
+    lines.push('Please let me know once it is paid. Thank you.')
+  }
+  return whatsappLink(phone, lines.join('\n'), defaultCode)
 }

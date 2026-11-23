@@ -18,10 +18,11 @@ test('link opens wa.me with an encoded message', () => {
   assert.equal(whatsappLink('', 'x'), '')
 })
 
-test('invoice reminder uses the client, amount and due date; paid or phoneless invoices get none', () => {
-  const link = invoiceWhatsapp({ 'Client Name': 'Sharma', 'Client Phone': '9876543210', Amount: '50000', 'Due Date': '2026-12-01', Status: 'Unpaid' })
+test('invoice message has the whole invoice; paid ones get a thank-you; no phone gets none', () => {
+  const link = invoiceWhatsapp({ 'Client Name': 'Sharma', 'Client Phone': '9876543210', 'Line Items': 'Laptop x1 @12000', Amount: '12000', 'Tax Rate': '18%', 'Tax Amount': '2160', Total: '14160', 'Due Date': '2026-12-01', 'Payment Status': 'Unpaid' })
   const text = decodeURIComponent(link.split('text=')[1])
-  assert.ok(text.includes('Sharma') && text.includes('50000') && text.includes('2026-12-01'))
-  assert.equal(invoiceWhatsapp({ 'Client Name': 'A', 'Client Phone': '9876543210', Status: 'Paid' }), '')
-  assert.equal(invoiceWhatsapp({ 'Client Name': 'A', Status: 'Unpaid' }), '')
+  for (const part of ['Sharma', 'Laptop x1', '12000', '18%', '2160', '14160', '2026-12-01', 'Unpaid']) assert.ok(text.includes(part), part)
+  const paid = decodeURIComponent(invoiceWhatsapp({ 'Client Name': 'A', 'Client Phone': '9876543210', Total: '500', 'Payment Status': 'Paid' }).split('text=')[1])
+  assert.ok(paid.includes('received your payment') && paid.includes('Paid') && !paid.includes('Due date'))
+  assert.equal(invoiceWhatsapp({ 'Client Name': 'A', 'Payment Status': 'Unpaid' }), '')
 })

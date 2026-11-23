@@ -830,7 +830,11 @@ export default function AIAssistant() {
       if (questionOnly || looksLikeQuestion(q) || looksLikeReportRequest(q)) {
         await answerQuestion(q)
       } else {
-        const { ok, data } = await callAgent({ action: 'plan', message: q })
+        const history = messages
+          .filter(m => m.text && !m.card)
+          .slice(-4)
+          .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }))
+        const { ok, data } = await callAgent({ action: 'plan', message: q, history })
 
         if (!ok) {
           addAiMessage({ text: data.error || 'Something went wrong. Please try again.' })

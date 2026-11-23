@@ -100,6 +100,13 @@ export async function POST(req: NextRequest) {
       if (!message) {
         return NextResponse.json({ error: 'message is required.' }, { status: 400 })
       }
+      // The last few messages, so a short reply like "Raj" answers the agent's own question.
+      const history: { role: 'user' | 'assistant'; content: string }[] = Array.isArray(body.history)
+        ? body.history
+            .filter((h: any) => h && (h.role === 'user' || h.role === 'assistant') && typeof h.content === 'string' && h.content.trim())
+            .slice(-4)
+            .map((h: any) => ({ role: h.role, content: String(h.content).trim().slice(0, 500) }))
+        : []
       const limit = checkAiLimit(user, 'agent')
       if (!limit.ok) {
         return NextResponse.json({ error: limit.message }, { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } })
@@ -121,6 +128,7 @@ export async function POST(req: NextRequest) {
           model: GROQ_AGENT_MODEL,
           messages: [
             { role: 'system', content: buildSystemPrompt() },
+            ...history,
             { role: 'user', content: message },
           ],
           response_format: { type: 'json_object' },
