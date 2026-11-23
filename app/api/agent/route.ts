@@ -14,6 +14,8 @@ import {
   findRecords,
   type UpdateAction,
 } from '@/lib/agentTools'
+import { createSupabaseAdminClient } from '@/lib/supabaseAdmin'
+import { cleanNote, notesBlock, MAX_NOTES } from '@/lib/agentMemory'
 import { buildSystemPrompt, stripJson, resolveOperations, type RawOp } from '@/lib/agentPlan'
 
 export const maxDuration = 60
@@ -119,6 +121,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ actions: [], fallback: true, degraded: true })
       }
 
+      // What this owner has taught the agent before.
+      const db = createSupabaseAdminClient()
+      let learned: string[] = []
+      try {
+        const { data: nrows } = await db.from('agent_notes').select('note').eq('user_id', user.id).order('created_at', { ascending: false }).limit(12)
+        learned = (nrows || []).map((r: any) => String(r.note))
+      } catch { /* no notes this time */ }
       const callModel = () => fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -128,7 +137,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model: GROQ_AGENT_MODEL,
           messages: [
-            { role: 'system', content: buildSystemPrompt() },
+            { role: 'system', content: buildSystemPrompt() + notesBlock(learned) },
             ...history,
             { role: 'user', content: message },
           ],
@@ -165,8 +174,27 @@ export async function POST(req: NextRequest) {
       const parsed = stripJson(content)
       const ops: RawOp[] = Array.isArray(parsed?.operations) ? parsed.operations : []
 
+      // Learn: save a habit the owner taught, or drop one they asked to forget.
+      let learnedNote = ''
+      try {
+        const rem = cleanNote(parsed?.remember)
+        if (rem && !learned.some(n => n.toLowerCase() === rem.toLowerCase())) {
+          await db.from('agent_notes').insert({ user_id: user.id, note: rem })
+          const { data: all } = await db.from('agent_notes').select('id').eq('user_id', user.id).order('created_at', { ascending: false })
+          if (all && all.length > MAX_NOTES) await db.from('agent_notes').delete().in('id', all.slice(MAX_NOTES).map((r: any) => r.id))
+          learnedNote = `I'll remember: ${rem}`
+        }
+        const forget = typeof parsed?.forget === 'string' ? parsed.forget.trim().toLowerCase().slice(0, 80) : ''
+        if (forget.length >= 3) {
+          const { data: mine } = await db.from('agent_notes').select('id, note').eq('user_id', user.id)
+          const gone = (mine || []).filter((r: any) => String(r.note).toLowerCase().includes(forget)).map((r: any) => r.id)
+          if (gone.length) { await db.from('agent_notes').delete().in('id', gone); learnedNote = 'Okay, I have forgotten that.' }
+        }
+      } catch (e: any) { console.error('agent notes error:', e?.message) }
+
       const resolved = await resolveOperations(user.id, ops)
       const notes = resolved.notes
+      if (learnedNote) notes.push(learnedNote)
       const actions = resolved.actions.filter(a => {
         const ok = moduleAllowed(ent, (a as any).module)
         if (!ok) notes.push(lockedText((a as any).module))
