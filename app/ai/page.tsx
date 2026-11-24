@@ -434,6 +434,7 @@ export default function AIAssistant() {
   const [noticedList, setNoticedList] = useState<Suggestion[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const [pins, setPins] = useState<string[]>([])
+  const chatRestored = useRef(false)
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -449,6 +450,15 @@ export default function AIAssistant() {
       } catch { /* treated as no access */ }
       setCanUseAI(hasAI)
       setChecking(false)
+      try {
+        // Bring back the conversation after leaving the page. Unconfirmed cards are closed: their data is gone.
+        const raw = localStorage.getItem(`samyojak_chat_${user.id}`)
+        const saved = raw ? JSON.parse(raw) : []
+        if (Array.isArray(saved) && saved.length) {
+          setMessages(saved.map((m: any) => (m && m.status === 'pending' ? { ...m, status: 'cancelled' } : m)))
+        }
+      } catch { /* storage unavailable */ }
+      chatRestored.current = true
       if (hasAI) {
         // A brand new account has nothing to summarise, so skip the overview call and show the welcome instead.
         loadSummary().then(data => {
@@ -478,6 +488,16 @@ export default function AIAssistant() {
     setCurrencyState(c)
     try { localStorage.setItem('samyojak_currency', c) } catch { /* storage unavailable */ }
   }
+
+  useEffect(() => {
+    if (!chatRestored.current || !userId) return
+    try {
+      let keep = messages.slice(-40)
+      let json = JSON.stringify(keep)
+      while (json.length > 300_000 && keep.length > 4) { keep = keep.slice(Math.ceil(keep.length / 2)); json = JSON.stringify(keep) }
+      localStorage.setItem(`samyojak_chat_${userId}`, json)
+    } catch { /* storage unavailable or full */ }
+  }, [messages, userId])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })

@@ -19,5 +19,6 @@ test('stock answer: enough, short, missing', () => {
   const rows = [{ data: { 'Item Name': 'Red Dress', 'Current Stock': '8' } }, { data: { 'Item Name': 'Red Dress XL', 'Current Stock': 7 } }, { data: { 'Item Name': 'Blue Dress', 'Current Stock': 50 } }]
   assert.ok(stockAnswer(rows, 'red dress', 12).startsWith('Yes'))
   assert.ok(stockAnswer(rows, 'red dress', 20).includes('5 short'))
-  assert.ok(stockAnswer(rows, 'green shirt', 3).includes('could not find'))
+  assert.ok(stockAnswer(rows, 'green shirt', 3).startsWith('No.'))
+  assert.ok(stockAnswer(rows, 'red dresses', 12).startsWith('Yes')) // plural matches
 })

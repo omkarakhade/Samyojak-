@@ -209,7 +209,7 @@ export async function POST(req: NextRequest) {
       })
 
       // A lead who "wants 12 red dresses": always check Inventory, even if the model forgot to.
-      if (!notes.some(n => /in stock|could not find|not enough/i.test(n)) && actions.some(a => a.type === 'add' && a.module === 'CRM')) {
+      if (!notes.some(n => /in stock|Inventory|not enough|short for/i.test(n))) {
         const m = message.match(/\bwants?\s+(\d{1,5})\s+([^,.;\n"]{2,60})/i)
         if (m) {
           try {

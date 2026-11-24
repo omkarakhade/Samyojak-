@@ -107,6 +107,7 @@ RULES:
 - Short answers: if earlier messages are shown, a short reply such as "Raj" or "yes paid" answers your own last question. Use it together with the earlier message.
 - GST: invoices get GST 18% by default. If the owner names another rate ("5% GST") put "Tax Rate" with the number on the Invoices record. If they say "no GST" use Tax Rate 0. If they say the price includes GST ("12000 including GST") add "Tax Inclusive":"yes". Amount is always the number the owner said.
 - A lead or customer who wants items ("Vidya wants 12 red dresses") is a CRM record (Name, Status New, Notes with what she wants) PLUS {"op":"check_stock","item":"red dress","quantity":12}. The system looks in Inventory and tells the owner if there is enough.
+- "Follow up with Vidya on Friday" or "call Neha tomorrow" for someone already in CRM is an update of that CRM record: {"op":"update","module":"CRM","find":"Vidya","changes":{"Next Follow-up Date":"YYYY-MM-DD"}}. Never add the person again. If no date is given ("Follow up with Vidya on"), return {"operations":[],"ask":"Which date should I set for Vidya's follow-up?"}.
 - Teaching: when the owner teaches you a habit ("always ask for the supplier's GST number", "from now on add 5% GST on services") or corrects how you recorded something ("no, also add the bill number"), add "remember":"one short rule written as a general habit" next to operations. "forget":"a few words of the habit" removes one. Do not use remember for one-off facts about a customer.
 - If the message is a question, a greeting, or has nothing to record or change, return {"operations":[],"reply":""}.
 - You cannot delete records or send messages. For those, return {"operations":[],"reply":""}.
@@ -149,6 +150,25 @@ function cleanChanges(raw: unknown): AgentRecord | null {
 }
 
 /** Turn the model's operations into concrete actions the user can review. */
+async function dropExistingLeads(userId: string, acts: AgentAction[], notes: string[]): Promise<AgentAction[]> {
+  if (!acts.some(a => a.type === 'add' && a.module === 'CRM')) return acts
+  let existing: string[] = []
+  try {
+    existing = (await listUserRecords(userId, 'CRM')).map(r => String(r.data['Name'] ?? '').trim().toLowerCase()).filter(Boolean)
+  } catch { return acts }
+  const out: AgentAction[] = []
+  for (const a of acts) {
+    if (a.type !== 'add' || a.module !== 'CRM') { out.push(a); continue }
+    const fresh = a.records.filter(r => {
+      const n = String(r['Name'] ?? '').trim().toLowerCase()
+      if (n && existing.includes(n)) { notes.push(`${String(r['Name']).trim()} is already in your CRM, so I did not add a second one.`); return false }
+      return true
+    })
+    if (fresh.length) out.push({ ...a, records: fresh })
+  }
+  return out
+}
+
 export async function resolveOperations(userId: string, ops: RawOp[]) {
   const actions: AgentAction[] = []
   const notes: string[] = []
@@ -159,7 +179,9 @@ export async function resolveOperations(userId: string, ops: RawOp[]) {
     if (!op || typeof op !== 'object') continue
 
     if (op.op === 'add') {
-      const cleaned = sanitizeActions([{ type: 'add', module: op.module, records: op.records }])
+      let cleaned = sanitizeActions([{ type: 'add', module: op.module, records: op.records }])
+      // The same lead should not be added twice ("Vidya" already in CRM).
+      cleaned = await dropExistingLeads(userId, cleaned, notes)
       for (const a of cleaned) actions.push(a)
       continue
     }

@@ -20,7 +20,9 @@ export function notesBlock(notes: string[]): string {
 
 /** Stock answer for "a lead wants 12 red dresses": adds up every Inventory row whose name contains the words. */
 export function stockAnswer(rows: { data: Record<string, any> }[], item: string, quantity: number): string {
-  const words = item.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 1)
+  // "dresses" and "dress" should match each other, so compare word stems.
+  const stem = (w: string) => (w.length > 3 ? w.replace(/(es|s)$/, '') : w)
+  const words = item.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 1).map(stem)
   if (words.length === 0) return ''
   let have = 0
   let found = ''
@@ -32,9 +34,10 @@ export function stockAnswer(rows: { data: Record<string, any> }[], item: string,
       if (!found) found = name
     }
   }
-  if (!found) return `I could not find "${item}" in Inventory.`
+  if (!found) return `No. There is no "${item}" in Inventory, so we cannot supply ${quantity > 0 ? quantity : 'any'} yet.`
   const q = Number.isFinite(quantity) && quantity > 0 ? quantity : 0
   if (!q) return `${found}: ${have} in stock.`
+  if (have <= 0) return `No. ${found} is out of stock (0 in Inventory), so we cannot supply ${q} yet.`
   if (have >= q) return `Yes, ${found} is available: ${have} in stock, enough for ${q} (${have - q} left after).`
   return `Not enough ${found}: ${have} in stock, ${q - have} short for ${q}.`
 }
