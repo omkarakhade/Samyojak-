@@ -412,6 +412,11 @@ const PIN_LABELS: Record<string, string> = {
   bills_due: 'Bills to pay',
 }
 
+// Kept outside the component so the conversation survives moving to another page and back in the same session.
+let chatCache: Message[] = []
+let chatCacheUser = ''
+const rowsCache: Record<number, Record<string, string>[]> = {}
+
 export default function AIAssistant() {
   const [plan, setPlan] = useState('')
   const [userId, setUserId] = useState('')
@@ -420,7 +425,7 @@ export default function AIAssistant() {
   const [ent, setEnt] = useState<{ status: string; daysRemaining: number; planName: string; modules: string[]; message: string } | null>(null)
   const lockedMsg = useRef('')
   const [checking, setChecking] = useState(true)
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>(() => chatCache)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [busyIndex, setBusyIndex] = useState<number | null>(null)
@@ -428,7 +433,7 @@ export default function AIAssistant() {
   const [greetingLoading, setGreetingLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
-  const migrationRows = useRef<Record<number, Record<string, string>[]>>({})
+  const migrationRows = useRef<Record<number, Record<string, string>[]>>(rowsCache)
   const [summary, setSummary] = useState<Summary | null>(null)
   const [welcomeDone, setWelcomeDone] = useState(false)
   const [noticedList, setNoticedList] = useState<Suggestion[]>([])
@@ -452,10 +457,14 @@ export default function AIAssistant() {
       setChecking(false)
       try {
         // Bring back the conversation after leaving the page. Unconfirmed cards are closed: their data is gone.
+        if (chatCacheUser && chatCacheUser !== user.id) { chatCache = []; setMessages([]) }
+        chatCacheUser = user.id
         const raw = localStorage.getItem(`samyojak_chat_${user.id}`)
         const saved = raw ? JSON.parse(raw) : []
         if (Array.isArray(saved) && saved.length) {
-          setMessages(saved.map((m: any) => (m && m.status === 'pending' ? { ...m, status: 'cancelled' } : m)))
+          // Questions waiting for a yes stay visible. Only file imports are closed, because their rows live in memory.
+          const restored = saved.map((m: any) => (m && m.status === 'pending' && m.migration ? { ...m, status: 'cancelled' } : m))
+          setMessages(prev => (prev.length ? prev : restored))
         }
       } catch { /* storage unavailable */ }
       chatRestored.current = true
@@ -490,6 +499,7 @@ export default function AIAssistant() {
   }
 
   useEffect(() => {
+    if (messages.length > 0 || chatRestored.current) chatCache = messages
     if (!chatRestored.current || !userId) return
     try {
       let keep = messages.slice(-40)
