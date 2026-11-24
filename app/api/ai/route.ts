@@ -84,6 +84,10 @@ async function buildContext(userId?: string, allowed: string[] = []) {
   const paidInvoices = allInvoices.filter((i: any) =>
     (i['Payment Status'] || i.payment_status || i.Status || '').toLowerCase() === 'paid'
   ).length
+  const amountOf = (i: any) => Number(String(i['Amount'] ?? i['Total'] ?? '0').replace(/[^0-9.]/g, '')) || 0
+  const isPaid = (i: any) => String(i['Payment Status'] || i.payment_status || i.Status || '').toLowerCase() === 'paid'
+  const billedAmount = allInvoices.reduce((n: number, i: any) => n + amountOf(i), 0)
+  const unpaidAmount = allInvoices.filter((i: any) => !isPaid(i)).reduce((n: number, i: any) => n + Math.max(0, amountOf(i) - (Number(String(i['Amount Received'] ?? '0').replace(/[^0-9.]/g, '')) || 0)), 0)
   const overdueInvoices = allInvoices.filter((i: any) =>
     (i['Payment Status'] || i.payment_status || i.Status || '').toLowerCase().includes('overdue')
   ).length
@@ -111,7 +115,7 @@ async function buildContext(userId?: string, allowed: string[] = []) {
 
   return {
     leads: { total: totalLeads, new: newLeads, converted, conversionRate, topNames: topLeadNames },
-    invoices: { total: allInvoices.length, paid: paidInvoices, overdue: overdueInvoices },
+    invoices: { total: allInvoices.length, paid: paidInvoices, overdue: overdueInvoices, billedAmount, unpaidAmount },
     inventory: { total: allProducts.length, lowStock },
     hr: { total: allEmployees.length, totalPayroll },
     projects: { total: allProjects.length, inProgress },
@@ -206,6 +210,9 @@ INVOICES:
 - Total: ${context?.invoices.total || 0}
 - Paid: ${context?.invoices.paid || 0}
 - Overdue: ${context?.invoices.overdue || 0}
+- Total billed: ₹${context?.invoices.billedAmount || 0}
+- Still unpaid: ₹${context?.invoices.unpaidAmount || 0}
+(Amounts are in rupees. Never write dollar signs or invent money figures that are not listed here.)
 
 INVENTORY:
 - Products: ${context?.inventory.total || 0}

@@ -71,13 +71,12 @@ export default function AdminPanel() {
 
   const loadStats = async () => {
     try {
-      const { count } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-      setStats(prev => ({ ...prev, totalUsers: count || 0 }))
+      const { data: sess } = await supabase.auth.getSession()
+      const res = await fetch('/api/admin/users', { headers: { Authorization: `Bearer ${sess.session?.access_token || ''}` } })
+      const d = await res.json()
+      if (res.ok) setStats(prev => ({ ...prev, totalUsers: (d.users || []).length }))
     } catch {
-      // profiles table may not exist — use auth admin instead
-      setStats(prev => ({ ...prev, totalUsers: 0 }))
+      /* leave the count as it is */
     }
   }
 
@@ -85,15 +84,14 @@ export default function AdminPanel() {
     setUsersLoading(true)
     setUserError('')
     try {
-      // Try to get users via supabase auth admin
-      const { data, error } = await supabase.auth.admin.listUsers()
-      if (error) throw error
-      setUsers(data.users || [])
+      const { data: sess } = await supabase.auth.getSession()
+      const res = await fetch('/api/admin/users', { headers: { Authorization: `Bearer ${sess.session?.access_token || ''}` } })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || 'Could not load users')
+      setUsers(d.users || [])
+      setStats(prev => ({ ...prev, totalUsers: (d.users || []).length }))
     } catch (e: any) {
-      // Admin API may not be available client-side — show available info
-      setUserError('User list requires service role key. Showing current session user only.')
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) setUsers([user])
+      setUserError(e?.message || 'Could not load users.')
     }
     setUsersLoading(false)
   }
@@ -296,7 +294,6 @@ export default function AdminPanel() {
                 <div>
                   <p className="font-bold">Note</p>
                   <p>{userError}</p>
-                  <p className="mt-1 text-xs">To see all users, add SUPABASE_SERVICE_ROLE_KEY as a server-side env variable and use a server action instead of client-side auth.admin.listUsers().</p>
                 </div>
               </div>
             )}
@@ -340,7 +337,7 @@ export default function AdminPanel() {
                               background: u.user_metadata?.plan ? '#EDE9FE' : '#F1F5F9',
                               color: u.user_metadata?.plan ? '#8B5CF6' : '#64748B',
                             }}>
-                            {u.user_metadata?.plan || 'No Plan'}
+                            {u.user_metadata?.plan || 'No Plan'}{u.subscription_status ? ' · ' + (u.subscription_status === 'active' ? 'Paid' : u.subscription_status) : ''}
                           </span>
                         </td>
                         <td className="p-4 text-xs text-gray-400">

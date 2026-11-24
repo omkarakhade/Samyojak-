@@ -12,10 +12,11 @@ import {
   undoAgentUpdates,
   type AddAction,
   findRecords,
+  listUserRecords,
   type UpdateAction,
 } from '@/lib/agentTools'
 import { createSupabaseAdminClient } from '@/lib/supabaseAdmin'
-import { cleanNote, notesBlock, MAX_NOTES } from '@/lib/agentMemory'
+import { cleanNote, notesBlock, MAX_NOTES, stockAnswer } from '@/lib/agentMemory'
 import { buildSystemPrompt, stripJson, resolveOperations, type RawOp } from '@/lib/agentPlan'
 
 export const maxDuration = 60
@@ -128,14 +129,14 @@ export async function POST(req: NextRequest) {
         const { data: nrows } = await db.from('agent_notes').select('note').eq('user_id', user.id).order('created_at', { ascending: false }).limit(12)
         learned = (nrows || []).map((r: any) => String(r.note))
       } catch { /* no notes this time */ }
-      const callModel = () => fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const callModel = (model: string = GROQ_AGENT_MODEL) => fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: GROQ_AGENT_MODEL,
+          model,
           messages: [
             { role: 'system', content: buildSystemPrompt() + notesBlock(learned) },
             ...history,
@@ -155,6 +156,12 @@ export async function POST(req: NextRequest) {
         await new Promise(r => setTimeout(r, wait))
         res = await callModel()
       }
+      // Still busy: the smaller model has its own limit, so try it before giving up.
+      let usedModel: string = GROQ_AGENT_MODEL
+      if (res.status === 429) {
+        const second = await callModel(AI_MODELS.fast)
+        if (second.ok) { res = second; usedModel = AI_MODELS.fast }
+      }
 
       if (!res.ok) {
         const errText = await res.text()
@@ -169,7 +176,7 @@ export async function POST(req: NextRequest) {
       }
 
       const data = await res.json()
-      logAiUsage('agent', GROQ_AGENT_MODEL, data.usage)
+      logAiUsage('agent', usedModel, data.usage)
       const content: string = data.choices?.[0]?.message?.content || ''
       const parsed = stripJson(content)
       const ops: RawOp[] = Array.isArray(parsed?.operations) ? parsed.operations : []
@@ -200,6 +207,19 @@ export async function POST(req: NextRequest) {
         if (!ok) notes.push(lockedText((a as any).module))
         return ok
       })
+
+      // A lead who "wants 12 red dresses": always check Inventory, even if the model forgot to.
+      if (!notes.some(n => /in stock|could not find|not enough/i.test(n)) && actions.some(a => a.type === 'add' && a.module === 'CRM')) {
+        const m = message.match(/\bwants?\s+(\d{1,5})\s+([^,.;\n"]{2,60})/i)
+        if (m) {
+          try {
+            const rows = await listUserRecords(user.id, 'Inventory')
+            const item = m[2].trim().replace(/\b(pieces?|pcs|units?|of)\b/gi, '').replace(/\s+/g, ' ').trim().replace(/s$/i, '')
+            const ans = stockAnswer(rows as any, item, Number(m[1]))
+            if (ans) notes.push(ans)
+          } catch { /* skip */ }
+        }
+      }
 
       // A sale needs a phone number so the invoice can go on WhatsApp: use the CRM one, or ask once.
       const hasPhone = (r: Record<string, any>) => Object.keys(r).some(k => /phone|mobile|whats/i.test(k) && String(r[k]).trim())
