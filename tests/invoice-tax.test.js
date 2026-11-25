@@ -26,3 +26,17 @@ test('records that already have tax, or no amount, are left alone', () => {
   assert.equal(had.Total, 105)
   assert.equal(withInvoiceTax({ 'Client Name': 'X' })['Tax Amount'], undefined)
 })
+
+test('tax follows the invoice currency', () => {
+  const uk = withInvoiceTax({ Amount: 1000, Currency: 'GBP' })
+  assert.equal(uk['Tax Rate'], '20%')
+  assert.equal(uk['Tax Label'], 'VAT')
+  assert.equal(uk.Total, 1200)
+  const ae = withInvoiceTax({ Amount: 1000, Currency: 'aed' })
+  assert.equal(ae['Tax Amount'], 50)
+  const us = withInvoiceTax({ Amount: 1000, Currency: 'USD' })
+  assert.equal(us.Total, 1000)
+  const unknown = withInvoiceTax({ Amount: 1000, Currency: 'XYZ' })
+  assert.equal(unknown['Tax Label'], 'GST')
+  assert.equal(withInvoiceTax({ Amount: 1000, Currency: 'GBP', 'Tax Rate': 5 })['Tax Amount'], 50)
+})

@@ -440,6 +440,7 @@ export default function AIAssistant() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [pins, setPins] = useState<string[]>([])
   const chatRestored = useRef(false)
+  const [nudgeOpen, setNudgeOpen] = useState(false)
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -694,18 +695,67 @@ export default function AIAssistant() {
 
   // ───── guided migration ─────
 
+  // A photo of a supplier bill or a stock list. It is shrunk on the phone first, read by the server, and the owner confirms the result like any other change.
+  const shrinkImage = async (file: File): Promise<Blob | null> => {
+    try {
+      const bmp = await createImageBitmap(file)
+      const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(bmp.width * scale))
+      canvas.height = Math.max(1, Math.round(bmp.height * scale))
+      canvas.getContext('2d')?.drawImage(bmp, 0, 0, canvas.width, canvas.height)
+      return await new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', 0.82))
+    } catch { return null }
+  }
+
+  const handlePhoto = async (file: File) => {
+    setLoading(true)
+    try {
+      const small = await shrinkImage(file)
+      if (!small) {
+        addAiMessage({ text: 'I could not open that photo. Please send a JPG or PNG (on iPhone, choose "Most Compatible" in camera settings).' })
+        setLoading(false)
+        return
+      }
+      const token = await getToken()
+      const form = new FormData()
+      form.append('file', small, 'photo.jpg')
+      const res = await fetch('/api/photo-extract', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      })
+      const out = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        addAiMessage({ text: out.error || 'I could not read that photo. Please try again.' })
+      } else if (out.needsConfirm && out.actions?.length) {
+        addAiMessage({ text: out.reply, actions: out.actions, status: 'pending' })
+      } else {
+        addAiMessage({ text: out.reply || 'I could not read that photo.' })
+      }
+    } catch {
+      addAiMessage({ text: 'Connection error while reading the photo. Please try again.' })
+    }
+    setLoading(false)
+  }
+
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file || loading) return
     setMessages(prev => [...prev, { role: 'user', text: `📎 ${file.name}`, time: nowTime() }])
 
+    if (/^image\//.test(file.type) || /\.(jpe?g|png|webp|heic)$/i.test(file.name)) {
+      await handlePhoto(file)
+      return
+    }
+
     const isPdf = /\.pdf$/i.test(file.name)
     const isXlsx = /\.xlsx$/i.test(file.name)
     if (!isPdf && !isXlsx && !/\.(csv|tsv|txt)$/i.test(file.name)) {
       addAiMessage({ text: /\.xls$/i.test(file.name)
         ? 'Old .xls files are not supported. In Excel choose Save as → Excel Workbook (.xlsx) or CSV, then attach it again.'
-        : 'I can read Excel (.xlsx), CSV and PDF files. Attach one of those and I will take it from there.' })
+        : 'I can read Excel (.xlsx), CSV, PDF files and photos of bills or stock lists. Attach one of those and I will take it from there.' })
       return
     }
     if (file.size > (isPdf ? 4 * 1024 * 1024 : MAX_FILE_BYTES)) {
@@ -1250,14 +1300,39 @@ export default function AIAssistant() {
           <div ref={bottomRef} />
         </div>
 
+        {/* Once a conversation is going, the things I noticed stay one tap away */}
+        {messages.length > 0 && noticedList.length > 0 && (
+          <div className="mb-2 flex-shrink-0">
+            <button onClick={() => setNudgeOpen(o => !o)}
+              className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold"
+              style={{ background: '#FFFBEB', color: '#92400E', border: '1.5px solid #FCD34D' }}>
+              💡 {noticedList.length} {noticedList.length === 1 ? 'thing' : 'things'} I noticed {nudgeOpen ? '▲' : '▼'}
+            </button>
+            {nudgeOpen && (
+              <div className="mt-1 p-3 rounded-xl space-y-2" style={{ background: '#FFFBEB', border: '1.5px solid #FCD34D' }}>
+                {noticedList.slice(0, 4).map(sg => (
+                  <div key={sg.label} className="flex items-center justify-between gap-3">
+                    <span className="text-xs" style={{ color: '#78350F' }}>{sg.why || sg.label}</span>
+                    <button onClick={() => { setNudgeOpen(false); useSuggestion(sg) }}
+                      className="px-3 py-1 rounded-full text-xs font-bold flex-shrink-0"
+                      style={{ background: 'white', color: '#92400E', border: '1.5px solid #FCD34D' }}>
+                      {sg.label}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Input */}
         <div className="flex gap-2 flex-shrink-0">
-          <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,.xlsx,.pdf,text/csv,application/pdf" className="hidden" onChange={handleFile} />
+          <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,.xlsx,.pdf,text/csv,application/pdf,image/*" className="hidden" onChange={handleFile} />
           <button
             onClick={() => fileRef.current?.click()}
             disabled={loading}
             aria-label="Attach a file"
-            title="Attach an Excel, CSV or PDF file to move your data in"
+            title="Attach a sheet, a PDF, or a photo of a bill or stock list"
             className="px-3 py-3 rounded-xl font-bold text-sm disabled:opacity-40 flex-shrink-0"
             style={{ background: '#EDE9FE', color: '#8B5CF6', border: '1.5px solid #C4B5FD' }}>
             <Paperclip size={18} />

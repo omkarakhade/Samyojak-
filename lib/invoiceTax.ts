@@ -1,7 +1,10 @@
 // Tax on invoices created by chat, matching what the manual Create Invoice form records:
-// Amount (before tax), Tax Rate, Tax Amount, Total. Default is India GST 18%, which the owner can change.
+// Amount (before tax), Tax Rate, Tax Amount, Total. The default rate follows the invoice currency
+// (India GST 18%, UK VAT 20%, and so on, see lib/taxRules.ts); the owner can change it.
 
-export const DEFAULT_TAX_RATE = 18
+import { taxRuleFor, DEFAULT_RULE } from '@/lib/taxRules'
+
+export const DEFAULT_TAX_RATE = DEFAULT_RULE.rate
 
 function num(v: unknown): number {
   const n = parseFloat(String(v ?? '').replace(/[^0-9.]/g, ''))
@@ -16,14 +19,15 @@ export function withInvoiceTax(rec: Record<string, any>): Record<string, any> {
   if (out['Tax Amount'] !== undefined && out['Tax Amount'] !== '') return out
   const amount = num(out['Amount'])
   if (!(amount > 0)) return out
+  const rule = taxRuleFor(out['Currency'])
   let rate = num(out['Tax Rate'])
-  if (!Number.isFinite(rate) || rate < 0 || rate > 100) rate = DEFAULT_TAX_RATE
+  if (!Number.isFinite(rate) || rate < 0 || rate > 100) rate = rule.rate
   const net = inclusive ? Math.round(amount / (1 + rate / 100)) : amount
   const tax = Math.round((net * rate) / 100)
   out['Amount'] = net
   out['Tax Rate'] = `${rate}%`
-  out['Tax System'] = 'GST (India)'
-  out['Tax Label'] = 'GST'
+  out['Tax System'] = rule.system
+  out['Tax Label'] = rule.label
   out['Tax Amount'] = tax
   out['Total'] = net + tax
   return out
