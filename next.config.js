@@ -29,6 +29,11 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // tool pages and the API are never for search engines or AI crawlers
+        source: '/:path(debug|debug-airtable|debug-payment|admin|api)/:rest*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive, noimageindex' }],
+      },
+      {
         source: '/(.*)',
         headers: [
           {
