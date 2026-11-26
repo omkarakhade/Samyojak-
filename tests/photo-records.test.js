@@ -44,3 +44,14 @@ test('bad numbers and long text are cleaned', () => {
   assert.equal(r.actions[0].records[0]['Current Stock'], 5)
   assert.equal(r.actions[0].records[0]['Cost Price'], undefined)
 })
+
+test('a photographed sales invoice keeps its lines, total and GST rate for the next message', () => {
+  const items = Array.from({ length: 13 }, () => ({ name: 'Red Dress – Elegant Fit', qty: 1, unit_price: 1500 }))
+  const r = buildPhotoActions({ kind: 'sales_invoice', gst_amount: 975, total: 20475, items })
+  assert.equal(r.actions.length, 0)
+  assert.match(r.reply, /Red Dress – Elegant Fit x13 @1500/)
+  assert.match(r.reply, /bill total 20475/)
+  assert.match(r.reply, /GST rate 5%/)
+  assert.match(r.reply, /Who was it for/)
+  assert.ok(r.reply.length < 500)
+})
