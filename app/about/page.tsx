@@ -5,8 +5,8 @@ import { ArrowRight, Brain, Globe, Shield, Zap } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'About Samyojak — The AI-Agent ERP',
-  description: 'Samyojak is an adaptive ERP built around an AI agent that works on your behalf. Learn the story and the idea behind it.',
+  title: 'About Samyojak — An ERP That Adjusts to You',
+  description: 'Samyojak is an ERP that adjusts to how you already work, with an AI agent that does the admin and asks before it changes anything.',
   alternates: { canonical: 'https://www.samyojak-erp.com/about' },
 }
 
@@ -44,12 +44,12 @@ export default function About() {
           </div>
           <h1 className="text-5xl md:text-6xl font-black mb-6 leading-tight"
             style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
-            The ERP that adapts to you.
+            An ERP that
             <br />
-            <span style={{ color: '#8B5CF6' }}>Not the other way around.</span>
+            <span style={{ color: '#8B5CF6' }}>adjusts to you.</span>
           </h1>
           <p className="text-xl leading-relaxed" style={{ color: '#64748B' }}>
-            Samyojak is a business system you talk to. Bring the spreadsheets you already keep, ask questions in plain words, and let the assistant do the repetitive admin, with your approval on every change.
+            Most business software asks you to change how you work before it helps. Samyojak starts from what you already have: your spreadsheets, your columns, your habits. It does the repetitive admin, and nothing changes without your approval.
           </p>
         </div>
       </section>
@@ -62,12 +62,12 @@ export default function About() {
           </h2>
           <div className="space-y-6" style={{ color: '#94A3B8', fontSize: '1.05rem', lineHeight: '1.8' }}>
             <p>
-              Samyojak was built by a solo founder using only an Android phone — no laptop, no funding, no team. The entire product was designed, coded, and deployed from a mobile device. That constraint became the product's greatest strength: everything had to be simple, fast, and mobile-first by necessity.
+              Samyojak began with a simple frustration: business software that is hard to start and harder to bend. Owners were told to rename their columns, rebuild their processes and wait weeks before it was useful. Most went back to a spreadsheet.
             </p>
             <p>
               The name Samyojak comes from Sanskrit — meaning{' '}
               <em style={{ color: '#C4B5FD' }}>"the one who coordinates and connects."</em>{' '}
-              That is exactly what the product does: connects your CRM, invoicing, expenses, purchasing, inventory, HR, projects, and an AI assistant into one workspace.
+              That is exactly what the product does: connects your CRM, invoicing, books, stock, purchasing, manufacturing, payroll, projects, and an AI assistant into one workspace.
             </p>
             <p>
               We watched small and medium businesses struggle with ERP software that was built for enterprises. They were forced to spend weeks configuring systems, hire consultants to migrate their data, and retrain their teams on entirely new workflows. The result? Most gave up and stayed on spreadsheets.
@@ -137,6 +137,33 @@ export default function About() {
         </div>
       </section>
 
+      {/* WHAT IT DOES TODAY */}
+      <section className="px-6 py-16">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-black mb-3" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
+            What it does today
+          </h2>
+          <p className="mb-8" style={{ color: '#64748B' }}>We keep adding to this. Here is what is working now.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              ['Records by typing', 'Say "sold a laptop to Raj" and it prepares the invoice, the tax and the stock change for you to approve.'],
+              ['Books that write themselves', 'Double-entry books, a balance sheet and a trial balance, made from the work you already record.'],
+              ['Stock you can trust', 'Sales and purchases move stock. Several warehouses, batches, expiry dates and low-stock warnings.'],
+              ['Make what you sell', 'Bills of materials and production jobs that use up parts and add finished goods.'],
+              ['People and payroll', 'Attendance, leave, expense claims and a monthly payroll run.'],
+              ['Sell and buy', 'Quotes, sales orders, purchase orders, recurring invoices and WhatsApp payment reminders.'],
+              ['It learns your way', 'Tell it how you work once and it remembers. Every change is logged and can be undone.'],
+              ['Your own files', 'Bring Excel, CSV or PDF as they are. No column renaming.'],
+            ].map(([t, d]) => (
+              <div key={t} className="p-5 rounded-2xl" style={{ background: 'white', border: '2px solid #E2E8F0', boxShadow: '4px 4px 0px #F1F5F9' }}>
+                <p className="font-black mb-1" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>{t}</p>
+                <p className="text-sm" style={{ color: '#64748B' }}>{d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* MADE FOR THE WORLD */}
       <section className="px-6 py-16" style={{ background: '#F8FAFC' }}>
         <div className="max-w-4xl mx-auto text-center">
@@ -145,7 +172,7 @@ export default function About() {
             Made for the world
           </h2>
           <p className="text-lg mb-8" style={{ color: '#64748B' }}>
-            Samyojak is not built for any one country, industry, or type of business. It is built for every person who runs a business, anywhere on the planet. Universal tax support. Multi-currency. Geo-based pricing. Global from day one.
+            Samyojak is not built for any one country, industry, or type of business. It is built for every person who runs a business, anywhere on the planet. Tax that follows your invoice currency. Foreign-currency invoices. Pricing by region. Global from day one.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
@@ -197,7 +224,7 @@ export default function About() {
           Join us in building the future of ERP
         </h2>
         <p className="mb-8" style={{ color: '#94A3B8' }}>
-          Start your trial. Set up in 5 minutes. Cancel anytime.
+          Start your free trial. Bring the spreadsheets you already have. Cancel anytime.
         </p>
         <div className="flex gap-4 justify-center flex-wrap">
           <Link href="/signup" className="candy-btn px-8 py-4 text-base inline-flex items-center gap-2">

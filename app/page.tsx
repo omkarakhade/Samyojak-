@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import HeroDemo from '@/components/HeroDemo'
 import { detectRegion, planPrices, type Region } from '@/lib/products'
 import {
   ArrowRight, Check, Brain, Users, FileText, Package, UserCheck,
@@ -13,16 +14,20 @@ import {
 } from 'lucide-react'
 
 const FEATURES = [
-  { icon: Brain, title: 'A chat that does the work', desc: 'Ask who has not paid, add a lead, mark an invoice paid. You see a preview and approve every change.', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: Brain, title: 'A chat that does the work', desc: 'Ask who has not paid, add a lead, record a sale. You see a preview and approve every change.', color: '#8B5CF6', bg: '#EDE9FE' },
   { icon: Upload, title: 'Bring any spreadsheet', desc: 'Excel, CSV or PDF imported with your own column names. Preview first, nothing saves until you say so.', color: '#F472B6', bg: '#FCE7F3' },
-  { icon: FileText, title: 'Universal Tax Invoicing', desc: 'GST, VAT, HST, Sales Tax — 15+ countries in one click', color: '#FBBF24', bg: '#FEF3C7' },
-  { icon: Wallet, title: 'Expenses, bills and profit', desc: 'Record what you spend, track bills to pay, and ask for profit by month.', color: '#34D399', bg: '#D1FAE5' },
-  { icon: Users, title: 'CRM', desc: 'Leads, follow-ups and pipeline in one list, with the next step on every lead', color: '#8B5CF6', bg: '#EDE9FE' },
-  { icon: Package, title: 'Inventory + Free QR Codes', desc: 'Stock tracking with auto-generated QR codes, low stock alerts', color: '#F472B6', bg: '#FCE7F3' },
-  { icon: Truck, title: 'Vendors and purchase orders', desc: 'Keep your suppliers and the orders you place with them, with expected dates', color: '#FBBF24', bg: '#FEF3C7' },
-  { icon: UserCheck, title: 'HR and recruiting', desc: 'Employees, salary records, leave balance, and candidates by stage', color: '#34D399', bg: '#D1FAE5' },
-  { icon: FolderOpen, title: 'Projects', desc: 'Client projects with status and deadlines', color: '#8B5CF6', bg: '#EDE9FE' },
-  { icon: BarChart3, title: 'Reports and tax summaries', desc: 'Monthly revenue charts and tax collected, for GST, VAT or sales tax', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: FileText, title: 'Tax that fits your country', desc: 'The tax follows your invoice currency: GST, VAT or sales tax. You can change the rate any time.', color: '#FBBF24', bg: '#FEF3C7' },
+  { icon: Package, title: 'Stock that moves by itself', desc: 'A sale takes stock off, a purchase adds it. Warehouses, batches, expiry dates and low-stock warnings.', color: '#34D399', bg: '#D1FAE5' },
+  { icon: BarChart3, title: 'Books kept for you', desc: 'Double-entry books are written as you work. Ask for a balance sheet, trial balance or cash position.', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: Wallet, title: 'Expenses, bills and profit', desc: 'Record what you spend, track bills to pay, and ask for profit by month.', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: Users, title: 'CRM with lead scoring', desc: 'Leads, follow-ups and a pipeline. Ask which leads to call first and why.', color: '#FBBF24', bg: '#FEF3C7' },
+  { icon: Factory, title: 'Make what you sell', desc: 'Bills of materials and production jobs use up the parts and add finished goods to stock.', color: '#34D399', bg: '#D1FAE5' },
+  { icon: Truck, title: 'Quotes, orders and purchases', desc: 'Turn a quote into an invoice, keep sales orders, receive purchase orders and bill regular clients automatically.', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: UserCheck, title: 'Payroll and attendance', desc: 'Attendance, leave, expense claims and a monthly payroll run, with a clear record of who was paid.', color: '#F472B6', bg: '#FCE7F3' },
+  { icon: Globe, title: 'Bank matching and budgets', desc: 'Match your bank statement to your records and see budget against actual spending.', color: '#FBBF24', bg: '#FEF3C7' },
+  { icon: FolderOpen, title: 'Projects on a board', desc: 'Client projects with status and deadlines, shown as a simple board you can move.', color: '#34D399', bg: '#D1FAE5' },
+  { icon: Package, title: 'QR labels for products', desc: 'Print QR labels for your stock from the Inventory page, no second app needed.', color: '#8B5CF6', bg: '#EDE9FE' },
+  { icon: Brain, title: 'It learns how you work', desc: 'Tell it your habits once and it remembers. It asks the few details a good clerk would ask, once.', color: '#F472B6', bg: '#FCE7F3' },
   { icon: MessageCircle, title: 'Payment reminders on WhatsApp', desc: 'Overdue invoices come with a ready message. One tap opens it in WhatsApp.', color: '#FBBF24', bg: '#FEF3C7' },
   { icon: ShieldCheck, title: 'Activity log and undo', desc: 'See everything the assistant added or changed, who approved it, and undo it.', color: '#34D399', bg: '#D1FAE5' },
 ]
@@ -235,7 +240,7 @@ export default function Home() {
               <h1
                 className={`font-black leading-tight mb-6 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
                 style={{ fontFamily: 'Outfit', fontSize: 'clamp(2.4rem, 5.5vw, 4rem)', color: '#1E293B', transitionDelay: '200ms' }}>
-                Ask your business.
+                An ERP that
                 <br />
                 <span style={{
                   background: 'linear-gradient(135deg, #8B5CF6 0%, #F472B6 50%, #FBBF24 100%)',
@@ -243,15 +248,15 @@ export default function Home() {
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                 }}>
-                  Samyojak Does the Work.
+                  adjusts to you.
                 </span>
               </h1>
 
               <p
                 className={`text-lg md:text-xl mb-8 max-w-xl mx-auto lg:mx-0 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
                 style={{ color: '#64748B', lineHeight: 1.6, transitionDelay: '300ms' }}>
-                Bring your spreadsheets as they are. Ask questions in plain words, add records by
-                typing them, and approve every change before it happens. Undo anything.
+                Most software makes you change how you work first. Samyojak starts with what you already
+                have: your spreadsheets, your columns, your way. You approve every change, and you can undo anything.
               </p>
 
               <div
@@ -290,70 +295,7 @@ export default function Home() {
               className={`relative transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               style={{ transitionDelay: '600ms' }}>
 
-              <div className="rounded-2xl overflow-hidden"
-                style={{
-                  border: '2px solid #E2E8F0',
-                  boxShadow: '0 32px 80px rgba(139,92,246,0.12), 0 8px 24px rgba(0,0,0,0.08), 8px 8px 0px #8B5CF620',
-                }}>
-
-                <div className="flex items-center gap-2 px-4 py-3"
-                  style={{ background: '#F8FAFC', borderBottom: '1.5px solid #E2E8F0' }}>
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                  </div>
-                  <div className="flex-1 mx-4 px-4 py-1.5 rounded-full text-xs text-center"
-                    style={{ background: 'white', color: '#94A3B8', border: '1px solid #E2E8F0' }}>
-                    www.samyojak-erp.com/ai
-                  </div>
-                </div>
-
-                <div className="p-5 space-y-3" style={{ background: '#FAFBFF' }}>
-                  <p className="text-xs font-bold uppercase tracking-wide" style={{ color: '#94A3B8' }}>Example conversation</p>
-
-                  <div className="flex justify-end">
-                    <div className="px-4 py-2 rounded-2xl text-sm" style={{ background: '#8B5CF6', color: 'white' }}>Who has not paid me?</div>
-                  </div>
-
-                  <div className="p-4 rounded-xl" style={{ background: 'white', border: '1.5px solid #E2E8F0' }}>
-                    <p className="text-xs font-black uppercase tracking-wide mb-2" style={{ color: '#8B5CF6' }}>Unpaid invoices</p>
-                    <div className="space-y-1.5">
-                      {[
-                        { c: 'Sharma Traders', a: '45,000', d: 'Due 12 Nov' },
-                        { c: 'Brightline Studio', a: '18,500', d: 'Due 20 Nov' },
-                      ].map(r => (
-                        <div key={r.c} className="grid grid-cols-3 text-xs" style={{ color: '#1E293B' }}>
-                          <span className="font-semibold truncate">{r.c}</span>
-                          <span>{r.a}</span>
-                          <span style={{ color: '#64748B' }}>{r.d}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-xs mt-2 font-bold" style={{ color: '#1E293B' }}>2 unpaid · 63,500</p>
-                  </div>
-
-                  <div className="flex justify-end">
-                    <div className="px-4 py-2 rounded-2xl text-sm" style={{ background: '#8B5CF6', color: 'white' }}>Paid rent 20k today</div>
-                  </div>
-
-                  <div className="p-4 rounded-xl" style={{ background: '#0F172A', border: '1.5px solid rgba(139,92,246,0.4)' }}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: '#8B5CF6' }}>
-                        <Brain size={12} className="text-white" />
-                      </div>
-                      <span className="text-xs font-bold" style={{ color: '#C4B5FD' }}>Samyojak</span>
-                    </div>
-                    <p className="text-xs mb-3" style={{ color: '#C4B5FD' }}>
-                      I am ready to add 1 record to Expenses: Rent, 20,000, Paid. Please review and confirm.
-                    </p>
-                    <div className="flex gap-2">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: '#34D399', color: '#064E3B' }}>Confirm</span>
-                      <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: '#1E293B', color: '#94A3B8', border: '1px solid #334155' }}>Cancel</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <HeroDemo />
 
               <div className="absolute -bottom-4 left-8 right-8 h-8 rounded-full pointer-events-none"
                 style={{ background: 'rgba(139,92,246,0.1)', filter: 'blur(16px)' }} />
@@ -366,7 +308,7 @@ export default function Home() {
       <div className="overflow-hidden py-4" style={{ background: '#1E293B' }}>
         <div className="flex gap-8 marquee-track whitespace-nowrap">
           {[...Array(3)].map((_, i) =>
-            ['Ask in plain words', 'Approve every change', 'Undo anything', 'Import Excel, CSV or PDF', 'CRM', 'Invoicing', 'Expenses and profit', 'Purchase orders', 'Inventory + QR', 'HR and recruiting', 'Universal tax'].map(f => (
+            ['Adjusts to you', 'Approve every change', 'Undo anything', 'Import Excel, CSV or PDF', 'CRM and lead scoring', 'Invoicing and tax', 'Books and balance sheet', 'Stock and warehouses', 'Manufacturing', 'Payroll and attendance', 'Inventory + QR'].map(f => (
               <span key={`${i}-${f}`} className="text-white/70 text-sm font-medium px-4">⚡ {f}</span>
             ))
           )}

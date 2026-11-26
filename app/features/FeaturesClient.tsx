@@ -9,6 +9,103 @@ import {
 
 const MODULES = [
   {
+    icon: BarChart3,
+    title: 'Books and Accounting',
+    color: '#8B5CF6',
+    bg: '#EDE9FE',
+    badge: '🆕 New',
+    desc: 'Your books are written as you work. Ask for the numbers an accountant would ask for.',
+    features: [
+      'Double-entry books made automatically from invoices, bills and expenses',
+      'Balance sheet, trial balance and cash position by asking',
+      'Journal entries for anything unusual',
+      'Bank statement matching against your records',
+      'Budgets with budget against actual spending',
+      'Asset register with automatic depreciation',
+      'Foreign-currency invoices converted for your books',
+    ],
+  },
+  {
+    icon: Package,
+    title: 'Stock, Warehouses and Labels',
+    color: '#F472B6',
+    bg: '#FCE7F3',
+    badge: '🆕 New',
+    desc: 'Stock that moves by itself, across more than one place.',
+    features: [
+      'A sale takes stock off, undo puts it back',
+      'Purchases and received purchase orders add stock',
+      'Several warehouses with transfers by asking',
+      'Cost price, batch, serial and expiry date fields',
+      'Stock value, reorder plan, ABC and demand forecast reports',
+      'Returns and refunds that put stock back',
+      'Printable QR labels for your products',
+    ],
+  },
+  {
+    icon: TrendingUp,
+    title: 'Manufacturing',
+    color: '#FBBF24',
+    bg: '#FEF3C7',
+    badge: '🆕 New',
+    desc: 'Make what you sell and know what it costs.',
+    features: [
+      'Bills of materials for each product',
+      'Production jobs that use up the parts and add finished goods',
+      'Materials needed for open jobs',
+      'Cost to make one unit',
+      'Quality issues recorded against jobs',
+      'Warnings when a material is short',
+    ],
+  },
+  {
+    icon: UserCheck,
+    title: 'Payroll, Attendance and Leave',
+    color: '#34D399',
+    bg: '#D1FAE5',
+    badge: '🆕 New',
+    desc: 'From who came in to who got paid, in one place.',
+    features: [
+      'Attendance and leave requests with approvals',
+      'Expense claims from your team',
+      'Payroll that counts absent days and unpaid leave',
+      'One payroll run a month, recorded as paid salary',
+      'Optional PF, ESI and TDS estimates (estimates, not filings)',
+      'Timesheets for hourly work',
+    ],
+  },
+  {
+    icon: RefreshCw,
+    title: 'Orders, Purchasing and Repeat Billing',
+    color: '#8B5CF6',
+    bg: '#EDE9FE',
+    badge: '🆕 New',
+    desc: 'The whole path from a quote to money in the bank.',
+    features: [
+      'Quotes turn into invoices by asking',
+      'Sales orders you convert once delivered',
+      'Purchase orders with expected dates',
+      'Recurring invoices created for the clients who are due',
+      'Support tickets with reply-by times and late flags',
+    ],
+  },
+  {
+    icon: Brain,
+    title: 'An Assistant That Learns How You Work',
+    color: '#F472B6',
+    bg: '#FCE7F3',
+    badge: '🆕 New',
+    desc: 'It does the admin like a careful clerk, and remembers your way of working.',
+    features: [
+      'Add records by typing them in plain words',
+      'Asks the few details a clerk would ask, once',
+      'Remembers habits you tell it, and forgets on request',
+      'Shows a preview and waits for your approval',
+      'Every change is logged and can be undone',
+      'Tax defaults follow your invoice currency (GST, VAT, sales tax)',
+    ],
+  },
+  {
     icon: Users,
     title: 'CRM with AI Lead Scoring',
     color: '#8B5CF6',
@@ -247,7 +344,7 @@ export default function FeaturesClient() {
         <div className="max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-semibold"
             style={{ background: '#EDE9FE', border: '2px solid #8B5CF6', color: '#8B5CF6' }}>
-            <Zap size={14} /> 12 powerful modules — 4 just added
+            <Zap size={14} /> Always growing: books, stock, manufacturing and payroll are new
           </div>
           <h1 className="text-5xl font-black mb-6" style={{ fontFamily: 'Outfit', color: '#1E293B' }}>
             Everything your business
@@ -255,7 +352,7 @@ export default function FeaturesClient() {
             <span style={{ color: '#8B5CF6' }}>needs to grow</span>
           </h1>
           <p className="text-lg" style={{ color: '#64748B' }}>
-            CRM, Quotations, Invoicing, Recurring Billing, Inventory, HR, Recruiting, Projects, BI Charts, AI Intelligence, Reports, and Universal Import. All in one adaptive workspace.
+            CRM, invoicing, books, stock across warehouses, manufacturing, payroll, projects and reports, all in one workspace that adjusts to how you already work.
           </p>
         </div>
       </section>
@@ -268,10 +365,10 @@ export default function FeaturesClient() {
             <p className="text-sm font-black mb-4" style={{ color: '#8B5CF6' }}>🆕 JUST ADDED</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { icon: FileCheck, title: 'Sales Quotations', desc: 'Quote builder + PDF + convert to invoice', color: '#34D399' },
-                { icon: BarChart3, title: 'BI Dashboard', desc: 'Live charts across all modules', color: '#8B5CF6' },
-                { icon: RefreshCw, title: 'Recurring Invoices', desc: 'Auto-invoice on any schedule', color: '#F472B6' },
-                { icon: UserPlus, title: 'Recruiting Tracker', desc: 'Applied to Hired pipeline', color: '#FBBF24' },
+                { icon: BarChart3, title: 'Books and balance sheet', desc: 'Made automatically as you work', color: '#8B5CF6' },
+                { icon: TrendingUp, title: 'Manufacturing', desc: 'Parts used, finished goods added', color: '#34D399' },
+                { icon: Package, title: 'Warehouses', desc: 'Stock in more than one place', color: '#F472B6' },
+                { icon: UserCheck, title: 'Payroll and attendance', desc: 'Leave, claims and a payroll run', color: '#FBBF24' },
               ].map(f => (
                 <div key={f.title} className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
