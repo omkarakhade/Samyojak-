@@ -112,7 +112,7 @@ export default function Contact() {
                       style={{ color: '#F472B6', fontFamily: 'Outfit' }}>Based In</p>
                     <p className="text-sm font-semibold"
                       style={{ color: '#1E293B', fontFamily: 'Plus Jakarta Sans' }}>
-                      🇮🇳 Pune, India
+                      🇮🇳 India
                     </p>
                   </div>
                 </div>

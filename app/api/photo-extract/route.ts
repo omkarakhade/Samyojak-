@@ -8,7 +8,7 @@ export const maxDuration = 60
 
 const MAX_BYTES = 3 * 1024 * 1024
 // A vision model on Groq. Can be changed in Vercel without a new release if Groq renames it.
-const VISION_MODEL = process.env.GROQ_VISION_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct'
+const VISION_MODEL = process.env.GROQ_VISION_MODEL || 'qwen/qwen3.8-27b'
 
 function stripJson(t: string): any {
   const s = t.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim()
