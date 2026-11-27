@@ -113,11 +113,19 @@ export function buildPhotoActions(raw: PhotoRead | null | undefined): PhotoResul
     }
     const from = supplier ? ` from ${supplier}` : ''
     const no = billNo ? ` (bill ${billNo})` : ''
+    // Like a careful clerk: say what the photo did not show, so the owner can add it.
+    const missing: string[] = []
+    if (!supplier) missing.push("the supplier's name")
+    if (!billNo) missing.push('the bill number')
+    if (!(gst > 0)) missing.push('the GST charged on it (this is the tax you can claim back)')
+    const ask = missing.length
+      ? ` I could not see ${missing.join(', ')}. You can confirm now, or cancel and tell me, for example "Bill from Sharma Traders, GST 5%, paid".`
+      : ''
     return {
       reply:
         `I read a supplier bill${from}${no} with ${lines}. I will add the stock to Inventory` +
         (actions.length > 1 ? ' and record the bill in Expenses as Unpaid. Tell me if you already paid it' : '') +
-        '. Please check the numbers below and confirm. Nothing is saved until you do.',
+        '. Please check the numbers below and confirm. Nothing is saved until you do.' + ask,
       actions,
     }
   }

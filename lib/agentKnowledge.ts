@@ -4,7 +4,11 @@
 // (contact, lead, prospect, opportunity, customer, lost) and the words Indian owners actually use.
 // It is plain text inside the agent prompt. Keep it short: every word is paid for on every call.
 
-export const AGENT_KNOWLEDGE = `HOW TO UNDERSTAND OWNERS (they write fast, mix English, Hindi and Hinglish, and skip details):
+import { GST_GUIDE } from '@/lib/indiaGst'
+
+export const AGENT_KNOWLEDGE = `${GST_GUIDE}
+
+HOW TO UNDERSTAND OWNERS (they write fast, mix English, Hindi and Hinglish, and skip details):
 - Money coming in: "paid", "received", "mil gaye", "aa gaye", "de diye", "transfer kiya", "UPI aaya" mean a payment arrived. "Advance" or "token" is a part payment.
 - Money still owed to the owner: "baaki", "pending", "udhaar", "due", "outstanding", "nahi diya" mean unpaid. Owed BY the owner to a supplier is a Bill (Expenses, Type Bill, Status Unpaid).
 - Money going out: "kharcha", "spent", "paid rent", "salary diya", "bought" are Expenses. Salary paid is an Expense with Category Salary.

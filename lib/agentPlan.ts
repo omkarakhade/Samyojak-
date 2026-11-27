@@ -6,6 +6,7 @@ import { payrollFor } from '@/lib/payroll'
 import { dueRecurring } from '@/lib/recurring'
 import { AGENT_KNOWLEDGE } from '@/lib/agentKnowledge'
 import { withInvoiceTax } from '@/lib/invoiceTax'
+import { suggestInvoiceRate } from '@/lib/indiaGst'
 import { stockAnswer } from '@/lib/agentMemory'
 import {
   AGENT_MODULES,
@@ -576,15 +577,22 @@ export async function resolveOperations(userId: string, ops: RawOp[]) {
 
   // Invoices made by chat get the same tax lines as the manual form (default GST 18%, change by saying so).
   let taxed = false
+  let allByItem = true
   for (const a of actions) {
     if (a.type === 'add' && a.module === 'Invoices') {
       a.records = a.records.map(r => {
-        const t = withInvoiceTax(r)
-        if (t['Tax Amount'] !== undefined && r['Tax Amount'] === undefined) taxed = true
+        // GST by what was sold (dresses under Rs 2,500 are 5%, phones 18%...), unless the owner named a rate.
+        const guess = suggestInvoiceRate(r)
+        const rec = guess ? { ...r, 'Tax Rate': guess.rate } : r
+        const t = withInvoiceTax(rec)
+        if (t['Tax Amount'] !== undefined && r['Tax Amount'] === undefined) {
+          taxed = true
+          if (guess) { if (!notes.includes(guess.note)) notes.push(guess.note) } else allByItem = false
+        }
         return t
       })
     }
   }
-  if (taxed) notes.push('Tax is added on invoices at the standard rate for the currency (18% GST for rupees, 20% VAT for pounds, and so on). Say a rate to change it, "including tax" if the amount you gave is the final price, or "no tax" for none.')
+  if (taxed && !allByItem) notes.push('Tax is added on invoices at the standard rate for the currency (18% GST for rupees, 20% VAT for pounds, and so on). Say a rate to change it, "including tax" if the amount you gave is the final price, or "no tax" for none.')
   return { actions, notes }
 }
