@@ -6,7 +6,8 @@ import { payrollFor } from '@/lib/payroll'
 import { dueRecurring } from '@/lib/recurring'
 import { AGENT_KNOWLEDGE } from '@/lib/agentKnowledge'
 import { withInvoiceTax } from '@/lib/invoiceTax'
-import { suggestTax } from '@/lib/worldTax'
+import { suggestTax, COUNTRY_CURRENCY } from '@/lib/worldTax'
+import { parseLineItems } from '@/lib/lineItems'
 import { stockAnswer } from '@/lib/agentMemory'
 import {
   AGENT_MODULES,
@@ -172,7 +173,7 @@ async function dropExistingLeads(userId: string, acts: AgentAction[], notes: str
   return out
 }
 
-export async function resolveOperations(userId: string, ops: RawOp[]) {
+export async function resolveOperations(userId: string, ops: RawOp[], userText = '') {
   const actions: AgentAction[] = []
   const notes: string[] = []
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
@@ -582,8 +583,22 @@ export async function resolveOperations(userId: string, ops: RawOp[]) {
     if (a.type === 'add' && a.module === 'Invoices') {
       a.records = a.records.map(r => {
         // GST by what was sold (dresses under Rs 2,500 are 5%, phones 18%...), unless the owner named a rate.
-        const guess = suggestTax(r)
-        const rec = guess ? { ...r, 'Tax Rate': guess.rate, 'Tax System': guess.system, 'Tax Label': guess.label } : r
+        // Fix the record before taxing it: the model sometimes guesses a rate or puts a tax-included total in Amount.
+        let base: Record<string, any> = { ...r }
+        const ownerNamedTax = /\d\s*%|\b(tax|gst|vat|no tax|including|inclusive)\b/i.test(userText)
+        if (!ownerNamedTax && base['Tax Amount'] === undefined) delete base['Tax Rate']
+        const place = String(base['Country'] ?? '').trim().toLowerCase()
+        if (!base['Currency'] && COUNTRY_CURRENCY[place]) base['Currency'] = COUNTRY_CURRENCY[place]
+        const inclusive = /^(yes|true|inclusive)$/i.test(String(base['Tax Inclusive'] ?? '').trim())
+        if (!inclusive && base['Tax Amount'] === undefined) {
+          const ls = parseLineItems(base['Line Items'])
+          if (ls.length > 0 && ls.every(l => l.price > 0)) {
+            // Prices on the lines are before tax, so Amount is their sum (a photo's bill total already has tax in it).
+            base['Amount'] = Math.round(ls.reduce((n, l) => n + (l.qty > 0 ? l.qty : 1) * l.price, 0) * 100) / 100
+          }
+        }
+        const guess = suggestTax(base)
+        const rec = guess ? { ...base, 'Tax Rate': guess.rate, 'Tax System': guess.system, 'Tax Label': guess.label } : base
         const t = withInvoiceTax(rec)
         if (t['Tax Amount'] !== undefined && r['Tax Amount'] === undefined) {
           taxed = true

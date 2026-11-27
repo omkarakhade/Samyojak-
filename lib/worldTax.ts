@@ -150,6 +150,14 @@ const CA_PROVINCES: Record<string, { rate: number; note: string }> = {
   'northwest territories': { rate: 5, note: 'GST only' }, nunavut: { rate: 5, note: 'GST only' },
 }
 
+export const COUNTRY_CURRENCY: Record<string, string> = {
+  uk: 'GBP', 'united kingdom': 'GBP', england: 'GBP', scotland: 'GBP', wales: 'GBP',
+  uae: 'AED', 'united arab emirates': 'AED', dubai: 'AED', 'abu dhabi': 'AED',
+  singapore: 'SGD', australia: 'AUD', canada: 'CAD', 'new zealand': 'NZD',
+  us: 'USD', usa: 'USD', 'united states': 'USD', america: 'USD',
+  germany: 'EUR', france: 'EUR', italy: 'EUR', spain: 'EUR', netherlands: 'EUR', ireland: 'EUR', belgium: 'EUR', austria: 'EUR', portugal: 'EUR',
+}
+
 const lower = (v: unknown) => String(v ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
 const num = (v: unknown) => {
   const n = parseFloat(String(v ?? '').replace(/[^0-9.]/g, ''))

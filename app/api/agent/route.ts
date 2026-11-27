@@ -199,7 +199,7 @@ export async function POST(req: NextRequest) {
         }
       } catch (e: any) { console.error('agent notes error:', e?.message) }
 
-      const resolved = await resolveOperations(user.id, ops)
+      const resolved = await resolveOperations(user.id, ops, message)
       const notes = resolved.notes
       if (learnedNote) notes.push(learnedNote)
       const actions = resolved.actions.filter(a => {

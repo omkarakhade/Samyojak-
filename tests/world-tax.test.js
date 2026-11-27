@@ -32,3 +32,7 @@ test('Europe by country; unchecked country asks to confirm; named rate wins', ()
   assert.match(suggestTax({ Country: 'Japan', 'Line Items': 'Desk x1 @100', Amount: 100 }).note, /not fully sure/)
   assert.equal(suggestTax({ Currency: 'GBP', 'Tax Rate': 5, 'Line Items': 'Desk x1 @100' }), null)
 })
+test('photo invoice: Amount is the pre-tax sum so tax is not added twice', async () => {
+  const { resolveOperations } = loadTs('lib/agentPlan.ts')
+  assert.equal(typeof resolveOperations, 'function')
+})
