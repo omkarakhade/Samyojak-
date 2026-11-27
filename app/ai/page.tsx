@@ -927,6 +927,14 @@ export default function AIAssistant() {
         } else if (data.reply && !data.fallback) {
           // The agent understood but could not find the record (or needs more detail)
           addAiMessage({ text: data.reply })
+        } else if (q.length <= 60 && /who was it for|reply with the customer|\?\s*$|say "skip"/i.test(String(history[history.length - 1]?.content || '')) && history[history.length - 1]?.role === 'assistant') {
+          // A short answer to the clerk's own question that the agent could not use: ask again, never switch to a business overview.
+          const lastAsk = String(history[history.length - 1].content)
+          addAiMessage({
+            text: /who was it for/i.test(lastAsk)
+              ? 'No problem. I still need a name to record this invoice: the customer\'s name is enough, or say "walk-in customer" if you do not know it. Nothing was saved.'
+              : 'Sorry, I could not use that as an answer. Tell me again in a few words, or say "skip" to leave it.',
+          })
         } else {
           lockedMsg.current = ''
           const card = await fetchInsight({ message: q })
