@@ -26,8 +26,8 @@ export function withInvoiceTax(rec: Record<string, any>): Record<string, any> {
   const tax = Math.round((net * rate) / 100)
   out['Amount'] = net
   out['Tax Rate'] = `${rate}%`
-  out['Tax System'] = rule.system
-  out['Tax Label'] = rule.label
+  out['Tax System'] = out['Tax System'] || rule.system
+  out['Tax Label'] = out['Tax Label'] || rule.label
   out['Tax Amount'] = tax
   out['Total'] = net + tax
   return out

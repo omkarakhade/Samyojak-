@@ -11,6 +11,8 @@ interface Rule {
   label: string
   /** Clothes and shoes: 5% up to this price per piece or pair, 18% above. */
   threshold?: number
+  /** We are not fully sure for every case: the owner is asked to check the rate. */
+  confirm?: boolean
 }
 
 // Order matters: the first match wins, so specific words come before general ones.
@@ -18,6 +20,10 @@ const RULES: Rule[] = [
   { re: /\b(cold drinks?|soft drinks?|cola|aerated|energy drinks?|cigarettes?|pan masala|gutka|gutkha|tobacco)\b/i, rate: 40, label: 'cold drinks and tobacco products' },
   { re: /\b(chocolates?|biscuits?|cookies?|cakes?|namkeen|bhujia|ghee|butter|cheese|toothpaste|toothbrush|soaps?|shampoo|hair oil|pasta|noodles|jam|sauces?|sugar|tea|coffee|edible oil|mustard oil|sunflower oil|groundnut oil|coconut oil|cooking oil|bicycles?|steel utensils?)\b/i, rate: 5, label: 'everyday packaged goods' },
   { re: /\b(milk|bread|paneer|sanitary pads?|fresh vegetables?|fresh fruits?)\b/i, rate: 0, label: 'basic food items' },
+  { re: /\b(electric (cars?|scooters?|bikes?|vehicles?)|ev)\b/i, rate: 5, label: 'electric vehicles', confirm: true },
+  { re: /\b(medicines?|tablets?|capsules?|syrups?|drugs?|ointments?|injections?)\b/i, rate: 5, label: 'most medicines (some life-saving drugs are 0%)', confirm: true },
+  { re: /\b(cars?|suv|sedan|hatchbacks?|jeeps?)\b/i, rate: 18, label: 'small cars (big cars above 1,200cc petrol, 1,500cc diesel or 4 metres are 40%)', confirm: true },
+  { re: /\b(motorcycles?|bikes?|scooters?|scooty|mopeds?)\b/i, rate: 18, label: 'motorcycles up to 350cc (above 350cc they are 40%)', confirm: true },
   { re: /\b(gold jewell?ery|gold chains?|gold rings?|gold necklaces?)\b/i, rate: 3, label: 'gold jewellery' },
   {
     re: /\b(dress(es)?|kurtas?|kurtis?|sarees?|saris?|lehengas?|shirts?|t-?shirts?|tees?|trousers?|pants?|jeans|skirts?|tops?|salwars?|suits?|jackets?|sweaters?|hoodies?|shorts|leggings|dupattas?|blouses?|uniforms?|garments?|clothes|clothing|shoes?|sandals?|chappals?|slippers?|sneakers?|boots?|footwear)\b/i,
@@ -31,6 +37,7 @@ const RULES: Rule[] = [
 export interface GstGuess {
   rate: number
   why: string
+  confirm?: boolean
 }
 
 /** The GST rate for one item, or null when we are not sure (the owner's default of 18% then applies). */
@@ -46,7 +53,7 @@ export function gstRateForItem(name: string, unitPrice = 0): GstGuess | null {
       }
       return null
     }
-    return { rate: r.rate, why: `${r.label} are ${r.rate}%` }
+    return { rate: r.rate, why: `${r.label} are ${r.rate}%`, confirm: r.confirm }
   }
   return null
 }
@@ -79,13 +86,14 @@ export function suggestInvoiceRate(rec: Record<string, any>): { rate: number; no
   })
 
   let matched = 0
+  const unsure: string[] = []
   const used = new Map<number, string>()
   let tax = 0
   let base = 0
   for (const l of priced) {
     const g = gstRateForItem(l.name, l.price)
     const rate = g ? g.rate : 18
-    if (g) { matched++; if (!used.has(rate)) used.set(rate, g.why) }
+    if (g) { matched++; if (!used.has(rate)) used.set(rate, g.why); if (g.confirm && !unsure.includes(l.name)) unsure.push(l.name) }
     else if (!used.has(18)) used.set(18, 'other items are 18%')
     const value = l.price > 0 ? l.qty * l.price : 0
     base += value
@@ -102,7 +110,9 @@ export function suggestInvoiceRate(rec: Record<string, any>): { rate: number; no
   const rateText = used.size === 1 ? `${rate}%` : `about ${rate}% in all (mixed rates)`
   return {
     rate,
-    note: `I used GST ${rateText} because ${why}. Say a different rate if yours is not that, "including tax" if the amount you gave is the final price, or "no tax" for none. If unsure about an item, check with your CA.`,
+    note:
+      `I used GST ${rateText} because ${why}. Say a different rate if yours is not that, "including tax" if the amount you gave is the final price, or "no tax" for none.` +
+      (unsure.length ? ` I am not fully sure about ${unsure.slice(0, 3).join(', ')}: please check the rate and tell me if it should be different.` : ' If unsure about an item, check with your CA.'),
   }
 }
 

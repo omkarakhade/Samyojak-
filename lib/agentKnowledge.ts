@@ -4,9 +4,9 @@
 // (contact, lead, prospect, opportunity, customer, lost) and the words Indian owners actually use.
 // It is plain text inside the agent prompt. Keep it short: every word is paid for on every call.
 
-import { GST_GUIDE } from '@/lib/indiaGst'
+import { TAX_BRIEF } from '@/lib/worldTax'
 
-export const AGENT_KNOWLEDGE = `${GST_GUIDE}
+export const AGENT_KNOWLEDGE = `${TAX_BRIEF}
 
 HOW TO UNDERSTAND OWNERS (they write fast, mix English, Hindi and Hinglish, and skip details):
 - Money coming in: "paid", "received", "mil gaye", "aa gaye", "de diye", "transfer kiya", "UPI aaya" mean a payment arrived. "Advance" or "token" is a part payment.

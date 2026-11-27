@@ -6,7 +6,7 @@ import { payrollFor } from '@/lib/payroll'
 import { dueRecurring } from '@/lib/recurring'
 import { AGENT_KNOWLEDGE } from '@/lib/agentKnowledge'
 import { withInvoiceTax } from '@/lib/invoiceTax'
-import { suggestInvoiceRate } from '@/lib/indiaGst'
+import { suggestTax } from '@/lib/worldTax'
 import { stockAnswer } from '@/lib/agentMemory'
 import {
   AGENT_MODULES,
@@ -582,8 +582,8 @@ export async function resolveOperations(userId: string, ops: RawOp[]) {
     if (a.type === 'add' && a.module === 'Invoices') {
       a.records = a.records.map(r => {
         // GST by what was sold (dresses under Rs 2,500 are 5%, phones 18%...), unless the owner named a rate.
-        const guess = suggestInvoiceRate(r)
-        const rec = guess ? { ...r, 'Tax Rate': guess.rate } : r
+        const guess = suggestTax(r)
+        const rec = guess ? { ...r, 'Tax Rate': guess.rate, 'Tax System': guess.system, 'Tax Label': guess.label } : r
         const t = withInvoiceTax(rec)
         if (t['Tax Amount'] !== undefined && r['Tax Amount'] === undefined) {
           taxed = true
