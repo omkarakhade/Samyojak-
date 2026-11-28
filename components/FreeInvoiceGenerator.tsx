@@ -33,7 +33,7 @@ export default function FreeInvoiceGenerator({ slug, country }: { slug: string; 
     `${cfg.taxLabel} (${t.rate}%): ${money(cfg.currency, t.tax)}`,
     'Total: ' + money(cfg.currency, t.total),
     '',
-    'Made with Samyojak: ' + SITE,
+    'Made with Samyojak, the AI ERP that adapts to you: ' + SITE,
   ].join('\n')
 
   return (
@@ -98,7 +98,7 @@ export default function FreeInvoiceGenerator({ slug, country }: { slug: string; 
                 <p className="flex justify-between"><span>{cfg.taxLabel} ({t.rate}%)</span><span>{money(cfg.currency, t.tax)}</span></p>
                 <p className="flex justify-between font-black text-base"><span>Total</span><span>{money(cfg.currency, t.total)}</span></p>
               </div>
-              <p className="text-xs mt-4" style={{ color: '#94A3B8' }}>Made with Samyojak · samyojak-erp.com</p>
+              <p className="text-xs mt-4" style={{ color: '#94A3B8' }}>Made with Samyojak · The AI ERP that adapts to you · samyojak-erp.com</p>
             </div>
 
             <div className="no-print flex flex-wrap gap-3 mt-4">
