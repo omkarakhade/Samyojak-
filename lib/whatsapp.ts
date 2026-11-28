@@ -53,6 +53,6 @@ export function invoiceWhatsapp(data: Record<string, any>, defaultCode = '91'): 
   }
   // Every invoice an owner sends tells their customer where it came from.
   lines.push('')
-  lines.push('Made with Samyojak, the AI ERP that adapts to you: ' + SAMYOJAK_LINK)
+  lines.push('Made with Samyojak, the ERP/CRM that adapts to you: ' + SAMYOJAK_LINK)
   return whatsappLink(phone, lines.join('\n'), defaultCode)
 }
