@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import SeoLanding from '@/components/SeoLanding'
 import { TAX_PAGES } from '@/lib/seoPages'
+import FreeInvoiceGenerator from '@/components/FreeInvoiceGenerator'
 
 export const dynamicParams = false
 export function generateStaticParams() {
@@ -25,5 +26,5 @@ export async function generateMetadata({ params }: { params: Promise<{ country: 
 export default async function TaxLanding({ params }: { params: Promise<{ country: string }> }) {
   const p = find((await params).country)
   if (!p) notFound()
-  return <SeoLanding page={p} parent={{ label: 'Tax by country', href: '/tax' }} rates={p.rates} ratesTitle={`${p.country}: rates at a glance`} />
+  return <SeoLanding page={p} parent={{ label: 'Tax by country', href: '/tax' }} rates={p.rates} ratesTitle={`${p.country}: rates at a glance`} extra={<FreeInvoiceGenerator slug={p.slug} country={p.country} />} />
 }

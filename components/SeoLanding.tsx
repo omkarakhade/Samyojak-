@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Check } from 'lucide-react'
 import MarketingNav from '@/components/MarketingNav'
@@ -15,11 +16,13 @@ export default function SeoLanding({
   parent,
   rates,
   ratesTitle,
+  extra,
 }: {
   page: SeoPage
   parent: { label: string; href: string }
   rates?: string[]
   ratesTitle?: string
+  extra?: ReactNode
 }) {
   return (
     <div style={{ background: '#FFFDF5', fontFamily: 'Plus Jakarta Sans' }}>
@@ -53,6 +56,8 @@ export default function SeoLanding({
           </div>
         </section>
       )}
+
+      {extra}
 
       <section className="px-6 pb-16" style={{ background: '#F8FAFC' }}>
         <div className="max-w-4xl mx-auto py-16">

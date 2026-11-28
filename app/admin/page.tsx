@@ -1,4 +1,5 @@
 'use client'
+import { FUNNEL_STAGES, funnelCounts } from '@/lib/funnel'
 import React, { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import { supabase } from '@/lib/supabase'
@@ -271,6 +272,19 @@ export default function AdminPanel() {
         {/* USERS TAB */}
         {activeTab === 'users' && (
           <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {FUNNEL_STAGES.map((st, i) => {
+                const counts = funnelCounts(users)
+                const prev = i > 0 ? counts[FUNNEL_STAGES[i - 1].id] : 0
+                return (
+                  <div key={st.id} className="bg-white dark:bg-[#1a2740] rounded-2xl border border-gray-100 dark:border-white/10 p-4">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{st.label}</p>
+                    <p className="text-2xl font-black dark:text-white">{counts[st.id]}</p>
+                    {i > 0 && <p className="text-xs text-gray-400">{prev ? Math.round((counts[st.id] / prev) * 100) : 0}% of the step before</p>}
+                  </div>
+                )
+              })}
+            </div>
             <div className="flex items-center justify-between gap-3">
               <div className="relative flex-1">
                 <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -307,7 +321,7 @@ export default function AdminPanel() {
                 <table className="w-full">
                   <thead className="bg-gray-50 dark:bg-[#0A1628]">
                     <tr>
-                      {['User', 'Plan', 'Created', 'Last Sign In', 'Status'].map(h => (
+                      {['User', 'Plan', 'Stage', 'Created', 'Last Activity', 'Status'].map(h => (
                         <th key={h} className="p-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
                           {h}
                         </th>
@@ -317,7 +331,7 @@ export default function AdminPanel() {
                   <tbody className="divide-y divide-gray-50 dark:divide-white/5">
                     {filteredUsers.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="p-8 text-center text-gray-400 text-sm">
+                        <td colSpan={6} className="p-8 text-center text-gray-400 text-sm">
                           No users found
                         </td>
                       </tr>
@@ -340,13 +354,17 @@ export default function AdminPanel() {
                             {u.user_metadata?.plan || 'No Plan'}{u.subscription_status ? ' · ' + (u.subscription_status === 'active' ? 'Paid' : u.subscription_status) : ''}
                           </span>
                         </td>
+                        <td className="p-4 text-xs font-semibold dark:text-white">
+                          {u.is_admin ? 'You' : (FUNNEL_STAGES.find(st => st.id === u.stage)?.label || '—')}
+                          <span className="block font-normal text-gray-400">{u.records || 0} records · {u.invoices || 0} invoices</span>
+                        </td>
                         <td className="p-4 text-xs text-gray-400">
                           {u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN') : '—'}
                         </td>
                         <td className="p-4 text-xs text-gray-400">
-                          {u.last_sign_in_at
-                            ? new Date(u.last_sign_in_at).toLocaleDateString('en-IN')
-                            : '—'}
+                          {u.last_activity
+                            ? new Date(u.last_activity).toLocaleDateString('en-IN')
+                            : 'Never used'}
                         </td>
                         <td className="p-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-bold ${

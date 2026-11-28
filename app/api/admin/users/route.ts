@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedUser, ADMIN_EMAIL } from '@/lib/serverAuth'
 import { createSupabaseAdminClient } from '@/lib/supabaseAdmin'
+import { funnelStage } from '@/lib/funnel'
 
 /** Admin only: everyone who signed up, with their plan and whether they have paid. */
 export async function GET(req: NextRequest) {
@@ -21,11 +22,37 @@ export async function GET(req: NextRequest) {
       .from('subscriptions')
       .select('user_id, subscription_status, plan_type, plan_tier, trial_end_date')
     const byUser = new Map((subs || []).map((s: any) => [s.user_id, s]))
+
+    // How much each person has actually used the product (page through, the API returns 1000 rows at a time)
+    const usage = new Map<string, { records: number; invoices: number; last: string }>()
+    for (let from = 0; from < 50000; from += 1000) {
+      const { data: recs, error: recErr } = await admin
+        .from('records')
+        .select('user_id, module, updated_at')
+        .range(from, from + 999)
+      if (recErr || !recs) break
+      for (const r of recs as any[]) {
+        const u = usage.get(r.user_id) || { records: 0, invoices: 0, last: '' }
+        u.records++
+        if (r.module === 'Invoices') u.invoices++
+        if (String(r.updated_at || '') > u.last) u.last = String(r.updated_at)
+        usage.set(r.user_id, u)
+      }
+      if (recs.length < 1000) break
+    }
+
     const rows = users
       .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
       .map(u => {
         const s: any = byUser.get(u.id)
+        const use = usage.get(u.id)
+        const subscription_status = s?.subscription_status || null
         return {
+          records: use?.records || 0,
+          invoices: use?.invoices || 0,
+          last_activity: use?.last || null,
+          is_admin: u.email === ADMIN_EMAIL,
+          stage: funnelStage({ records: use?.records, invoices: use?.invoices, subscription_status }),
           id: u.id,
           email: u.email,
           created_at: u.created_at,

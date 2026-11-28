@@ -25,4 +25,7 @@ test('invoice message has the whole invoice; paid ones get a thank-you; no phone
   const paid = decodeURIComponent(invoiceWhatsapp({ 'Client Name': 'A', 'Client Phone': '9876543210', Total: '500', 'Payment Status': 'Paid' }).split('text=')[1])
   assert.ok(paid.includes('received your payment') && paid.includes('Paid') && !paid.includes('Due date'))
   assert.equal(invoiceWhatsapp({ 'Client Name': 'A', 'Payment Status': 'Unpaid' }), '')
+  // every message tells the customer where the invoice came from, with a trackable link
+  assert.ok(text.includes('Made with Samyojak') && text.includes('utm_source=invoice'))
+  assert.ok(paid.includes('Made with Samyojak'))
 })

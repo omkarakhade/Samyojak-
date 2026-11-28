@@ -1,6 +1,8 @@
 // Builds a WhatsApp "click to chat" link with a ready message. Nothing is sent automatically:
 // the owner's own WhatsApp opens with the text filled in, and they press send.
 
+export const SAMYOJAK_LINK = 'https://www.samyojak-erp.com/?utm_source=invoice&utm_medium=whatsapp'
+
 /** Digits only, with a country code. A bare 10-digit number gets defaultCode (India: 91). Returns '' if unusable. */
 export function whatsappNumber(raw: unknown, defaultCode = '91'): string {
   let d = String(raw ?? '').replace(/[^0-9]/g, '')
@@ -49,5 +51,8 @@ export function invoiceWhatsapp(data: Record<string, any>, defaultCode = '91'): 
     lines.push('')
     lines.push('Please let me know once it is paid. Thank you.')
   }
+  // Every invoice an owner sends tells their customer where it came from.
+  lines.push('')
+  lines.push('Made with Samyojak, the ERP that adjusts to you: ' + SAMYOJAK_LINK)
   return whatsappLink(phone, lines.join('\n'), defaultCode)
 }

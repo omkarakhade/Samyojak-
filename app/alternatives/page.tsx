@@ -32,6 +32,11 @@ const alternatives = [
     color: '#F472B6',
     bg: '#FCE7F3',
   },
+  { title: 'Tally Alternative', desc: 'Record by typing or a photo and let GST follow the items.', href: '/alternatives/tally', color: '#8B5CF6', bg: '#EDE9FE' },
+  { title: 'Vyapar Alternative', desc: 'Billing plus stock, payroll and production in one workspace.', href: '/alternatives/vyapar', color: '#F472B6', bg: '#FCE7F3' },
+  { title: 'myBillBook Alternative', desc: 'GST billing with an agent that does the data entry.', href: '/alternatives/mybillbook', color: '#8B5CF6', bg: '#EDE9FE' },
+  { title: 'Zoho Books Alternative', desc: 'One workspace, flat pricing, no per-user fees.', href: '/alternatives/zoho-books', color: '#F472B6', bg: '#FCE7F3' },
+  { title: 'QuickBooks Alternative', desc: 'VAT and sales tax by item, stock and payroll together.', href: '/alternatives/quickbooks', color: '#8B5CF6', bg: '#EDE9FE' },
 ]
 
 export default function AlternativesPage() {
