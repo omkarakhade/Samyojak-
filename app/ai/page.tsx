@@ -914,7 +914,12 @@ export default function AIAssistant() {
           .filter(m => m.text && !m.card)
           .slice(-4)
           .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }))
-        const { ok, data } = await callAgent({ action: 'plan', message: q, history })
+        // "I don't have it" / "skip" to the clerk's own question: tell the agent to record without the detail instead of asking again.
+        const lastTurn = history[history.length - 1]
+        const declined = lastTurn?.role === 'assistant' && /\?\s*$/.test(String(lastTurn.content || '')) &&
+          /^(i\s*)?(don'?t|do not|dont)\s+(have|know)|^no\b|^skip\b|^none\b|^nahi\b|nahi hai|pata nahi|^not available|^n\/?a$/i.test(q.trim())
+        const planMessage = declined ? `${q} (the owner does not have this detail: record without it and do not ask again)` : q
+        const { ok, data } = await callAgent({ action: 'plan', message: planMessage, history })
 
         if (!ok) {
           addAiMessage({ text: data.error || 'Something went wrong. Please try again.' })

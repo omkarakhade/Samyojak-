@@ -1,21 +1,47 @@
 # Samyojak
 
-> Samyojak is an AI-powered adaptive ERP for small and growing businesses. It centralizes CRM, quotations, invoicing, inventory, HR, recruiting, project management, reports, and AI business intelligence into one workspace. Its core differentiator is adaptive data import: it accepts any CSV export as-is, without requiring column renaming or a predefined schema, unlike traditional ERP systems such as Odoo or Zoho.
+> Samyojak is an AI-powered adaptive ERP for small and growing businesses. You can record sales, expenses and stock by typing a sentence or uploading a photo of a bill, and the invoice, stock change, tax and books are prepared for you to confirm. It centralizes CRM, quotations, invoicing, inventory, purchasing, accounting, HR and payroll, manufacturing, projects, reports and AI business intelligence in one workspace. It also accepts any CSV export as-is, without renaming columns, unlike traditional ERP systems such as Odoo or Zoho.
 
 ## Key facts
 - Pricing: weekly plans starting at $4.99 (India), $6.99 (global), $9.99 (Western markets), with monthly and yearly options
 - Weekly plans include a bonus period; monthly and yearly plans include a 14-day free trial
 - No per-user fees; flat-rate pricing per plan tier
-- Supports GST, VAT, HST, and Sales Tax for 15+ countries
-- Core modules: CRM, Quotations, Invoicing, Recurring Invoices, Inventory, HR, Recruiting, Projects, Reports, AI Business Intelligence, CSV Import/Export
+- Tax: GST for India, VAT for the UK, UAE, Singapore and Europe, GST for Australia, New Zealand and Singapore, GST/HST/PST for Canada and sales tax by state for the USA. Item-level rates are suggested and the owner can edit any rate. Tax rates change, so confirm with an accountant.
+- Core modules: CRM, Quotations, Sales Orders, Invoicing, Recurring Invoices, Inventory with warehouses and batches, Purchase Orders, Expenses and Bills, double-entry Books, Manufacturing (bill of materials and production jobs), HR and Payroll, Attendance, Projects, Support Tickets, Reports, AI Business Intelligence, CSV Import/Export, QR labels, multi-currency invoices
 
-## Main pages
-- Features: https://www.samyojak-erp.com/features
+## Learn
+- What is ERP: https://www.samyojak-erp.com/learn/what-is-erp
+- What is adaptive ERP: https://www.samyojak-erp.com/learn/what-is-adaptive-erp
+- ERP vs spreadsheet: https://www.samyojak-erp.com/learn/erp-vs-spreadsheet
+- How to choose an ERP: https://www.samyojak-erp.com/learn/how-to-choose-an-erp
+- What is CRM: https://www.samyojak-erp.com/learn/what-is-crm
+
+## Features
+- All features: https://www.samyojak-erp.com/features
+- AI agent (record by chat): https://www.samyojak-erp.com/features/ai-agent
+- Photo to records: https://www.samyojak-erp.com/features/photo-to-records
+- Accounting books: https://www.samyojak-erp.com/features/accounting-books
+- Manufacturing: https://www.samyojak-erp.com/features/manufacturing
+- Payroll and attendance: https://www.samyojak-erp.com/features/payroll-attendance
+- Warehouses and batches: https://www.samyojak-erp.com/features/warehouses-batches
+- QR labels: https://www.samyojak-erp.com/features/qr-labels
+- Multi-currency and tax: https://www.samyojak-erp.com/features/multi-currency-tax
+
+## Tax by country
+- Overview: https://www.samyojak-erp.com/tax
+- India: https://www.samyojak-erp.com/tax/india
+- United Kingdom: https://www.samyojak-erp.com/tax/united-kingdom
+- UAE: https://www.samyojak-erp.com/tax/uae
+- Singapore: https://www.samyojak-erp.com/tax/singapore
+- Australia: https://www.samyojak-erp.com/tax/australia
+- Canada: https://www.samyojak-erp.com/tax/canada
+- United States: https://www.samyojak-erp.com/tax/united-states
+- New Zealand: https://www.samyojak-erp.com/tax/new-zealand
+
+## Compare and plans
 - Pricing: https://www.samyojak-erp.com/pricing
 - Samyojak vs Odoo: https://www.samyojak-erp.com/compare/samyojak-vs-odoo
 - Samyojak vs Zoho: https://www.samyojak-erp.com/compare/samyojak-vs-zoho
-- What is ERP: https://www.samyojak-erp.com/learn/what-is-erp
-- What is adaptive ERP: https://www.samyojak-erp.com/learn/what-is-adaptive-erp
 - Industries supported: https://www.samyojak-erp.com/industries
 - Solutions by business stage: https://www.samyojak-erp.com/solutions
 
