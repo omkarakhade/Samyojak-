@@ -22,6 +22,15 @@ export default function MarketingFooter() {
             <p className="font-black text-white text-sm mb-3" style={{ fontFamily: 'Outfit' }}>Product</p>
             <div className="space-y-2">
               <Link href="/features" className="block text-sm hover:text-white transition-colors" style={{ color: '#94A3B8' }}>Features</Link>
+              <Link href="/features/ai-agent" className="block text-sm hover:text-white transition-colors" style={{ color: '#94A3B8' }}>AI Agent</Link>
+              <Link href="/features/photo-to-records" className="block text-sm hover:text-white transition-colors" style={{ color: '#94A3B8' }}>Photo to Records</Link>
+              <Link href="/features/accounting-books" className="block text-sm hover:text-white transition-colors" style={{ color: '#94A3B8' }}>Accounting & Books</Link>
+              <Link href="/features/manufacturing" className="block text-sm hover:text-white transition-colors" style={{ color: '#94A3B8' }}>Manufacturing</Link>
+              <Link href="/features/payroll-attendance" className="block text-sm hover:text-white transition-colors" style={{ color: '#94A3B8' }}>Payroll & Attendance</Link>
+              <Link href="/features/warehouses-batches" className="block text-sm hover:text-white transition-colors" style={{ color: '#94A3B8' }}>Warehouses & Batches</Link>
+              <Link href="/features/qr-labels" className="block text-sm hover:text-white transition-colors" style={{ color: '#94A3B8' }}>QR Labels</Link>
+              <Link href="/features/multi-currency-tax" className="block text-sm hover:text-white transition-colors" style={{ color: '#94A3B8' }}>Multi-Currency & Tax</Link>
+              <Link href="/tax" className="block text-sm hover:text-white transition-colors" style={{ color: '#94A3B8' }}>Tax by Country</Link>
               <Link href="/pricing" className="block text-sm hover:text-white transition-colors" style={{ color: '#94A3B8' }}>Pricing</Link>
               <Link href="/referral" className="block text-sm hover:text-white transition-colors" style={{ color: '#94A3B8' }}>Referral</Link>
             </div>

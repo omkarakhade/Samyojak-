@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next'
 
+import { FEATURE_PAGES, TAX_PAGES } from '@/lib/seoPages'
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://www.samyojak-erp.com'
   const now = new Date()
@@ -84,6 +86,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/resources/project-management-template',
     '/resources/erp-checklist',
     '/resources/business-management-checklist',
+    ...FEATURE_PAGES.map(p => `/features/${p.slug}`),
+    '/tax',
+    ...TAX_PAGES.map(p => `/tax/${p.slug}`),
   ]
 
   return staticRoutes.map(route => ({
